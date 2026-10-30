@@ -147,7 +147,9 @@ struct DraftVideoPreview: View {
         ZStack {
             Color.black.ignoresSafeArea()
             if let player { PlayerView(player: player).accessibilityHidden(true) }
-            VStack {
+            DuoControlRegion { size in
+              ScrollView {
+               VStack {
                 HStack {
                     Button { dismiss() } label: { Image("close").resizable().scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44) }
                         .buttonStyle(.plain).accessibilityLabel("Close video")
@@ -165,7 +167,9 @@ struct DraftVideoPreview: View {
                     playing.toggle()
                 } label: { Image(playing ? "pause" : "play").resizable().scaledToFit().frame(width: 50, height: 50) }
                     .buttonStyle(.plain).accessibilityLabel(playing ? "Pause video" : "Play video")
-            }.padding(20)
+               }.padding(20).frame(maxWidth: .infinity).frame(minHeight: size.height)
+              }
+            }
         }.onAppear {
             let url = DraftFiles.url(item)
             if FileManager.default.fileExists(atPath: url.path) { player = AVPlayer(url: url) }

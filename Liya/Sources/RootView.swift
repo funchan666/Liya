@@ -37,17 +37,21 @@ struct RootView: View {
                 if request != nil { selection = .discover }
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                HStack(spacing: 0) {
-                    ForEach(LiyaTab.allCases, id: \.rawValue) { item in
-                        Button { selection = item } label: {
-                            VStack(spacing: 3) {
-                                Image(item.image(selected: selection == item)).resizable().scaledToFit().frame(width: item == .compose ? 34 : 24, height: 34)
-                                Text(item.title).font(.system(size: 10, weight: selection == item ? .bold : .regular))
-                                    .foregroundStyle(selection == item ? liyaAccent : .secondary)
-                            }.frame(maxWidth: .infinity).frame(minHeight: 52).contentShape(Rectangle())
-                        }.buttonStyle(.plain).accessibilityLabel(item.title).accessibilityAddTraits(selection == item ? .isSelected : [])
+                DuoControlRegion { size in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 0) {
+                            ForEach(LiyaTab.allCases, id: \.rawValue) { item in
+                                Button { selection = item } label: {
+                                    VStack(spacing: 3) {
+                                        Image(item.image(selected: selection == item)).resizable().scaledToFit().frame(width: item == .compose ? 34 : 24, height: 34)
+                                        Text(item.title).font(.system(size: 10, weight: selection == item ? .bold : .regular))
+                                            .foregroundStyle(selection == item ? liyaAccent : .secondary)
+                                    }.frame(width: max(52, (size.width - 16) / CGFloat(LiyaTab.allCases.count)), height: 52).contentShape(Rectangle())
+                                }.buttonStyle(.plain).accessibilityLabel(item.title).accessibilityAddTraits(selection == item ? .isSelected : [])
+                            }
+                        }.padding(.horizontal, 8).modifier(AdaptiveContainerMargins())
                     }
-                }.padding(.horizontal, 8).modifier(AdaptiveContainerMargins()).background(.white)
+                }.frame(height: 52).background(.white)
             }
         }
     }

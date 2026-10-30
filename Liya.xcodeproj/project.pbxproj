@@ -15,6 +15,7 @@
 		54CA158E53B5FE7FA22C7C28 /* DraftMedia.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */; };
 		7B42BD8844C5C09CEF2842B6 /* LiyaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2061D8AD2D04E41E28919D /* LiyaApp.swift */; };
 		7FDE4B121440C7BE36374D65 /* SquareViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593E5372186CB54C83F75E59 /* SquareViews.swift */; };
+		94AA0FDD52D33EF28DE55AE6 /* DuoControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3984E1F4A9E1E136685F9B50 /* DuoControls.swift */; };
 		A0627F5AD9573BDC71118145 /* ProfileViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1801B18AF27DF23E012330C7 /* ProfileViews.swift */; };
 		C82EF4A543D3DF6A2C874E68 /* LocalPosts.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA69102DD583B62A83217A19 /* LocalPosts.swift */; };
 		CA27812540BE098620440156 /* MainViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 393130AEC742C97B5E001EAB /* MainViews.swift */; };
@@ -30,6 +31,7 @@
 		1D648C3AC2E6356988E3E2E1 /* Examples */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Examples; path = Liya/Resources/Examples; sourceTree = SOURCE_ROOT; };
 		362B25F54F99DDE61E68206D /* VideoHome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoHome.swift; sourceTree = "<group>"; };
 		393130AEC742C97B5E001EAB /* MainViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViews.swift; sourceTree = "<group>"; };
+		3984E1F4A9E1E136685F9B50 /* DuoControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoControls.swift; sourceTree = "<group>"; };
 		593E5372186CB54C83F75E59 /* SquareViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquareViews.swift; sourceTree = "<group>"; };
 		6570BF991B9EBC01B32BA0EE /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
 		7C2061D8AD2D04E41E28919D /* LiyaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaApp.swift; sourceTree = "<group>"; };
@@ -57,6 +59,7 @@
 			children = (
 				9B3165B5F348D386BDA1F13D /* Components.swift */,
 				BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */,
+				3984E1F4A9E1E136685F9B50 /* DuoControls.swift */,
 				BFEE673FE4EB43FAD342B45A /* ExampleProfiles.swift */,
 				0D3C848B4534F0BB94FF8789 /* Examples.swift */,
 				7C2061D8AD2D04E41E28919D /* LiyaApp.swift */,
@@ -156,6 +159,7 @@
 			files = (
 				2A68D9FBFD459854460E746A /* Components.swift in Sources */,
 				54CA158E53B5FE7FA22C7C28 /* DraftMedia.swift in Sources */,
+				94AA0FDD52D33EF28DE55AE6 /* DuoControls.swift in Sources */,
 				324598B2552C2847BA3FBABB /* ExampleProfiles.swift in Sources */,
 				3EED5221EF3C25A6D41D15A2 /* Examples.swift in Sources */,
 				7B42BD8844C5C09CEF2842B6 /* LiyaApp.swift in Sources */,
@@ -175,7 +179,7 @@
 		585C2C0EC05169A1231D719D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Liya;
@@ -197,7 +201,7 @@
 		6FC4B633A84D7B53CB229E32 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Liya;

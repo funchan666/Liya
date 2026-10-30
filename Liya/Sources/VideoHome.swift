@@ -108,7 +108,9 @@ struct VideoHome: View {
         ZStack {
             Color(red: 0.04, green: 0.04, blue: 0.11).ignoresSafeArea()
             PlayerView(player: preview.player).accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 12) {
+            DuoControlRegion { available in
+              ScrollView {
+               VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image("video-title").resizable().scaledToFit().frame(width: 145, height: 42).accessibilityLabel("Liya videos")
                     Spacer()
@@ -149,7 +151,9 @@ struct VideoHome: View {
                         .font(.caption.monospacedDigit()).foregroundStyle(.white)
                 }
                 Text("Example content · Community features are not connected.").font(.footnote)
-            }.foregroundStyle(.white).padding(20).frame(maxWidth: 620).modifier(AdaptiveContainerMargins())
+               }.foregroundStyle(.white).padding(20).frame(maxWidth: 620).frame(maxWidth: .infinity).frame(minHeight: available.height).modifier(AdaptiveContainerMargins())
+              }
+            }
         }
         .contentShape(Rectangle())
         .simultaneousGesture(DragGesture(minimumDistance: 60).onEnded { value in

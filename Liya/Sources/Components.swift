@@ -32,15 +32,17 @@ struct PageHeader: View {
     let title: String
     var light = false
     var body: some View {
-        HStack {
-            Button(action: { dismiss() }) {
-                Image("back").renderingMode(light ? .template : .original).resizable().scaledToFit().foregroundStyle(.white).frame(width: 20, height: 20).frame(width: 44, height: 44)
-            }.buttonStyle(.plain).accessibilityLabel("Back")
-            Spacer()
-            Text(title).font(.headline).foregroundStyle(light ? .white : liyaInk)
-            Spacer()
-            Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
-        }.modifier(AdaptiveContainerMargins())
+        DuoControlRegion { _ in
+            HStack {
+                Button(action: { dismiss() }) {
+                    Image("back").renderingMode(light ? .template : .original).resizable().scaledToFit().foregroundStyle(.white).frame(width: 20, height: 20).frame(width: 44, height: 44)
+                }.buttonStyle(.plain).accessibilityLabel("Back")
+                Spacer(minLength: 0)
+                Text(title).font(.headline).lineLimit(1).foregroundStyle(light ? .white : liyaInk)
+                Spacer(minLength: 0)
+                Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
+            }.modifier(AdaptiveContainerMargins())
+        }.frame(height: 44)
     }
 }
 
@@ -99,12 +101,16 @@ struct LocalConfirmation: View {
     var body: some View {
         ZStack {
             LiyaBackground()
-            VStack(spacing: 18) {
-                Text(title).font(.title3.bold()).foregroundStyle(liyaInk)
-                Text(message).multilineTextAlignment(.center).foregroundStyle(.secondary)
-                PrimaryButton(title: action, action: confirm)
-                Button("Cancel", action: cancel).font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
-            }.padding(24).frame(maxWidth: 440)
+            DuoControlRegion { size in
+                ScrollView {
+                    VStack(spacing: 18) {
+                        Text(title).font(.title3.bold()).foregroundStyle(liyaInk)
+                        Text(message).multilineTextAlignment(.center).foregroundStyle(.secondary)
+                        PrimaryButton(title: action, action: confirm)
+                        Button("Cancel", action: cancel).font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                    }.padding(24).frame(maxWidth: 440).frame(maxWidth: .infinity).frame(minHeight: size.height)
+                }
+            }
         }
     }
 }

@@ -75,14 +75,16 @@ struct DraftPhotoPreview: View {
             if let image = UIImage(contentsOfFile: DraftFiles.url(item).path) {
                 Image(uiImage: image).resizable().scaledToFit().accessibilityLabel("Private photo")
             } else { Text("Photo unavailable").foregroundStyle(.white) }
-            VStack {
+            DuoControlRegion { size in
+              VStack {
                 HStack {
                     Button { dismiss() } label: { Image("close").resizable().scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44) }
                         .buttonStyle(.plain).accessibilityLabel("Close photo")
                     Spacer()
                 }
                 Spacer()
-            }.padding(20)
+              }.padding(20).frame(width: size.width, height: size.height)
+            }
         }
     }
 }
