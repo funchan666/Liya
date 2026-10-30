@@ -1,0 +1,362 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		073D8EE7810AFCF9F9B31B86 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C1AA7E627810F1A043DB07 /* RootView.swift */; };
+		2A68D9FBFD459854460E746A /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B3165B5F348D386BDA1F13D /* Components.swift */; };
+		324598B2552C2847BA3FBABB /* ExampleProfiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFEE673FE4EB43FAD342B45A /* ExampleProfiles.swift */; };
+		32E3CDDE51E9F1562E13755D /* VideoHome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 362B25F54F99DDE61E68206D /* VideoHome.swift */; };
+		3EED5221EF3C25A6D41D15A2 /* Examples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3C848B4534F0BB94FF8789 /* Examples.swift */; };
+		54CA158E53B5FE7FA22C7C28 /* DraftMedia.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */; };
+		7B42BD8844C5C09CEF2842B6 /* LiyaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2061D8AD2D04E41E28919D /* LiyaApp.swift */; };
+		7FDE4B121440C7BE36374D65 /* SquareViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593E5372186CB54C83F75E59 /* SquareViews.swift */; };
+		A0627F5AD9573BDC71118145 /* ProfileViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1801B18AF27DF23E012330C7 /* ProfileViews.swift */; };
+		C82EF4A543D3DF6A2C874E68 /* LocalPosts.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA69102DD583B62A83217A19 /* LocalPosts.swift */; };
+		CA27812540BE098620440156 /* MainViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 393130AEC742C97B5E001EAB /* MainViews.swift */; };
+		D13D7EED4D1BD097D1746957 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C619DBBB0211BA6980C958D2 /* Assets.xcassets */; };
+		DC4628DC65FC19D7D5763A59 /* LocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6570BF991B9EBC01B32BA0EE /* LocalStore.swift */; };
+		E8F3748B9E26E4E91056C740 /* Examples in Resources */ = {isa = PBXBuildFile; fileRef = 1D648C3AC2E6356988E3E2E1 /* Examples */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0A49B42E539DC4B03BDB34DE /* Liya.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Liya.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0D3C848B4534F0BB94FF8789 /* Examples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Examples.swift; sourceTree = "<group>"; };
+		1801B18AF27DF23E012330C7 /* ProfileViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViews.swift; sourceTree = "<group>"; };
+		1D648C3AC2E6356988E3E2E1 /* Examples */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Examples; path = Liya/Resources/Examples; sourceTree = SOURCE_ROOT; };
+		362B25F54F99DDE61E68206D /* VideoHome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoHome.swift; sourceTree = "<group>"; };
+		393130AEC742C97B5E001EAB /* MainViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViews.swift; sourceTree = "<group>"; };
+		593E5372186CB54C83F75E59 /* SquareViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquareViews.swift; sourceTree = "<group>"; };
+		6570BF991B9EBC01B32BA0EE /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
+		7C2061D8AD2D04E41E28919D /* LiyaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaApp.swift; sourceTree = "<group>"; };
+		9B3165B5F348D386BDA1F13D /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		BA69102DD583B62A83217A19 /* LocalPosts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPosts.swift; sourceTree = "<group>"; };
+		BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraftMedia.swift; sourceTree = "<group>"; };
+		BFEE673FE4EB43FAD342B45A /* ExampleProfiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleProfiles.swift; sourceTree = "<group>"; };
+		C619DBBB0211BA6980C958D2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E1C1AA7E627810F1A043DB07 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		47E1305AB0237536E0BCB3A5 = {
+			isa = PBXGroup;
+			children = (
+				1D648C3AC2E6356988E3E2E1 /* Examples */,
+				6BBA48D2AE2AA016DFA0ECBE /* Liya */,
+				5F92A2190486565EC12E91E7 /* Sources */,
+				7C1D8A4D23972E7A196D2C6D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5F92A2190486565EC12E91E7 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				9B3165B5F348D386BDA1F13D /* Components.swift */,
+				BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */,
+				BFEE673FE4EB43FAD342B45A /* ExampleProfiles.swift */,
+				0D3C848B4534F0BB94FF8789 /* Examples.swift */,
+				7C2061D8AD2D04E41E28919D /* LiyaApp.swift */,
+				BA69102DD583B62A83217A19 /* LocalPosts.swift */,
+				6570BF991B9EBC01B32BA0EE /* LocalStore.swift */,
+				393130AEC742C97B5E001EAB /* MainViews.swift */,
+				1801B18AF27DF23E012330C7 /* ProfileViews.swift */,
+				E1C1AA7E627810F1A043DB07 /* RootView.swift */,
+				593E5372186CB54C83F75E59 /* SquareViews.swift */,
+				362B25F54F99DDE61E68206D /* VideoHome.swift */,
+			);
+			name = Sources;
+			path = Liya/Sources;
+			sourceTree = "<group>";
+		};
+		6BBA48D2AE2AA016DFA0ECBE /* Liya */ = {
+			isa = PBXGroup;
+			children = (
+				C619DBBB0211BA6980C958D2 /* Assets.xcassets */,
+			);
+			path = Liya;
+			sourceTree = "<group>";
+		};
+		7C1D8A4D23972E7A196D2C6D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0A49B42E539DC4B03BDB34DE /* Liya.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		319DC7A720CAF1D2CD041369 /* Liya */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 03D42F9D2DE6B62119F0915C /* Build configuration list for PBXNativeTarget "Liya" */;
+			buildPhases = (
+				69C1C6A7EE9A257EA05B5A33 /* Sources */,
+				0BB7252F8A1FB08BDEC4FD73 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Liya;
+			packageProductDependencies = (
+			);
+			productName = Liya;
+			productReference = 0A49B42E539DC4B03BDB34DE /* Liya.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2B7D257627435858BF94383D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+			};
+			buildConfigurationList = EF66F6CC11FC8DEB1EF37E59 /* Build configuration list for PBXProject "Liya" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 47E1305AB0237536E0BCB3A5;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				319DC7A720CAF1D2CD041369 /* Liya */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0BB7252F8A1FB08BDEC4FD73 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D13D7EED4D1BD097D1746957 /* Assets.xcassets in Resources */,
+				E8F3748B9E26E4E91056C740 /* Examples in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		69C1C6A7EE9A257EA05B5A33 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A68D9FBFD459854460E746A /* Components.swift in Sources */,
+				54CA158E53B5FE7FA22C7C28 /* DraftMedia.swift in Sources */,
+				324598B2552C2847BA3FBABB /* ExampleProfiles.swift in Sources */,
+				3EED5221EF3C25A6D41D15A2 /* Examples.swift in Sources */,
+				7B42BD8844C5C09CEF2842B6 /* LiyaApp.swift in Sources */,
+				C82EF4A543D3DF6A2C874E68 /* LocalPosts.swift in Sources */,
+				DC4628DC65FC19D7D5763A59 /* LocalStore.swift in Sources */,
+				CA27812540BE098620440156 /* MainViews.swift in Sources */,
+				A0627F5AD9573BDC71118145 /* ProfileViews.swift in Sources */,
+				073D8EE7810AFCF9F9B31B86 /* RootView.swift in Sources */,
+				7FDE4B121440C7BE36374D65 /* SquareViews.swift in Sources */,
+				32E3CDDE51E9F1562E13755D /* VideoHome.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		585C2C0EC05169A1231D719D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Liya;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = example.Liya;
+				PRODUCT_NAME = Liya;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		6FC4B633A84D7B53CB229E32 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Liya;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = example.Liya;
+				PRODUCT_NAME = Liya;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		835CA8B200AECB53FD8B572D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		9DAA7D566E25EE3CE395A04D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		03D42F9D2DE6B62119F0915C /* Build configuration list for PBXNativeTarget "Liya" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6FC4B633A84D7B53CB229E32 /* Debug */,
+				585C2C0EC05169A1231D719D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		EF66F6CC11FC8DEB1EF37E59 /* Build configuration list for PBXProject "Liya" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9DAA7D566E25EE3CE395A04D /* Debug */,
+				835CA8B200AECB53FD8B572D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 2B7D257627435858BF94383D /* Project object */;
+}

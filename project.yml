@@ -1,0 +1,27 @@
+name: Liya
+options:
+  bundleIdPrefix: example
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  Liya:
+    type: application
+    platform: iOS
+    sources:
+      - path: Liya/Sources
+      - path: Liya/Assets.xcassets
+      - path: Liya/Resources/Examples
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: example.Liya
+        PRODUCT_NAME: Liya
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Liya
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
