@@ -23,9 +23,12 @@ struct PostTagSelector: View {
 
 struct LocalPostCard: View {
     @EnvironmentObject private var store: LocalStore
+    @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var social: SocialStore
     let post: LocalDraft
     @State private var preview: DraftAttachment?
     @State private var confirmingDelete = false
+    @State private var sharing = false
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
@@ -53,6 +56,15 @@ struct LocalPostCard: View {
                     }
                 }
             }
+            if social.isJoined(session) {
+                Button(sharing ? "Sharing…" : (isShared ? "Shared with community" : "Share with community")) {
+                    guard let owner = session.userID else { return }
+                    sharing = true
+                    Task { _ = await social.publish(session, id: SocialAttempt.draftPostID(owner: owner, draft: post), body: post.text, tags: post.tags ?? [], attachments: post.attachments ?? []); sharing = false }
+                }.font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                    .disabled(sharing || isShared)
+                if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
+            }
         }.padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 16))
             .sheet(item: $preview) { item in
                 if item.isVideo { DraftVideoPreview(item: item) } else { DraftPhotoPreview(item: item) }
@@ -63,6 +75,10 @@ struct LocalPostCard: View {
                 } cancel: { confirmingDelete = false }
                 .presentationDetents([.medium])
             }
+    }
+    private var isShared: Bool {
+        guard let owner = session.userID else { return false }
+        return social.posts.contains { $0.id == SocialAttempt.draftPostID(owner: owner, draft: post) }
     }
 }
 

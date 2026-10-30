@@ -8,12 +8,15 @@ final class VideoPreview: ObservableObject {
     @Published var index = 0
     @Published var playing = false
     @Published var unavailable = false
+    @Published var loading = false
     @Published var progress: Double = 0
     @Published var duration: Double = 0
     @Published var muted = false
     private var timeObserver: Any?
     private var wantsPlayback = true
     private var reachedEnd = false
+    private var isActive = false
+    private var loadTask: Task<Void, Never>?
 
     init() {
         timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.25, preferredTimescale: 600), queue: .main) { [weak self] time in
@@ -27,28 +30,44 @@ final class VideoPreview: ObservableObject {
         }
     }
 
-    deinit { if let timeObserver { player.removeTimeObserver(timeObserver) } }
+    deinit { loadTask?.cancel(); if let timeObserver { player.removeTimeObserver(timeObserver) } }
 
-    func select(_ newIndex: Int, active: Bool) {
-        guard (0..<Examples.videoCount).contains(newIndex) else { return }
+    func select(_ newIndex: Int, active: Bool, session: LiyaSession) {
+        guard session.videos.indices.contains(newIndex) else { return }
+        loadTask?.cancel()
         index = newIndex
-        guard let url = Examples.url(kind: "video", index: index, fileExtension: "mp4") else {
-            player.replaceCurrentItem(with: nil)
-            playing = false
-            unavailable = true
-            return
-        }
+        isActive = active
+        player.replaceCurrentItem(with: nil)
+        playing = false
+        loading = true
         unavailable = false
         duration = 0
         progress = 0
         reachedEnd = false
         wantsPlayback = true
-        player.replaceCurrentItem(with: AVPlayerItem(url: url))
-        resumeIfWanted(active: active)
+        loadTask = Task { [weak self, weak session] in
+            guard let self, let session else { return }
+            do {
+                let url = try await session.mediaURL(kind: "video", index: newIndex)
+                guard !Task.isCancelled else { return }
+                self.loading = false
+                self.player.replaceCurrentItem(with: AVPlayerItem(url: url))
+                self.resumeIfWanted(active: self.isActive)
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.loading = false
+                self.unavailable = true
+            }
+        }
+    }
+
+    func clear() {
+        loadTask?.cancel(); player.replaceCurrentItem(with: nil)
+        loading = false; playing = false; unavailable = false
     }
 
     func toggle() {
-        guard !unavailable else { return }
+        guard !unavailable, !loading, player.currentItem != nil else { return }
         if playing {
             wantsPlayback = false
             pause()
@@ -71,7 +90,8 @@ final class VideoPreview: ObservableObject {
     func toggleMute() { muted.toggle(); player.isMuted = muted }
 
     func resumeIfWanted(active: Bool) {
-        if active && wantsPlayback && !unavailable { player.play(); playing = true } else { pause() }
+        isActive = active
+        if active && wantsPlayback && !unavailable && !loading && player.currentItem != nil { player.play(); playing = true } else { pause() }
     }
     func pause() { player.pause(); playing = false }
     func finished() { reachedEnd = true; wantsPlayback = false; pause() }
@@ -101,6 +121,7 @@ private enum VideoPanel: String, Identifiable {
 struct VideoHome: View {
     let active: Bool
     @EnvironmentObject private var store: LocalStore
+    @EnvironmentObject private var session: LiyaSession
     @State private var panel: VideoPanel?
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var preview = VideoPreview()
@@ -114,34 +135,47 @@ struct VideoHome: View {
                 HStack {
                     Image("video-title").resizable().scaledToFit().frame(width: 145, height: 42).accessibilityLabel("Liya videos")
                     Spacer()
-                    Text("Example video \(preview.index + 1) / \(Examples.videoCount)").font(.caption.bold())
+                    Text(session.videos.isEmpty ? "Videos" : "Example video \(preview.index + 1) / \(session.videos.count)").font(.caption.bold())
                 }
                 Spacer()
-                if preview.unavailable { Text("This video is unavailable.").font(.headline) }
+                if session.catalogLoading || preview.loading { Text("Loading videos…").font(.headline) }
+                else if let error = session.catalogError {
+                    Text(error).font(.headline)
+                    Button("Try again") { Task { await session.refreshCatalog() } }.frame(minHeight: 44)
+                } else if session.videos.isEmpty { Text("No videos yet.").font(.headline) }
+                else if preview.unavailable {
+                    Text("This video is unavailable.").font(.headline)
+                    Button("Try again") { preview.select(preview.index, active: active, session: session) }.frame(minHeight: 44)
+                }
                 HStack {
                     Spacer()
                     VStack(spacing: 12) {
-                        Button { store.toggleVideoLike(preview.index) } label: {
+                        Button { Task { await session.toggleLike(kind: "video", index: preview.index) } } label: {
                             Image("heart").resizable().scaledToFit().frame(width: 44, height: 44)
-                        }.buttonStyle(.plain).accessibilityLabel(store.likedVideos.contains(preview.index) ? "Remove local like" : "Like locally")
-                        Text(store.likedVideos.contains(preview.index) ? "Liked locally" : "Like locally").font(.caption2)
+                        }.buttonStyle(.plain).disabled(!session.likesReady || session.likesLoading || session.videos.isEmpty)
+                            .accessibilityLabel(session.isLiked(kind: "video", index: preview.index) ? "Remove like" : "Like")
+                        Text(session.isLiked(kind: "video", index: preview.index) ? "Liked" : "Like").font(.caption2)
                         Button { panel = .notes } label: { Image("comment").resizable().scaledToFit().frame(width: 44, height: 44) }
                             .buttonStyle(.plain).accessibilityLabel("Private video notes")
                         Button { panel = .report } label: { Image("report").resizable().scaledToFit().frame(width: 44, height: 44) }
                             .buttonStyle(.plain).accessibilityLabel("Report options")
                     }
                 }
+                if let error = session.likesError {
+                    Text(error).font(.footnote)
+                    Button("Retry likes") { Task { await session.refreshLikes() } }.frame(minHeight: 44)
+                }
                 HStack {
                     Button { preview.toggle() } label: {
                         Image(preview.playing ? "pause" : "play").resizable().scaledToFit().frame(width: 48, height: 48)
                     }.buttonStyle(.plain).accessibilityLabel(preview.playing ? "Pause" : "Play")
                     Spacer()
-                    Button { preview.select(preview.index - 1, active: active) } label: {
+                    Button { preview.select(preview.index - 1, active: active, session: session) } label: {
                         Image("back").renderingMode(.template).resizable().scaledToFit().foregroundStyle(.white).frame(width: 20, height: 20).frame(width: 44, height: 44)
                     }.buttonStyle(.plain).disabled(preview.index == 0).accessibilityLabel("Previous video")
-                    Button { preview.select(preview.index + 1, active: active) } label: {
+                    Button { preview.select(preview.index + 1, active: active, session: session) } label: {
                         Image("back").renderingMode(.template).resizable().scaledToFit().foregroundStyle(.white).scaleEffect(x: -1, y: 1).frame(width: 20, height: 20).frame(width: 44, height: 44)
-                    }.buttonStyle(.plain).disabled(preview.index == Examples.videoCount - 1).accessibilityLabel("Next video")
+                    }.buttonStyle(.plain).disabled(preview.index >= session.videos.count - 1).accessibilityLabel("Next video")
                 }
                 HStack(spacing: 8) {
                     Button(preview.muted ? "Sound off" : "Sound on") { preview.toggleMute() }
@@ -158,16 +192,16 @@ struct VideoHome: View {
         .contentShape(Rectangle())
         .simultaneousGesture(DragGesture(minimumDistance: 60).onEnded { value in
             if abs(value.translation.height) > abs(value.translation.width) {
-                preview.select(preview.index + (value.translation.height < 0 ? 1 : -1), active: active)
+                preview.select(preview.index + (value.translation.height < 0 ? 1 : -1), active: active, session: session)
             }
         })
         .onAppear {
-            if preview.player.currentItem == nil { preview.select(preview.index, active: active && scenePhase == .active && panel == nil) }
+            if preview.player.currentItem == nil { preview.select(preview.index, active: active && scenePhase == .active && panel == nil, session: session) }
             else { preview.resumeIfWanted(active: active && scenePhase == .active && panel == nil) }
         }
         .onChange(of: store.videoRequest) { request in
             if let request {
-                preview.select(request.index, active: active && scenePhase == .active && panel == nil)
+                preview.select(request.index, active: active && scenePhase == .active && panel == nil, session: session)
                 if request.openNotes { panel = .notes }
             }
         }
@@ -176,6 +210,10 @@ struct VideoHome: View {
         }
         .onChange(of: scenePhase) { phase in preview.resumeIfWanted(active: active && phase == .active && panel == nil) }
         .onChange(of: panel) { current in preview.resumeIfWanted(active: active && scenePhase == .active && current == nil) }
+        .onChange(of: session.catalogGeneration) { _ in
+            if session.videos.isEmpty { preview.clear() }
+            else { preview.select(min(preview.index, session.videos.count - 1), active: active && scenePhase == .active && panel == nil, session: session) }
+        }
         .sheet(item: $panel) { current in
             NavigationStack {
                 if current == .notes { VideoNotesView(index: preview.index) }
@@ -185,7 +223,7 @@ struct VideoHome: View {
         .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
             if let item = notification.object as? AVPlayerItem, item === preview.player.currentItem { preview.finished() }
         }
-        .onDisappear { preview.pause() }
+        .onDisappear { preview.resumeIfWanted(active: false) }
         .navigationBarHidden(true)
     }
     private func timeLabel(_ value: Double) -> String {

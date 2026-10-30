@@ -48,6 +48,7 @@ private struct ImportedMovie: Transferable {
 struct DraftMediaPicker: View {
     @Binding var attachments: [DraftAttachment]
     @Binding var loading: Bool
+    var note = "Up to 9 items. Media stays on this device."
     @State private var selection: [PhotosPickerItem] = []
     @State private var errorMessage: String?
     @State private var preview: DraftAttachment?
@@ -80,7 +81,7 @@ struct DraftMediaPicker: View {
             }
             if loading { Text("Loading selected media…").font(.footnote).foregroundStyle(.secondary) }
             if let errorMessage { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
-            Text("Up to 9 items. Media stays on this device.").font(.footnote).foregroundStyle(.secondary)
+            Text(note).font(.footnote).foregroundStyle(.secondary)
         }.sheet(item: $preview) { item in
             if item.isVideo { DraftVideoPreview(item: item) } else { DraftPhotoPreview(item: item) }
         }

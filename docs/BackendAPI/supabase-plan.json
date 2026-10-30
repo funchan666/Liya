@@ -25,5 +25,170 @@
   },
   "project_status": "ACTIVE_HEALTHY",
   "public_schema_initial_tables": [],
-  "migration_history_initial": []
+  "migration_history_initial": [],
+  "stage_status": "incomplete",
+  "deployments": {
+    "storage": {
+      "bucket": "liya-example-media",
+      "public": false,
+      "object_count_observed": 50,
+      "size_metadata": "matched local manifest",
+      "remote_bytes_and_access": "not tested"
+    },
+    "migrations": [
+      {
+        "version": "20261030070310",
+        "name": "liya_profiles"
+      },
+      {
+        "version": "20261030070442",
+        "name": "liya_example_media"
+      },
+      {
+        "version": "20261030070704",
+        "name": "liya_moods"
+      },
+      {
+        "version": "20261030071855",
+        "name": "liya_welcome_wallet"
+      },
+      {
+        "version": "20261030071955",
+        "name": "liya_wallet_realtime"
+      },
+      {
+        "version": "20261030072405",
+        "name": "liya_user_media_policies"
+      },
+      {
+        "version": "20261030072527",
+        "name": "liya_content_reports"
+      },
+      {
+        "version": "20261030072654",
+        "name": "liya_media_likes"
+      },
+      {
+        "version": "20261030072726",
+        "name": "liya_tree_entries"
+      },
+      {
+        "version": "20261030073156",
+        "name": "liya_real_social"
+      },
+      {
+        "version": "20261030073515",
+        "name": "liya_social_notifications"
+      },
+      {
+        "version": "20261030073601",
+        "name": "liya_social_avatar_and_reporting"
+      },
+      {
+        "version": "20261030073638",
+        "name": "liya_post_version"
+      },
+      {
+        "version": "20261030073934",
+        "name": "liya_foreign_key_indexes"
+      },
+      {
+        "version": "20261030074149",
+        "name": "liya_post_realtime"
+      },
+      {
+        "version": "20261030074526",
+        "name": "liya_social_revision_sync"
+      },
+      {
+        "version": "20261030074655",
+        "name": "liya_automated_chat"
+      },
+      {
+        "version": "20261030074912",
+        "name": "liya_delete_receipts"
+      }
+    ],
+    "functions": [
+      {
+        "name": "liya-bootstrap",
+        "version": 1,
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "invocation": "not tested"
+      },
+      {
+        "name": "liya-delete-account",
+        "version": 1,
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "invocation": "not tested"
+      }
+    ],
+    "auth": {
+      "anonymous_sign_in": "enabled via Supabase dashboard",
+      "session_and_bootstrap": "client wired, not tested",
+      "account_recovery": "not implemented",
+      "captcha": "not configured"
+    },
+    "user_storage": {
+      "bucket": "liya-user-media",
+      "public": false,
+      "policies": "owner path select and insert",
+      "access": "not tested"
+    },
+    "legal_storage": {
+      "bucket": "liya-legal",
+      "public": true,
+      "objects": [
+        "terms.pdf",
+        "privacy.pdf"
+      ],
+      "public_access": "not tested"
+    },
+    "social": {
+      "status": "schema deployed and client wired; not built or tested",
+      "features": [
+        "opt-in community profiles and optional avatar",
+        "posts and attachments",
+        "comments",
+        "likes",
+        "follows",
+        "blocks",
+        "reports",
+        "private messages and attachments",
+        "in-app activity notifications",
+        "owner-filtered social revision notifications and reconnect refresh",
+        "prewritten automated chat with server-enforced reply delay",
+        "account deletion request and owner media cleanup",
+        "large user-video compression before upload"
+      ],
+      "limitations": [
+        "deletion and interrupted-request recovery not verified; in-flight uploads can race cleanup",
+        "no push delivery",
+        "automated chat uses prewritten responses, not a generative AI provider",
+        "no permission, Realtime or runtime validation",
+        "5-minute signed URL revocation window",
+        "50MB bucket object limit; compression can fail when the complete video does not fit",
+        "multipart upload is not resumable; orphan uploads can remain after failures",
+        "full community refresh on changes; scalability needs cursor pagination",
+        "no account recovery after loss of an anonymous session"
+      ]
+    }
+  },
+  "pending": [
+    "Only with explicit authorization, validate build and real-device/social CRUD, account deletion, interruption recovery, Realtime and two-user RLS isolation",
+    "Decide and configure effective anonymous account abuse prevention and recovery; user does not request reviewer accounts",
+    "Configure APNs and server-side push when final Bundle ID and Apple credentials are available",
+    "Implement verified Apple payments and atomic coin fulfillment in the authorized stage",
+    "Validate remote media bytes, access and playback",
+    "Resolve pending payment recovery and in-flight upload cleanup guarantees before relying on account deletion"
+  ],
+  "legal": {
+    "terms": "legal/terms.pdf",
+    "privacy": "legal/privacy.pdf",
+    "status": "automatic_chat_and_account_deletion_privacy_uploaded_public_access_not_tested",
+    "proposed_support_email": "support@liya.com",
+    "proposed_support_email_status": "not confirmed or enabled"
+  }
 }

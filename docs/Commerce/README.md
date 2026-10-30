@@ -1,0 +1,11 @@
+# Liya coins and purchase integration
+
+The app now has client code for an anonymous Supabase account and an account-owned wallet. The deployed `liya_welcome_wallet` migration grants a fixed 600 coins once per account and records the grant in a server ledger; direct client writes to the balance are not granted. The app requests that grant and shows a welcome sheet while server acknowledgement is pending. It also has balance refresh and Realtime subscription code. None of these paths has been run or verified. Anonymous account recreation can obtain another grant; anti-abuse protection and account recovery remain outstanding.
+
+Purchasing remains unavailable. Selecting a pack asks StoreKit for **only that product** and displays its localized Apple price when available. `CoinCheckout` has a StoreKit 2 transaction and unfinished-transaction observer, but no `CoinSettlement` implementation is attached. There is no server-side Apple signed-transaction verification, trusted credit, refund handling or recovery. No transaction may be finished until the original account has received a durable, idempotent server credit. The code is not evidence of a real purchase or delivery.
+
+`COIN_PRODUCTS.json` records the seven user-specified identifiers and target USD prices unchanged, two proposed extra identifiers and prices, and revised coin amounts. The additional products still need creation in App Store Connect; none of the nine is assumed available. The final Bundle ID is unknown and `example.Liya` is a development placeholder. Apple's storefront price is authoritative.
+
+Mood Prism (120 coins), Profile Glow (180) and Post Spotlight (280) are planned, unavailable features. Chat, AI chat, messages and all conversation features must remain free. Do not charge until the feature, atomic debit and fulfillment are implemented. Confirm the exact cost and offer the wallet on insufficient balance. The app must never accept a client-declared purchase or amount as proof of payment. `wallet-draft.sql` is the earlier source draft; the deployed version is recorded in `supabase/migrations/20261030071855_liya_welcome_wallet.sql`.
+
+No compilation, app run, service test, sandbox transaction or real purchase has been performed. Tods A is incomplete; B has not been started.

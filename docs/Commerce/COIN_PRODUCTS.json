@@ -1,0 +1,22 @@
+{
+  "currency": "USD",
+  "note": "Target US prices for App Store Connect setup. StoreKit supplies the actual localized price at selection time. New IDs are proposals, not confirmed registered products.",
+  "products": [
+    {"id":"ceyarlaxiuojqsbi","usd":"0.99","coins":450,"origin":"provided"},
+    {"id":"gxaojqvpvmykrgif","usd":"1.99","coins":950,"origin":"provided"},
+    {"id":"hzlqemvjatucwprd","usd":"2.99","coins":1500,"origin":"new"},
+    {"id":"hqahzvljpcaltfnm","usd":"4.99","coins":2700,"origin":"provided"},
+    {"id":"npdkdztghlqpfxnr","usd":"9.99","coins":5800,"origin":"provided"},
+    {"id":"qwnbrlxesdvyampt","usd":"14.99","coins":9000,"origin":"new"},
+    {"id":"czyghtwgjcswnuvl","usd":"19.99","coins":12500,"origin":"provided"},
+    {"id":"jemidcjpjteygrfy","usd":"49.99","coins":34000,"origin":"provided"},
+    {"id":"qmubwwcjusfbmlpw","usd":"99.99","coins":72000,"origin":"provided"}
+  ],
+  "welcome_coins": 600,
+  "planned_spending": [
+    {"id":"mood_prism","coins":120,"description":"Diary appearance","status":"not_implemented"},
+    {"id":"profile_glow","coins":180,"description":"Profile appearance","status":"not_implemented"},
+    {"id":"post_spotlight","coins":280,"description":"Highlight an eligible post","status":"not_implemented"}
+  ],
+  "chat_cost": 0
+}

@@ -1,0 +1,10 @@
+create index liya_content_reports_media on public.liya_content_reports(media_id);
+create index liya_content_reports_reporter on public.liya_content_reports(reporter_id);
+create index liya_media_likes_media on public.liya_media_likes(media_id);
+create index liya_post_comments_owner on public.liya_post_comments(owner_id);
+create index liya_social_notifications_actor on public.liya_social_notifications(actor_id);
+create index liya_social_notifications_post on public.liya_social_notifications(post_id);
+create index liya_social_reports_post on public.liya_social_reports(post_id);
+create index liya_social_reports_reporter on public.liya_social_reports(reporter_id);
+create index liya_social_reports_target on public.liya_social_reports(target_user);
+create index liya_tree_entries_owner on public.liya_tree_entries(owner_id);

@@ -3,16 +3,20 @@ options:
   bundleIdPrefix: example
   deploymentTarget:
     iOS: "16.0"
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift.git
+    exactVersion: 2.55.5
 targets:
   Liya:
     type: application
     platform: iOS
+    dependencies:
+      - package: Supabase
+        product: Supabase
     sources:
       - path: Liya/Sources
       - path: Liya/Assets.xcassets
-      - path: Liya/Resources/Examples
-        type: folder
-        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: example.Liya

@@ -2,29 +2,49 @@ import SwiftUI
 
 struct ComposeHome: View {
     @EnvironmentObject private var store: LocalStore
-    @State private var saved = false
+    @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var social: SocialStore
+    @State private var savedMessage: String?
+    @State private var publishing = false
+    @AppStorage("liya.postAttempt") private var postAttempt = ""
+    @AppStorage("liya.postFingerprint") private var postFingerprint = ""
     var body: some View {
         ZStack {
             LiyaBackground()
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     Image("publish-title").resizable().scaledToFit().frame(width: 150, height: 46).accessibilityLabel("Create")
-                    OfflineNote(text: "Online publishing is not connected. Posts and drafts remain on this device.")
+                    OfflineNote(text: "Posts and their attachments are visible to signed-in community members. Private drafts stay on this device.")
+                    if !social.isJoined(session) && !social.loading {
+                        NavigationLink("Create a community profile to post") { CommunityJoinView() }.foregroundStyle(liyaAccent)
+                    }
                     Text("Your thoughts").font(.headline).foregroundStyle(liyaInk)
-                    TextField("Share a moment or feeling…", text: Binding(get: { store.composeText }, set: { store.composeText = $0; saved = false }), axis: .vertical)
-                        .lineLimit(7...12).padding(16).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 16))
-                    PostTagSelector(selection: $store.composeTags)
-                    DraftMediaPicker(attachments: $store.composeAttachments, loading: $store.composeLoading)
-                    PrimaryButton(title: "Post on this device", disabled: store.composeLoading || (store.composeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && store.composeAttachments.isEmpty)) {
-                        store.saveDraft(store.composeText.trimmingCharacters(in: .whitespacesAndNewlines), attachments: store.composeAttachments, published: true, tags: store.composeTags)
-                        store.composeText = ""; store.composeAttachments = []; store.composeTags = []; saved = true
+                    TextField("Share a moment or feeling…", text: Binding(get: { store.composeText }, set: { store.composeText = $0; savedMessage = nil }), axis: .vertical)
+                        .lineLimit(7...12).padding(16).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 16)).disabled(publishing)
+                    PostTagSelector(selection: $store.composeTags).disabled(publishing)
+                    DraftMediaPicker(attachments: $store.composeAttachments, loading: $store.composeLoading, note: "Up to 9 items. Attachments are shared with your post.").disabled(publishing)
+                    if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
+                    PrimaryButton(title: publishing ? "Publishing…" : "Share with community", disabled: publishing || store.composeLoading || !social.isJoined(session) || store.composeText.count > 4000 || (store.composeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && store.composeAttachments.isEmpty)) {
+                        guard let owner = session.userID else { return }
+                        let body = store.composeText.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let tags = store.composeTags; let files = store.composeAttachments
+                        let stamp = SocialAttempt.fingerprint(owner: owner, text: body, tags: tags, files: files)
+                        if stamp != postFingerprint || UUID(uuidString: postAttempt) == nil { postFingerprint = stamp; postAttempt = UUID().uuidString }
+                        guard let id = UUID(uuidString: postAttempt) else { return }
+                        publishing = true
+                        Task {
+                            if await social.publish(session, id: id, body: body, tags: tags, attachments: files) {
+                                store.composeText = ""; store.composeAttachments = []; store.composeTags = []; postAttempt = ""; postFingerprint = ""; savedMessage = "Shared with the community."
+                            }
+                            publishing = false
+                        }
                     }
                     Button("Save private draft") {
                         store.saveDraft(store.composeText.trimmingCharacters(in: .whitespacesAndNewlines), attachments: store.composeAttachments, tags: store.composeTags)
-                        store.composeText = ""; store.composeAttachments = []; store.composeTags = []; saved = true
+                        store.composeText = ""; store.composeAttachments = []; store.composeTags = []; savedMessage = "Private draft saved on this device."
                     }.font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(maxWidth: .infinity, minHeight: 44)
-                        .disabled(store.composeLoading || (store.composeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && store.composeAttachments.isEmpty))
-                    if saved { Text("Saved on this device · not shared online").font(.footnote).foregroundStyle(liyaAccent) }
+                        .disabled(publishing || store.composeLoading || (store.composeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && store.composeAttachments.isEmpty))
+                    if let savedMessage { Text(savedMessage).font(.footnote).foregroundStyle(liyaAccent) }
                     NavigationLink { DraftsView() } label: {
                         HStack { Text("Your drafts").fontWeight(.semibold); Spacer(); Text("\(store.drafts.filter { $0.publishedLocally != true }.count)") }
                             .foregroundStyle(liyaInk).padding(16).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
@@ -37,13 +57,20 @@ struct ComposeHome: View {
 
 struct DraftsView: View {
     @EnvironmentObject private var store: LocalStore
+    @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var social: SocialStore
     @State private var deletingDraft: LocalDraft?
     @State private var previewVideo: DraftAttachment?
+    @State private var publishingDraft: UUID?
     private var unpublished: [LocalDraft] { store.drafts.filter { $0.publishedLocally != true } }
     var body: some View {
         PageShell(title: "Your drafts") {
             VStack(spacing: 12) {
                 OfflineNote(text: "Drafts are private and stored on this device.")
+                if !social.isJoined(session) && !social.loading {
+                    NavigationLink("Create a community profile to share") { CommunityJoinView() }.foregroundStyle(liyaAccent)
+                }
+                if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
                 if unpublished.isEmpty {
                     EmptyState(title: "No drafts yet", detail: "Save a thought to find it here later.")
                 } else {
@@ -62,7 +89,15 @@ struct DraftsView: View {
                                 Text(draft.date, style: .date).font(.caption).foregroundStyle(.secondary)
                                 Spacer()
                                 NavigationLink("Edit") { EditDraftView(draft: draft) }.font(.footnote.bold()).foregroundStyle(liyaAccent)
-                                Button("Post locally") { store.publishLocally(draft.id) }.font(.footnote.bold()).foregroundStyle(liyaAccent)
+                                Button(publishingDraft == draft.id ? "Sharing…" : (isShared(draft) ? "Shared" : "Share")) {
+                                    guard let owner = session.userID else { return }
+                                    publishingDraft = draft.id
+                                    Task {
+                                        _ = await social.publish(session, id: SocialAttempt.draftPostID(owner: owner, draft: draft), body: draft.text, tags: draft.tags ?? [], attachments: draft.attachments ?? [])
+                                        publishingDraft = nil
+                                    }
+                                }.disabled(publishingDraft != nil || !social.isJoined(session) || isShared(draft))
+                                    .font(.footnote.bold()).foregroundStyle(liyaAccent)
                                 Button("Delete") { deletingDraft = draft }.font(.footnote.bold()).foregroundStyle(liyaAccent)
                             }
                         }.padding(16).background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 14))
@@ -78,6 +113,10 @@ struct DraftsView: View {
             } cancel: { deletingDraft = nil }
             .presentationDetents([.medium])
         }
+    }
+    private func isShared(_ draft: LocalDraft) -> Bool {
+        guard let owner = session.userID else { return false }
+        return social.posts.contains { $0.id == SocialAttempt.draftPostID(owner: owner, draft: draft) }
     }
 }
 
@@ -116,6 +155,7 @@ private struct DraftMessageSelection: Identifiable {
 
 struct MessagesHome: View {
     @EnvironmentObject private var store: LocalStore
+    @EnvironmentObject private var session: LiyaSession
     @State private var section = 0
     @State private var deleteMessage: DraftMessageSelection?
     private var messageIndexes: [Int] { store.messageDrafts.keys.compactMap(Int.init).filter { !store.blockedExamples.contains($0) }.sorted() }
@@ -129,8 +169,8 @@ struct MessagesHome: View {
                     Image("message-title").resizable().scaledToFit().frame(width: 160, height: 46).accessibilityLabel("Messages")
                     SegmentedTabs(items: ["Message", "Interaction"], selection: $section)
                     if section == 0 {
-                        OfflineNote(text: "Messaging is not connected. Drafts below are private and have not been sent.")
-                        if messageIndexes.isEmpty { EmptyState(title: "No messages", detail: "Message drafts for example profiles appear here.") }
+                        CommunityMessagesView()
+                        if !messageIndexes.isEmpty { OfflineNote(text: "Earlier drafts for example profiles are private and have not been sent.") }
                         ForEach(messageIndexes, id: \.self) { index in
                             HStack(spacing: 12) {
                                 NavigationLink { ExampleChatView(index: index) } label: {
@@ -149,8 +189,29 @@ struct MessagesHome: View {
                             }.padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                         }
                     } else {
-                        OfflineNote(text: "Your local likes and private notes are shown here. They are not shared.")
-                        if visibleNotes.isEmpty && visibleLikes.isEmpty && store.videoNotes.isEmpty && store.likedVideos.isEmpty {
+                        CommunityActivityView()
+                        OfflineNote(text: "Example likes and earlier device-only activity are shown below. Private notes are not shared.")
+                        if let error = session.likesError {
+                            Text(error).font(.footnote).foregroundStyle(.red)
+                            Button("Retry likes") { Task { await session.refreshLikes() } }.foregroundStyle(liyaAccent)
+                        }
+                        ForEach(session.photos.indices, id: \.self) { index in
+                            if session.isLiked(kind: "photo", index: index) && !store.blockedExamples.contains(index) {
+                                NavigationLink { ExamplePhotoDetail(index: index) } label: {
+                                    HStack { ExampleAvatar(index: index); Text("Account like · example photo \(index + 1)"); Spacer() }
+                                        .foregroundStyle(liyaInk).padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
+                                }.buttonStyle(.plain)
+                            }
+                        }
+                        ForEach(session.videos.indices, id: \.self) { index in
+                            if session.isLiked(kind: "video", index: index) {
+                                Button { store.videoRequest = VideoRequest(index: index) } label: {
+                                    Text("Account like · example video \(index + 1)").foregroundStyle(liyaInk).frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
+                                }.buttonStyle(.plain)
+                            }
+                        }
+                        if session.likesReady && session.likedMediaIDs.isEmpty && visibleNotes.isEmpty && visibleLikes.isEmpty && store.videoNotes.isEmpty && store.likedVideos.isEmpty {
                             EmptyState(title: "No local activity", detail: "Likes and notes on example photos will appear here.")
                         }
                         ForEach(visibleLikes, id: \.self) { index in

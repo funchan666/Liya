@@ -1,5 +1,5 @@
 {
-  "scope": "Static inventory of the current local preview. Paths and IDs are migration proposals, not proof of cloud upload.",
+  "scope": "Local source inventory. All 50 object names and byte sizes were observed in the project Storage metadata; remote contents, hashes and client read permissions have not been tested.",
   "photos": 40,
   "videos": 10,
   "notes": [
@@ -21,7 +21,7 @@
         "example-profile-001.avatar",
         "example-photo-001.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-002",
@@ -36,7 +36,7 @@
         "example-profile-002.avatar",
         "example-photo-002.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-003",
@@ -51,7 +51,7 @@
         "example-profile-003.avatar",
         "example-photo-003.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-004",
@@ -66,7 +66,7 @@
         "example-profile-004.avatar",
         "example-photo-004.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-005",
@@ -81,7 +81,7 @@
         "example-profile-005.avatar",
         "example-photo-005.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-006",
@@ -96,7 +96,7 @@
         "example-profile-006.avatar",
         "example-photo-006.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-007",
@@ -111,7 +111,7 @@
         "example-profile-007.avatar",
         "example-photo-007.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-008",
@@ -126,7 +126,7 @@
         "example-profile-008.avatar",
         "example-photo-008.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-009",
@@ -141,7 +141,7 @@
         "example-profile-009.avatar",
         "example-photo-009.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-010",
@@ -156,7 +156,7 @@
         "example-profile-010.avatar",
         "example-photo-010.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-011",
@@ -171,7 +171,7 @@
         "example-profile-011.avatar",
         "example-photo-011.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-012",
@@ -186,7 +186,7 @@
         "example-profile-012.avatar",
         "example-photo-012.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-013",
@@ -201,7 +201,7 @@
         "example-profile-013.avatar",
         "example-photo-013.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-014",
@@ -216,7 +216,7 @@
         "example-profile-014.avatar",
         "example-photo-014.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-015",
@@ -231,7 +231,7 @@
         "example-profile-015.avatar",
         "example-photo-015.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-016",
@@ -246,7 +246,7 @@
         "example-profile-016.avatar",
         "example-photo-016.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-017",
@@ -261,7 +261,7 @@
         "example-profile-017.avatar",
         "example-photo-017.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-018",
@@ -276,7 +276,7 @@
         "example-profile-018.avatar",
         "example-photo-018.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-019",
@@ -291,7 +291,7 @@
         "example-profile-019.avatar",
         "example-photo-019.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-020",
@@ -306,7 +306,7 @@
         "example-profile-020.avatar",
         "example-photo-020.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-021",
@@ -321,7 +321,7 @@
         "example-profile-021.avatar",
         "example-photo-021.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-022",
@@ -336,7 +336,7 @@
         "example-profile-022.avatar",
         "example-photo-022.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-023",
@@ -351,7 +351,7 @@
         "example-profile-023.avatar",
         "example-photo-023.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-024",
@@ -366,7 +366,7 @@
         "example-profile-024.avatar",
         "example-photo-024.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-025",
@@ -381,7 +381,7 @@
         "example-profile-025.avatar",
         "example-photo-025.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-026",
@@ -396,7 +396,7 @@
         "example-profile-026.avatar",
         "example-photo-026.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-027",
@@ -411,7 +411,7 @@
         "example-profile-027.avatar",
         "example-photo-027.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-028",
@@ -426,7 +426,7 @@
         "example-profile-028.avatar",
         "example-photo-028.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-029",
@@ -441,7 +441,7 @@
         "example-profile-029.avatar",
         "example-photo-029.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-030",
@@ -456,7 +456,7 @@
         "example-profile-030.avatar",
         "example-photo-030.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-031",
@@ -471,7 +471,7 @@
         "example-profile-031.avatar",
         "example-photo-031.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-032",
@@ -486,7 +486,7 @@
         "example-profile-032.avatar",
         "example-photo-032.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-033",
@@ -501,7 +501,7 @@
         "example-profile-033.avatar",
         "example-photo-033.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-034",
@@ -516,7 +516,7 @@
         "example-profile-034.avatar",
         "example-photo-034.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-035",
@@ -531,7 +531,7 @@
         "example-profile-035.avatar",
         "example-photo-035.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-036",
@@ -546,7 +546,7 @@
         "example-profile-036.avatar",
         "example-photo-036.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-037",
@@ -561,7 +561,7 @@
         "example-profile-037.avatar",
         "example-photo-037.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-038",
@@ -576,7 +576,7 @@
         "example-profile-038.avatar",
         "example-photo-038.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-039",
@@ -591,7 +591,7 @@
         "example-profile-039.avatar",
         "example-photo-039.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-photo-040",
@@ -606,7 +606,7 @@
         "example-profile-040.avatar",
         "example-photo-040.image"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-video-001",
@@ -620,7 +620,7 @@
       "references": [
         "example-video-001.video"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-video-002",
@@ -634,7 +634,7 @@
       "references": [
         "example-video-002.video"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-video-003",
@@ -648,7 +648,7 @@
       "references": [
         "example-video-003.video"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-video-004",
@@ -662,7 +662,7 @@
       "references": [
         "example-video-004.video"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-video-005",
@@ -676,7 +676,7 @@
       "references": [
         "example-video-005.video"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-video-006",
@@ -690,7 +690,7 @@
       "references": [
         "example-video-006.video"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-video-007",
@@ -704,7 +704,7 @@
       "references": [
         "example-video-007.video"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-video-008",
@@ -718,7 +718,7 @@
       "references": [
         "example-video-008.video"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-video-009",
@@ -732,7 +732,7 @@
       "references": [
         "example-video-009.video"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     },
     {
       "id": "example-video-010",
@@ -746,7 +746,7 @@
       "references": [
         "example-video-010.video"
       ],
-      "upload_status": "not_uploaded"
+      "upload_status": "metadata_observed_size_matches; bytes and access not verified"
     }
   ]
 }

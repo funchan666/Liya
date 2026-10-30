@@ -18,11 +18,15 @@ private enum LiyaTab: Int, CaseIterable {
 
 struct RootView: View {
     @EnvironmentObject private var store: LocalStore
+    @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var social: SocialStore
     @State private var selection: LiyaTab = .discover
 
     var body: some View {
         if !store.inPreview {
-            WelcomeView { store.inPreview = true }
+            WelcomeView {
+                Task { if await session.signIn() { store.inPreview = true } }
+            }
         } else {
             ZStack {
                 Group {
@@ -33,8 +37,15 @@ struct RootView: View {
                     tab(.profile) { ProfileHome() }
                 }
             }
+            .disabled(session.isDeletingAccount)
+            .task(id: session.userID) {
+                if session.userID != nil { await social.refresh(session); social.watchMessages(session) }
+            }
             .onChange(of: store.videoRequest) { request in
                 if request != nil { selection = .discover }
+            }
+            .sheet(item: $session.welcomeGift) { gift in
+                WelcomeCoinGift(creditedCoins: gift.coins).interactiveDismissDisabled()
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 DuoControlRegion { size in
@@ -66,6 +77,7 @@ struct RootView: View {
 
 private struct WelcomeView: View {
     let enter: () -> Void
+    @EnvironmentObject private var session: LiyaSession
     @State private var policy: PolicyPage?
     var body: some View {
         ZStack {
@@ -79,9 +91,12 @@ private struct WelcomeView: View {
                         Text("A little space for how you feel.").font(.headline).foregroundStyle(.white).multilineTextAlignment(.center)
                         Spacer(minLength: 100)
                         Button(action: enter) {
-                            Text("Explore on this device").fontWeight(.semibold).foregroundStyle(liyaInk).frame(maxWidth: .infinity).frame(minHeight: 50).background(.white, in: Capsule())
-                        }.buttonStyle(.plain)
-                        Text("Local preview · Sign-in and online features are not connected yet.")
+                            Text(session.isSigningIn ? "Connecting…" : "Continue to Liya").fontWeight(.semibold).foregroundStyle(liyaInk).frame(maxWidth: .infinity).frame(minHeight: 50).background(.white, in: Capsule())
+                        }.buttonStyle(.plain).disabled(session.isSigningIn)
+                        if let errorMessage = session.errorMessage {
+                            Text(errorMessage).font(.footnote).foregroundStyle(.white).multilineTextAlignment(.center)
+                        }
+                        Text("Your local drafts remain on this device.")
                             .font(.footnote).foregroundStyle(.white).multilineTextAlignment(.center)
                         HStack {
                             Button("Terms of Service") { policy = .terms }
@@ -93,13 +108,8 @@ private struct WelcomeView: View {
             }
         }.sheet(item: $policy) { page in
             NavigationStack {
-                InformationView(title: page == .terms ? "Terms of Service" : "Privacy Policy", message: "This policy has not been published yet.")
+                LegalDocumentView(page: page)
             }
         }
     }
-}
-
-private enum PolicyPage: String, Identifiable {
-    case terms, privacy
-    var id: String { rawValue }
 }

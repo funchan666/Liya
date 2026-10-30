@@ -1,17 +1,42 @@
-import Foundation
-import UIKit
+import SwiftUI
 
-enum Examples {
-    static let photoCount = 40
-    static let videoCount = 10
+/// Content images are fetched using a short-lived URL for the signed-in user.
+struct CloudPhoto: View {
+    @EnvironmentObject private var session: LiyaSession
+    let index: Int
+    var contentMode: ContentMode = .fit
+    @State private var url: URL?
+    @State private var failed = false
 
-    static func url(kind: String, index: Int, fileExtension ext: String) -> URL? {
-        let name = String(format: "example_%@_%03d", kind, index + 1)
-        return Bundle.main.url(forResource: name, withExtension: ext, subdirectory: "Examples")
+    var body: some View {
+        Group {
+            if let url {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image): image.resizable().aspectRatio(contentMode: contentMode)
+                    case .failure: unavailable
+                    case .empty: Color.clear
+                    @unknown default: unavailable
+                    }
+                }
+            } else if failed {
+                unavailable
+            } else {
+                Color.clear
+            }
+        }
+        .task(id: "\(session.imageGeneration)-\(index)") {
+            url = nil; failed = false
+            do {
+                let signedURL = try await session.mediaURL(kind: "photo", index: index)
+                guard !Task.isCancelled else { return }
+                url = signedURL
+            } catch { if !Task.isCancelled { failed = true } }
+        }
     }
 
-    static func photo(_ index: Int) -> UIImage? {
-        guard let url = url(kind: "photo", index: index, fileExtension: "jpg") else { return nil }
-        return UIImage(contentsOfFile: url.path)
+    private var unavailable: some View {
+        Text("Photo unavailable").font(.caption).foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, minHeight: 44)
     }
 }

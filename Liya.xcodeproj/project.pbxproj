@@ -8,10 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		073D8EE7810AFCF9F9B31B86 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C1AA7E627810F1A043DB07 /* RootView.swift */; };
+		262EA9226C0699993B1E645E /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F623C35F01064B5675C139C1 /* WalletView.swift */; };
+		26E2D5608ADB547C04EA2231 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 1008727600F4C756AF33B38C /* Supabase */; };
 		2A68D9FBFD459854460E746A /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B3165B5F348D386BDA1F13D /* Components.swift */; };
+		2BA2072B7918FE67B1D32B29 /* LiyaSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D48B8AC7CD59A9EF09A2C00 /* LiyaSession.swift */; };
 		324598B2552C2847BA3FBABB /* ExampleProfiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFEE673FE4EB43FAD342B45A /* ExampleProfiles.swift */; };
 		32E3CDDE51E9F1562E13755D /* VideoHome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 362B25F54F99DDE61E68206D /* VideoHome.swift */; };
+		3BAB87846F99325C6B799D94 /* CoinCheckout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B7ED4624CF45B548E99A81 /* CoinCheckout.swift */; };
 		3EED5221EF3C25A6D41D15A2 /* Examples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3C848B4534F0BB94FF8789 /* Examples.swift */; };
+		4E2E82BA3371A18568475440 /* SocialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 342B0A1CBB1A51F8DF16C1CF /* SocialStore.swift */; };
 		54CA158E53B5FE7FA22C7C28 /* DraftMedia.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */; };
 		7B42BD8844C5C09CEF2842B6 /* LiyaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2061D8AD2D04E41E28919D /* LiyaApp.swift */; };
 		7FDE4B121440C7BE36374D65 /* SquareViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593E5372186CB54C83F75E59 /* SquareViews.swift */; };
@@ -19,21 +24,30 @@
 		A0627F5AD9573BDC71118145 /* ProfileViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1801B18AF27DF23E012330C7 /* ProfileViews.swift */; };
 		C82EF4A543D3DF6A2C874E68 /* LocalPosts.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA69102DD583B62A83217A19 /* LocalPosts.swift */; };
 		CA27812540BE098620440156 /* MainViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 393130AEC742C97B5E001EAB /* MainViews.swift */; };
+		CC7E2CA079842B58037D651C /* LegalDocumentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A004A2012B0809716BDC4A2 /* LegalDocumentView.swift */; };
 		D13D7EED4D1BD097D1746957 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C619DBBB0211BA6980C958D2 /* Assets.xcassets */; };
+		D8BF7B3D30868198F8AF9D7D /* SocialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577DC4FDFFFC8D2FE2971E05 /* SocialViews.swift */; };
 		DC4628DC65FC19D7D5763A59 /* LocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6570BF991B9EBC01B32BA0EE /* LocalStore.swift */; };
-		E8F3748B9E26E4E91056C740 /* Examples in Resources */ = {isa = PBXBuildFile; fileRef = 1D648C3AC2E6356988E3E2E1 /* Examples */; };
+		F9095906E366F7A2A10EA0A4 /* AutomaticChat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701485677FE2C405F57264D3 /* AutomaticChat.swift */; };
+		F9366F1AF434AB6AECAB4263 /* VideoCompression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBDFB333D4488D41A926C30 /* VideoCompression.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		07B7ED4624CF45B548E99A81 /* CoinCheckout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinCheckout.swift; sourceTree = "<group>"; };
 		0A49B42E539DC4B03BDB34DE /* Liya.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Liya.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0D3C848B4534F0BB94FF8789 /* Examples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Examples.swift; sourceTree = "<group>"; };
 		1801B18AF27DF23E012330C7 /* ProfileViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViews.swift; sourceTree = "<group>"; };
-		1D648C3AC2E6356988E3E2E1 /* Examples */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Examples; path = Liya/Resources/Examples; sourceTree = SOURCE_ROOT; };
+		342B0A1CBB1A51F8DF16C1CF /* SocialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialStore.swift; sourceTree = "<group>"; };
 		362B25F54F99DDE61E68206D /* VideoHome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoHome.swift; sourceTree = "<group>"; };
 		393130AEC742C97B5E001EAB /* MainViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViews.swift; sourceTree = "<group>"; };
 		3984E1F4A9E1E136685F9B50 /* DuoControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoControls.swift; sourceTree = "<group>"; };
+		577DC4FDFFFC8D2FE2971E05 /* SocialViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialViews.swift; sourceTree = "<group>"; };
 		593E5372186CB54C83F75E59 /* SquareViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquareViews.swift; sourceTree = "<group>"; };
+		5A004A2012B0809716BDC4A2 /* LegalDocumentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocumentView.swift; sourceTree = "<group>"; };
 		6570BF991B9EBC01B32BA0EE /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
+		6BBDFB333D4488D41A926C30 /* VideoCompression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCompression.swift; sourceTree = "<group>"; };
+		6D48B8AC7CD59A9EF09A2C00 /* LiyaSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaSession.swift; sourceTree = "<group>"; };
+		701485677FE2C405F57264D3 /* AutomaticChat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomaticChat.swift; sourceTree = "<group>"; };
 		7C2061D8AD2D04E41E28919D /* LiyaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaApp.swift; sourceTree = "<group>"; };
 		9B3165B5F348D386BDA1F13D /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		BA69102DD583B62A83217A19 /* LocalPosts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPosts.swift; sourceTree = "<group>"; };
@@ -41,13 +55,24 @@
 		BFEE673FE4EB43FAD342B45A /* ExampleProfiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleProfiles.swift; sourceTree = "<group>"; };
 		C619DBBB0211BA6980C958D2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E1C1AA7E627810F1A043DB07 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		F623C35F01064B5675C139C1 /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9BA8C07A0349C9AF0D637ABB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				26E2D5608ADB547C04EA2231 /* Supabase in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		47E1305AB0237536E0BCB3A5 = {
 			isa = PBXGroup;
 			children = (
-				1D648C3AC2E6356988E3E2E1 /* Examples */,
 				6BBA48D2AE2AA016DFA0ECBE /* Liya */,
 				5F92A2190486565EC12E91E7 /* Sources */,
 				7C1D8A4D23972E7A196D2C6D /* Products */,
@@ -57,19 +82,27 @@
 		5F92A2190486565EC12E91E7 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				701485677FE2C405F57264D3 /* AutomaticChat.swift */,
+				07B7ED4624CF45B548E99A81 /* CoinCheckout.swift */,
 				9B3165B5F348D386BDA1F13D /* Components.swift */,
 				BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */,
 				3984E1F4A9E1E136685F9B50 /* DuoControls.swift */,
 				BFEE673FE4EB43FAD342B45A /* ExampleProfiles.swift */,
 				0D3C848B4534F0BB94FF8789 /* Examples.swift */,
+				5A004A2012B0809716BDC4A2 /* LegalDocumentView.swift */,
 				7C2061D8AD2D04E41E28919D /* LiyaApp.swift */,
+				6D48B8AC7CD59A9EF09A2C00 /* LiyaSession.swift */,
 				BA69102DD583B62A83217A19 /* LocalPosts.swift */,
 				6570BF991B9EBC01B32BA0EE /* LocalStore.swift */,
 				393130AEC742C97B5E001EAB /* MainViews.swift */,
 				1801B18AF27DF23E012330C7 /* ProfileViews.swift */,
 				E1C1AA7E627810F1A043DB07 /* RootView.swift */,
+				342B0A1CBB1A51F8DF16C1CF /* SocialStore.swift */,
+				577DC4FDFFFC8D2FE2971E05 /* SocialViews.swift */,
 				593E5372186CB54C83F75E59 /* SquareViews.swift */,
+				6BBDFB333D4488D41A926C30 /* VideoCompression.swift */,
 				362B25F54F99DDE61E68206D /* VideoHome.swift */,
+				F623C35F01064B5675C139C1 /* WalletView.swift */,
 			);
 			name = Sources;
 			path = Liya/Sources;
@@ -100,6 +133,7 @@
 			buildPhases = (
 				69C1C6A7EE9A257EA05B5A33 /* Sources */,
 				0BB7252F8A1FB08BDEC4FD73 /* Resources */,
+				9BA8C07A0349C9AF0D637ABB /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -107,6 +141,7 @@
 			);
 			name = Liya;
 			packageProductDependencies = (
+				1008727600F4C756AF33B38C /* Supabase */,
 			);
 			productName = Liya;
 			productReference = 0A49B42E539DC4B03BDB34DE /* Liya.app */;
@@ -131,6 +166,9 @@
 			);
 			mainGroup = 47E1305AB0237536E0BCB3A5;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4169A5017835DAFD0AC3573A /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
@@ -146,7 +184,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				D13D7EED4D1BD097D1746957 /* Assets.xcassets in Resources */,
-				E8F3748B9E26E4E91056C740 /* Examples in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -157,19 +194,27 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F9095906E366F7A2A10EA0A4 /* AutomaticChat.swift in Sources */,
+				3BAB87846F99325C6B799D94 /* CoinCheckout.swift in Sources */,
 				2A68D9FBFD459854460E746A /* Components.swift in Sources */,
 				54CA158E53B5FE7FA22C7C28 /* DraftMedia.swift in Sources */,
 				94AA0FDD52D33EF28DE55AE6 /* DuoControls.swift in Sources */,
 				324598B2552C2847BA3FBABB /* ExampleProfiles.swift in Sources */,
 				3EED5221EF3C25A6D41D15A2 /* Examples.swift in Sources */,
+				CC7E2CA079842B58037D651C /* LegalDocumentView.swift in Sources */,
 				7B42BD8844C5C09CEF2842B6 /* LiyaApp.swift in Sources */,
+				2BA2072B7918FE67B1D32B29 /* LiyaSession.swift in Sources */,
 				C82EF4A543D3DF6A2C874E68 /* LocalPosts.swift in Sources */,
 				DC4628DC65FC19D7D5763A59 /* LocalStore.swift in Sources */,
 				CA27812540BE098620440156 /* MainViews.swift in Sources */,
 				A0627F5AD9573BDC71118145 /* ProfileViews.swift in Sources */,
 				073D8EE7810AFCF9F9B31B86 /* RootView.swift in Sources */,
+				4E2E82BA3371A18568475440 /* SocialStore.swift in Sources */,
+				D8BF7B3D30868198F8AF9D7D /* SocialViews.swift in Sources */,
 				7FDE4B121440C7BE36374D65 /* SquareViews.swift in Sources */,
+				F9366F1AF434AB6AECAB4263 /* VideoCompression.swift in Sources */,
 				32E3CDDE51E9F1562E13755D /* VideoHome.swift in Sources */,
+				262EA9226C0699993B1E645E /* WalletView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -361,6 +406,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4169A5017835DAFD0AC3573A /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift.git";
+			requirement = {
+				kind = exactVersion;
+				version = 2.55.5;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1008727600F4C756AF33B38C /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4169A5017835DAFD0AC3573A /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 2B7D257627435858BF94383D /* Project object */;
 }

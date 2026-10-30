@@ -4,10 +4,8 @@ struct ExampleAvatar: View {
     let index: Int
     var size: CGFloat = 44
     var body: some View {
-        Group {
-            if let photo = Examples.photo(index) { Image(uiImage: photo).resizable().scaledToFill() }
-            else { Image("app-mark").resizable().scaledToFill() }
-        }.frame(width: size, height: size).clipShape(Circle()).accessibilityHidden(true)
+        CloudPhoto(index: index, contentMode: .fill)
+            .frame(width: size, height: size).clipShape(Circle()).accessibilityHidden(true)
     }
 }
 
@@ -27,18 +25,15 @@ struct ExampleProfileView: View {
                         Button { options = true } label: { Image("more").resizable().scaledToFit().frame(width: 22, height: 22).frame(width: 44, height: 44) }
                             .buttonStyle(.plain).accessibilityLabel("More options")
                     }
-                    if let photo = Examples.photo(index) {
-                        GeometryReader { geometry in
-                            Image(uiImage: photo).resizable().scaledToFill().frame(width: geometry.size.width, height: 240).clipped()
-                        }.frame(height: 240).clipShape(RoundedRectangle(cornerRadius: 18))
-                    }
+                    CloudPhoto(index: index, contentMode: .fill).frame(maxWidth: .infinity).frame(height: 240)
+                        .clipped().clipShape(RoundedRectangle(cornerRadius: 18))
                     Text("Example profile \(index + 1)").font(.title2.bold()).foregroundStyle(liyaInk)
                     OfflineNote(text: "Illustrative profile from supplied media. Follows, notes and blocks here are local to this device.")
                     HStack {
                         Button {
                             if !store.blockedExamples.contains(index) { store.toggleFollow(index) }
                         } label: {
-                            Text(store.followedExamples.contains(index) ? "Following locally" : "Follow locally")
+                            Text(store.followedExamples.contains(index) ? "Saved example" : "Save example")
                                 .font(.subheadline.bold()).foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 46)
                                 .background(liyaGradient, in: Capsule())
                         }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
@@ -53,7 +48,7 @@ struct ExampleProfileView: View {
                         NavigationLink { ExamplePhotoDetail(index: index) } label: {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Example photo \(index + 1)").font(.headline).foregroundStyle(liyaInk)
-                                if let photo = Examples.photo(index) { Image(uiImage: photo).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 14)) }
+                                CloudPhoto(index: index).frame(maxWidth: .infinity).frame(height: 240).clipShape(RoundedRectangle(cornerRadius: 14))
                             }.padding(12).background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 15))
                         }.buttonStyle(.plain)
                     } else {
@@ -100,7 +95,7 @@ struct ExampleOptionsView: View {
         NavigationStack {
             PageShell(title: "More options") {
                 VStack(spacing: 14) {
-                    OfflineNote(text: "This is an example profile. Reports cannot be sent while the service is offline.")
+                    OfflineNote(text: "This is an illustrative profile. You can report its associated example content; blocks remain on this device.")
                     NavigationLink { ReportDraftView(index: index, targetType: reportTarget) } label: { option(reportTarget == "post" ? "Report post" : "Report profile", image: "report") }
                         .buttonStyle(.plain)
                     Button {
@@ -119,27 +114,41 @@ struct ExampleOptionsView: View {
 
 struct ReportDraftView: View {
     @EnvironmentObject private var store: LocalStore
+    @EnvironmentObject private var session: LiyaSession
     let index: Int
     var targetType = "profile"
     @State private var selected: String?
     @State private var saved = false
+    @State private var sending = false
+    @State private var reportID = UUID()
+    @State private var reportError: String?
     private let reasons = ["Sexual content", "Harassment", "Discrimination", "Incorrect content", "Other"]
     var body: some View {
         PageShell(title: "Report type") {
             VStack(alignment: .leading, spacing: 12) {
-                OfflineNote(text: "This will save an unsent report draft on this device. No report is submitted.")
+                OfflineNote(text: "Send a report about this example content, or keep an unsent draft on this device. Reports are stored for review; a review service has not yet been configured.")
                 ForEach(reasons, id: \.self) { reason in
-                    Button { selected = reason; saved = false } label: {
+                    Button { selected = reason; saved = false; reportID = UUID(); reportError = nil } label: {
                         HStack { Text(reason); Spacer(); if selected == reason { Text("Selected").font(.caption.bold()).foregroundStyle(liyaAccent) } }
                             .foregroundStyle(liyaInk).padding(16).frame(maxWidth: .infinity)
                             .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 12))
-                    }.buttonStyle(.plain)
+                    }.buttonStyle(.plain).disabled(sending)
                 }
-                PrimaryButton(title: "Save unsent draft", disabled: selected == nil || saved) {
+                PrimaryButton(title: sending ? "Sending…" : "Send report", disabled: selected == nil || saved || sending) {
                     guard let selected else { return }
-                    store.saveReportDraft(index: index, reason: selected, targetType: targetType); saved = true
+                    sending = true; reportError = nil
+                    Task {
+                        if await session.submitReport(id: reportID, index: index, targetType: targetType, reason: selected) { saved = true }
+                        else { reportError = "The report could not be confirmed. Try again or save an unsent draft." }
+                        sending = false
+                    }
                 }
-                if saved { Text("Saved on this device · not submitted").font(.footnote).foregroundStyle(liyaAccent) }
+                if let reportError { Text(reportError).font(.footnote).foregroundStyle(.red) }
+                if saved { Text("Report received · review is not yet configured").font(.footnote).foregroundStyle(liyaAccent) }
+                PrimaryButton(title: "Save unsent draft", disabled: selected == nil || saved || sending) {
+                    guard let selected else { return }
+                    store.saveReportDraft(index: index, reason: selected, targetType: targetType); reportError = "Draft saved on this device; it has not been submitted."
+                }
             }.padding(.top, 12)
         }
     }
