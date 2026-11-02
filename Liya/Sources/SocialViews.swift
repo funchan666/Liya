@@ -317,8 +317,8 @@ struct CommunityCommentsView: View {
                 } else { NavigationLink("Create a community profile to comment") { CommunityJoinView() }.foregroundStyle(liyaAccent) }
             }.padding(.top, 12)
         }.onAppear { restoreDraft() }
-            .onChange(of: text) { _ in persistDraft() }
-            .onChange(of: social.syncGeneration) { _ in Task { await load() } }
+            .onLiyaChange(of: text) { _ in persistDraft() }
+            .onLiyaChange(of: social.syncGeneration) { _ in Task { await load() } }
             .onDisappear { persistDraft() }
             .task { await load() }
             .sheet(item: $deleting) { comment in
@@ -431,7 +431,7 @@ private struct SocialMediaPreview: View {
                 guard !Task.isCancelled else { return }
                 if item.kind == "video" { player = AVPlayer(url: value) } else { url = value }
             } catch { if !Task.isCancelled { failed = true } }
-        }.onChange(of: phase) { if $0 != .active { player?.pause(); playing = false } }
+        }.onLiyaChange(of: phase) { if $0 != .active { player?.pause(); playing = false } }
             .onDisappear { player?.pause(); player = nil }
     }
 }
@@ -493,6 +493,8 @@ struct CommunityMessagesView: View {
 struct CommunityConversationView: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
+    @EnvironmentObject private var calls: LiyaCalls
+    @Environment(\.openURL) private var openURL
     let personID: UUID
     @State private var text = ""
     @State private var attachments: [DraftAttachment] = []
@@ -511,6 +513,17 @@ struct CommunityConversationView: View {
         PageShell(title: social.person(personID)?.displayName ?? "Conversation") {
             VStack(alignment: .leading, spacing: 12) {
                 OfflineNote(text: "Messages are free and visible only to you and this member.")
+                if social.isJoined(session) && social.person(personID) != nil {
+                    HStack(spacing: 12) {
+                        Button("Voice call") { Task { await calls.start(session, peer: personID, kind: "audio") } }
+                        Button("Video call") { Task { await calls.start(session, peer: personID, kind: "video") } }
+                    }.font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44).disabled(calls.busy || calls.call != nil)
+                    if let error = calls.error { Text(error).font(.footnote).foregroundStyle(.red) }
+                    if calls.permissionDenied {
+                        Button("Open Settings") { if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) } }
+                            .font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                    }
+                }
                 Button("Refresh messages") { Task { await social.refreshMessages(session) } }.font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
                 if let error = social.messageError {
                     Text(error).font(.footnote).foregroundStyle(.red)
@@ -549,8 +562,8 @@ struct CommunityConversationView: View {
                 }
             }.padding(.top, 12)
         }.onAppear { restore() }
-            .onChange(of: text) { _ in persist() }
-            .onChange(of: attachments) { _ in persist() }
+            .onLiyaChange(of: text) { _ in persist() }
+            .onLiyaChange(of: attachments) { _ in persist() }
             .onDisappear { persist() }
             .task { await social.refreshMessages(session) }
             .sheet(item: $deleting) { message in

@@ -121,7 +121,7 @@ struct MoodDiaryView: View {
                 if saved { Text("Saved to your account").font(.footnote).foregroundStyle(liyaAccent) }
             }.padding(.top, 12)
         }.task { await session.refreshMoods(); loadEntry() }
-            .onChange(of: session.moodEntries) { _ in if !dirty { loadEntry() } }
+            .onLiyaChange(of: session.moodEntries) { _ in if !dirty { loadEntry() } }
             .onDisappear { if dirty { store.savePendingMood(mood, note: note, date: date) } }
     }
 

@@ -101,19 +101,22 @@ struct EditProfileView: View {
     @State private var initialized = false
     @State private var saving = false
     var body: some View {
-        PageShell(title: "Edit profile") {
+        let avatarURL = session.profileAvatarURL
+        return PageShell(title: "Edit profile") {
             VStack(alignment: .leading, spacing: 16) {
                 OfflineNote(text: "Your profile and selected photo are saved privately to your account.")
                 PhotosPicker(selection: $selection, matching: .images) {
                     VStack(spacing: 8) {
                         if let avatar { MediaThumbnail(item: avatar).frame(width: 88, height: 88).clipped().clipShape(RoundedRectangle(cornerRadius: 16)) }
-                        else if let url = session.profileAvatarURL {
+                        else if let url = avatarURL {
                             AsyncImage(url: url) { image in image.resizable().scaledToFill() } placeholder: { Color.clear }
                                 .frame(width: 88, height: 88).clipped().clipShape(RoundedRectangle(cornerRadius: 16))
                         } else { Image("avatar-camera").resizable().scaledToFit().frame(width: 75, height: 75) }
                         Text(loading ? "Loading…" : "Choose photo").font(.footnote.bold()).foregroundStyle(liyaAccent)
                     }.frame(maxWidth: .infinity).padding(16).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                 }.disabled(loading || saving)
+                CameraPhotoButton { item in avatar = item; error = nil } onError: { error = $0 }
+                    .disabled(loading || saving)
                 if let error { Text(error).font(.footnote).foregroundStyle(.red) }
                 if let error = session.profileError { Text(error).font(.footnote).foregroundStyle(.red) }
                 Text("Nickname").font(.headline)
@@ -152,15 +155,15 @@ struct EditProfileView: View {
                 }
             }.foregroundStyle(liyaInk).padding(.top, 12).disabled(saving)
         }.task { if session.profile == nil { await session.refreshProfile() }; initialize() }
-            .onChange(of: session.profileLoading) { loading in if !loading { initialize() } }
-            .onChange(of: selection) { item in
+            .onLiyaChange(of: session.profileLoading) { loading in if !loading { initialize() } }
+            .onLiyaChange(of: selection) { item in
                 guard let item else { return }
                 loading = true; error = nil
                 Task { @MainActor in
                     do {
                         if let photo = try await item.loadTransferable(type: ImportedPhoto.self) { avatar = photo.item }
                         else { error = "The photo could not be loaded. Please try again." }
-                    } catch { error = "The photo could not be loaded. Please try again." }
+                    } catch { self.error = "The photo could not be loaded. Please try again." }
                     selection = nil; loading = false
                 }
             }

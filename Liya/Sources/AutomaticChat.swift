@@ -52,7 +52,7 @@ final class AutomaticChat: ObservableObject {
             schedulePending(session)
             return true
         } catch {
-            error = "Couldn't confirm the message. Your draft is still here; try again."
+            self.error = "Couldn't confirm the message. Your draft is still here; try again."
             return false
         }
     }
@@ -113,7 +113,7 @@ struct AutomaticChatView: View {
                                 }
                             }
                         }.frame(maxWidth: 620).frame(maxWidth: .infinity).padding(.horizontal, 20).padding(.bottom, 12)
-                    }.onChange(of: chat.messages.count) { _ in
+                    }.onLiyaChange(of: chat.messages.count) { _ in
                         if let last = chat.messages.last { withAnimation { reader.scrollTo(last.id, anchor: .bottom) } }
                     }
                 }

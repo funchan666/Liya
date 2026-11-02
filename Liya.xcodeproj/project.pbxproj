@@ -3,10 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A33333333333333333333301 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A33333333333333333333302 /* LaunchScreen.storyboard */; };
 		073D8EE7810AFCF9F9B31B86 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C1AA7E627810F1A043DB07 /* RootView.swift */; };
 		262EA9226C0699993B1E645E /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F623C35F01064B5675C139C1 /* WalletView.swift */; };
 		26E2D5608ADB547C04EA2231 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 1008727600F4C756AF33B38C /* Supabase */; };
@@ -22,6 +23,9 @@
 		7FDE4B121440C7BE36374D65 /* SquareViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593E5372186CB54C83F75E59 /* SquareViews.swift */; };
 		94AA0FDD52D33EF28DE55AE6 /* DuoControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3984E1F4A9E1E136685F9B50 /* DuoControls.swift */; };
 		A0627F5AD9573BDC71118145 /* ProfileViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1801B18AF27DF23E012330C7 /* ProfileViews.swift */; };
+		A11111111111111111111101 /* LiyaCalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11111111111111111111102 /* LiyaCalls.swift */; };
+		A11111111111111111111103 /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = A11111111111111111111105 /* LiveKit */; };
+		A22222222222222222222201 /* LiyaVoIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = A22222222222222222222202 /* LiyaVoIP.swift */; };
 		C82EF4A543D3DF6A2C874E68 /* LocalPosts.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA69102DD583B62A83217A19 /* LocalPosts.swift */; };
 		CA27812540BE098620440156 /* MainViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 393130AEC742C97B5E001EAB /* MainViews.swift */; };
 		CC7E2CA079842B58037D651C /* LegalDocumentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A004A2012B0809716BDC4A2 /* LegalDocumentView.swift */; };
@@ -33,8 +37,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A33333333333333333333302 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		07B7ED4624CF45B548E99A81 /* CoinCheckout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinCheckout.swift; sourceTree = "<group>"; };
-		0A49B42E539DC4B03BDB34DE /* Liya.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Liya.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0A49B42E539DC4B03BDB34DE /* Liya.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Liya.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0D3C848B4534F0BB94FF8789 /* Examples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Examples.swift; sourceTree = "<group>"; };
 		1801B18AF27DF23E012330C7 /* ProfileViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViews.swift; sourceTree = "<group>"; };
 		342B0A1CBB1A51F8DF16C1CF /* SocialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialStore.swift; sourceTree = "<group>"; };
@@ -50,6 +55,8 @@
 		701485677FE2C405F57264D3 /* AutomaticChat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomaticChat.swift; sourceTree = "<group>"; };
 		7C2061D8AD2D04E41E28919D /* LiyaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaApp.swift; sourceTree = "<group>"; };
 		9B3165B5F348D386BDA1F13D /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		A11111111111111111111102 /* LiyaCalls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaCalls.swift; sourceTree = "<group>"; };
+		A22222222222222222222202 /* LiyaVoIP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaVoIP.swift; sourceTree = "<group>"; };
 		BA69102DD583B62A83217A19 /* LocalPosts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPosts.swift; sourceTree = "<group>"; };
 		BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraftMedia.swift; sourceTree = "<group>"; };
 		BFEE673FE4EB43FAD342B45A /* ExampleProfiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleProfiles.swift; sourceTree = "<group>"; };
@@ -63,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A11111111111111111111103 /* LiveKit in Frameworks */,
 				26E2D5608ADB547C04EA2231 /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -82,6 +90,8 @@
 		5F92A2190486565EC12E91E7 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				A22222222222222222222202 /* LiyaVoIP.swift */,
+				A11111111111111111111102 /* LiyaCalls.swift */,
 				701485677FE2C405F57264D3 /* AutomaticChat.swift */,
 				07B7ED4624CF45B548E99A81 /* CoinCheckout.swift */,
 				9B3165B5F348D386BDA1F13D /* Components.swift */,
@@ -111,6 +121,7 @@
 		6BBA48D2AE2AA016DFA0ECBE /* Liya */ = {
 			isa = PBXGroup;
 			children = (
+				A33333333333333333333302 /* LaunchScreen.storyboard */,
 				C619DBBB0211BA6980C958D2 /* Assets.xcassets */,
 			);
 			path = Liya;
@@ -141,6 +152,7 @@
 			);
 			name = Liya;
 			packageProductDependencies = (
+				A11111111111111111111105 /* LiveKit */,
 				1008727600F4C756AF33B38C /* Supabase */,
 			);
 			productName = Liya;
@@ -154,7 +166,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 2710;
 			};
 			buildConfigurationList = EF66F6CC11FC8DEB1EF37E59 /* Build configuration list for PBXProject "Liya" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -167,9 +179,9 @@
 			mainGroup = 47E1305AB0237536E0BCB3A5;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				A11111111111111111111104 /* XCRemoteSwiftPackageReference "client-sdk-swift" */,
 				4169A5017835DAFD0AC3573A /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -183,6 +195,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A33333333333333333333301 /* LaunchScreen.storyboard in Resources */,
 				D13D7EED4D1BD097D1746957 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -194,6 +207,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A22222222222222222222201 /* LiyaVoIP.swift in Sources */,
+				A11111111111111111111101 /* LiyaCalls.swift in Sources */,
 				F9095906E366F7A2A10EA0A4 /* AutomaticChat.swift in Sources */,
 				3BAB87846F99325C6B799D94 /* CoinCheckout.swift in Sources */,
 				2A68D9FBFD459854460E746A /* Components.swift in Sources */,
@@ -224,44 +239,72 @@
 		585C2C0EC05169A1231D719D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APS_ENVIRONMENT = production;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Liya/Liya.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Liya/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Liya;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Liya uses the camera to take photos and for video calls you choose to start.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Liya uses the microphone for voice and video calls when you start a call.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Liya uses selected photos and videos for your profile, posts and messages.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = example.Liya;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.liyalumora.auroramuse;
 				PRODUCT_NAME = Liya;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
 		6FC4B633A84D7B53CB229E32 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APS_ENVIRONMENT = development;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Liya/Liya.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Liya/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Liya;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Liya uses the camera to take photos and for video calls you choose to start.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Liya uses the microphone for voice and video calls when you start a call.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Liya uses selected photos and videos for your profile, posts and messages.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = example.Liya;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.liyalumora.auroramuse;
 				PRODUCT_NAME = Liya;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -302,6 +345,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -315,6 +359,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -358,6 +403,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -378,6 +424,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -416,6 +463,14 @@
 				version = 2.55.5;
 			};
 		};
+		A11111111111111111111104 /* XCRemoteSwiftPackageReference "client-sdk-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/livekit/client-sdk-swift.git";
+			requirement = {
+				kind = exactVersion;
+				version = 2.17.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -423,6 +478,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4169A5017835DAFD0AC3573A /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
+		};
+		A11111111111111111111105 /* LiveKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A11111111111111111111104 /* XCRemoteSwiftPackageReference "client-sdk-swift" */;
+			productName = LiveKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

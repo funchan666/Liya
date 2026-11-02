@@ -107,22 +107,89 @@
       {
         "version": "20261030074912",
         "name": "liya_delete_receipts"
+      },
+      {
+        "version": "20261102021457",
+        "name": "liya_calls"
+      },
+      {
+        "version": "20261102021556",
+        "name": "liya_calls_enable"
+      },
+      {
+        "version": "20261102022845",
+        "name": "liya_call_cleanup"
+      },
+      {
+        "version": "20261102023105",
+        "name": "liya_call_lease"
+      },
+      {
+        "version": "20261102023437",
+        "name": "liya_voip"
+      },
+      {
+        "version": "20261102023536",
+        "name": "liya_voip_gating"
+      },
+      {
+        "version": "20261102023619",
+        "name": "liya_voip_retention"
+      },
+      {
+        "version": "20261102023727",
+        "name": "liya_voip_token_hash"
+      },
+      {
+        "version": "20261102023816",
+        "name": "liya_call_trigger_safety"
       }
     ],
     "functions": [
       {
         "name": "liya-bootstrap",
-        "version": 1,
+        "version": 2,
         "status": "ACTIVE",
         "verify_jwt": true,
         "invocation": "not tested"
       },
       {
         "name": "liya-delete-account",
-        "version": 1,
+        "version": 2,
         "status": "ACTIVE",
         "verify_jwt": true,
         "invocation": "not tested"
+      },
+      {
+        "name": "liya-call-token",
+        "version": 3,
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "invocation": "not tested"
+      },
+      {
+        "name": "liya-call-cleanup",
+        "version": 2,
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "invocation": "not tested",
+        "authentication": "database-created random per-job capability"
+      },
+      {
+        "name": "liya-voip-registration",
+        "version": 2,
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "invocation": "not tested",
+        "authentication": "JWT"
+      },
+      {
+        "name": "liya-voip-delivery",
+        "version": 3,
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "invocation": "not tested",
+        "authentication": "database-created random per-job capability"
       }
     ],
     "auth": {
@@ -174,20 +241,36 @@
         "full community refresh on changes; scalability needs cursor pagination",
         "no account recovery after loss of an anonymous session"
       ]
+    },
+    "calling": {
+      "provider": "LiveKit Cloud",
+      "project_id": "p_23priivvrej",
+      "region": "United States",
+      "agent_observability": "disabled at project creation",
+      "configuration": "LiveKit URL, API key and rotated API secret saved in Supabase Edge Function Secrets; secret values not recorded here",
+      "database_flag": "enabled",
+      "client": "Swift SDK 2.17.0 and foreground invitations wired; not built or tested",
+      "background_audio": "audio and voip background modes declared; not validated",
+      "bundle_id": "com.liyalumora.auroramuse",
+      "background_incoming": "PushKit, CallKit, APNs registration and sender code prepared and deployed; APNS_BUNDLE_ID configured, Apple registration, signing and remaining APNs credentials unverified or absent; scheduler inactive",
+      "security": "server-side LiveKit removal and capability-authenticated retry deployed; actual removal and isolation not validated",
+      "cleanup_job": "active and retries pending ended-call cleanup",
+      "voip_job": "inactive until Apple configuration is available"
     }
   },
   "pending": [
     "Only with explicit authorization, validate build and real-device/social CRUD, account deletion, interruption recovery, Realtime and two-user RLS isolation",
     "Decide and configure effective anonymous account abuse prevention and recovery; user does not request reviewer accounts",
-    "Configure APNs and server-side push when final Bundle ID and Apple credentials are available",
     "Implement verified Apple payments and atomic coin fulfillment in the authorized stage",
     "Validate remote media bytes, access and playback",
-    "Resolve pending payment recovery and in-flight upload cleanup guarantees before relying on account deletion"
+    "Resolve pending payment recovery and in-flight upload cleanup guarantees before relying on account deletion",
+    "Verify Apple registration of the selected Bundle ID, configure Push Notifications capability, provisioning and remaining APNs credentials; activate VoIP server flag and job",
+    "Validate call cleanup, account isolation, background incoming-call and audio behavior only with explicit authorization"
   ],
   "legal": {
     "terms": "legal/terms.pdf",
     "privacy": "legal/privacy.pdf",
-    "status": "automatic_chat_and_account_deletion_privacy_uploaded_public_access_not_tested",
+    "status": "calling_and_push_privacy_uploaded_public_access_not_tested",
     "proposed_support_email": "support@liya.com",
     "proposed_support_email_status": "not confirmed or enabled"
   }

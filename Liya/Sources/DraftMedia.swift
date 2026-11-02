@@ -25,6 +25,86 @@ enum DraftFiles {
         try FileManager.default.copyItem(at: file, to: url(item))
         return item
     }
+    static func savePhoto(_ image: UIImage) throws -> DraftAttachment {
+        guard let data = image.jpegData(compressionQuality: 0.9) else { throw CocoaError(.fileWriteUnknown) }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let id = UUID()
+        let item = DraftAttachment(id: id, filename: "\(id.uuidString).jpg", isVideo: false)
+        try data.write(to: url(item), options: .atomic)
+        return item
+    }
+}
+
+struct CameraPhotoButton: View {
+    @Environment(\.openURL) private var openURL
+    let onPhoto: (DraftAttachment) -> Void
+    let onError: (String) -> Void
+    @State private var requesting = false
+    @State private var showingCamera = false
+    @State private var showingSettings = false
+    var body: some View {
+        Button {
+            guard !requesting else { return }
+            guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+                onError("The camera is unavailable on this device."); return
+            }
+            requesting = true
+            Task { @MainActor in
+                let status = AVCaptureDevice.authorizationStatus(for: .video)
+                let allowed: Bool
+                switch status {
+                case .authorized: allowed = true
+                case .notDetermined: allowed = await AVCaptureDevice.requestAccess(for: .video)
+                default: allowed = false
+                }
+                requesting = false
+                if allowed { showingCamera = true }
+                else if AVCaptureDevice.authorizationStatus(for: .video) == .restricted {
+                    onError("Camera access is restricted on this device.")
+                } else { showingSettings = true }
+            }
+        } label: {
+            Text(requesting ? "Opening…" : "Take photo")
+                .font(.caption.bold()).foregroundStyle(liyaAccent)
+                .frame(minWidth: 100, minHeight: 44)
+                .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
+        }.buttonStyle(.plain).disabled(requesting)
+            .fullScreenCover(isPresented: $showingCamera) {
+                SystemCameraPicker { image in
+                    showingCamera = false
+                    guard let image else { return }
+                    do { onPhoto(try DraftFiles.savePhoto(image)) }
+                    catch { onError("The photo could not be saved. Please try again.") }
+                }.ignoresSafeArea()
+            }
+            .sheet(isPresented: $showingSettings) {
+                LocalConfirmation(title: "Camera access is off", message: "Allow camera access in Settings to take a photo. You can still choose an existing photo.", action: "Open Settings") {
+                    showingSettings = false
+                    if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                } cancel: { showingSettings = false }
+            }
+    }
+}
+
+private struct SystemCameraPicker: UIViewControllerRepresentable {
+    let completion: (UIImage?) -> Void
+    func makeCoordinator() -> Coordinator { Coordinator(completion: completion) }
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.mediaTypes = [UTType.image.identifier]
+        picker.delegate = context.coordinator
+        return picker
+    }
+    func updateUIViewController(_ controller: UIImagePickerController, context: Context) {}
+    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let completion: (UIImage?) -> Void
+        init(completion: @escaping (UIImage?) -> Void) { self.completion = completion }
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) { completion(nil) }
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            completion(info[.originalImage] as? UIImage)
+        }
+    }
 }
 
 struct ImportedPhoto: Transferable {
@@ -79,13 +159,18 @@ struct DraftMediaPicker: View {
                     }
                 }
             }
+            if attachments.count < 9 {
+                CameraPhotoButton { item in
+                    if attachments.count < 9 { attachments.append(item) }
+                } onError: { errorMessage = $0 }.disabled(loading)
+            }
             if loading { Text("Loading selected media…").font(.footnote).foregroundStyle(.secondary) }
             if let errorMessage { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
             Text(note).font(.footnote).foregroundStyle(.secondary)
         }.sheet(item: $preview) { item in
             if item.isVideo { DraftVideoPreview(item: item) } else { DraftPhotoPreview(item: item) }
         }
-        .onChange(of: selection) { items in
+        .onLiyaChange(of: selection) { items in
             guard !items.isEmpty, !loading else { return }
             loading = true
             errorMessage = nil
@@ -174,7 +259,7 @@ struct DraftVideoPreview: View {
         }.onAppear {
             let url = DraftFiles.url(item)
             if FileManager.default.fileExists(atPath: url.path) { player = AVPlayer(url: url) }
-        }.onChange(of: scenePhase) { phase in
+        }.onLiyaChange(of: scenePhase) { phase in
             if phase != .active { player?.pause(); playing = false }
         }.onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
             if let item = notification.object as? AVPlayerItem, item === player?.currentItem { playing = false; reachedEnd = true }

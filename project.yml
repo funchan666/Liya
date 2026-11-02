@@ -1,9 +1,12 @@
 name: Liya
 options:
-  bundleIdPrefix: example
+  bundleIdPrefix: com.liyalumora
   deploymentTarget:
     iOS: "16.0"
 packages:
+  LiveKit:
+    url: https://github.com/livekit/client-sdk-swift.git
+    exactVersion: 2.17.0
   Supabase:
     url: https://github.com/supabase/supabase-swift.git
     exactVersion: 2.55.5
@@ -12,20 +15,34 @@ targets:
     type: application
     platform: iOS
     dependencies:
+      - package: LiveKit
+        product: LiveKit
       - package: Supabase
         product: Supabase
     sources:
       - path: Liya/Sources
       - path: Liya/Assets.xcassets
+      - path: Liya/LaunchScreen.storyboard
+        buildPhase: resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: example.Liya
+        PRODUCT_BUNDLE_IDENTIFIER: com.liyalumora.auroramuse
         PRODUCT_NAME: Liya
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_VERSION: "5.0"
         GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_ENTITLEMENTS: Liya/Liya.entitlements
+        INFOPLIST_FILE: Liya/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Liya
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_NSCameraUsageDescription: Liya uses the camera to take photos and for video calls you choose to start.
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Liya uses the microphone for voice and video calls when you start a call.
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: Liya uses selected photos and videos for your profile, posts and messages.
+        INFOPLIST_KEY_UILaunchScreen_Generation: NO
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+      configs:
+        Debug:
+          APS_ENVIRONMENT: development
+        Release:
+          APS_ENVIRONMENT: production

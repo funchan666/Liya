@@ -134,6 +134,17 @@ final class LiyaSession: ObservableObject {
         await refreshWallet()
     }
 
+    /// Restore an existing session for an incoming call; never create a new account here.
+    func restoreForIncomingCall() async -> Bool {
+        if userID != nil { return true }
+        guard !isDeletingAccount, UserDefaults.standard.bool(forKey: "liya.hasSupabaseAccount") else { return false }
+        do {
+            let saved = try await client.auth.session
+            userID = saved.user.id
+            return true
+        } catch { return false }
+    }
+
     func deleteAccount() async -> Bool {
         guard let owner = userID, !isDeletingAccount else { return false }
         isDeletingAccount = true; deletionError = nil

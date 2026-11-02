@@ -1,8 +1,34 @@
 import SwiftUI
 
+extension View {
+    @ViewBuilder
+    func onLiyaChange<Value: Equatable>(of value: Value, perform action: @escaping (Value) -> Void) -> some View {
+        if #available(iOS 17, *) {
+            onChange(of: value) { _, newValue in action(newValue) }
+        } else {
+            onChange(of: value, perform: action)
+        }
+    }
+}
+
 let liyaInk = Color(red: 0.13, green: 0.13, blue: 0.23)
 let liyaAccent = Color(red: 0.44, green: 0.22, blue: 0.95)
 let liyaGradient = LinearGradient(colors: [Color(red: 0.05, green: 0.52, blue: 0.99), Color(red: 0.64, green: 0.14, blue: 0.96)], startPoint: .leading, endPoint: .trailing)
+
+struct LiyaLoadingIndicator: View {
+    var size: CGFloat = 34
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var rotating = false
+
+    var body: some View {
+        Image("liya-spinner")
+            .resizable().scaledToFit().frame(width: size, height: size)
+            .rotationEffect(.degrees(rotating ? 360 : 0))
+            .animation(reduceMotion ? nil : .linear(duration: 1.1).repeatForever(autoreverses: false), value: rotating)
+            .onAppear { rotating = !reduceMotion }
+            .accessibilityLabel("Loading")
+    }
+}
 
 struct LiyaBackground: View {
     var name = "plain-background"

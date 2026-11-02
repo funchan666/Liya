@@ -199,18 +199,18 @@ struct VideoHome: View {
             if preview.player.currentItem == nil { preview.select(preview.index, active: active && scenePhase == .active && panel == nil, session: session) }
             else { preview.resumeIfWanted(active: active && scenePhase == .active && panel == nil) }
         }
-        .onChange(of: store.videoRequest) { request in
+        .onLiyaChange(of: store.videoRequest) { request in
             if let request {
                 preview.select(request.index, active: active && scenePhase == .active && panel == nil, session: session)
                 if request.openNotes { panel = .notes }
             }
         }
-        .onChange(of: active) { selected in
+        .onLiyaChange(of: active) { selected in
             preview.resumeIfWanted(active: selected && scenePhase == .active && panel == nil)
         }
-        .onChange(of: scenePhase) { phase in preview.resumeIfWanted(active: active && phase == .active && panel == nil) }
-        .onChange(of: panel) { current in preview.resumeIfWanted(active: active && scenePhase == .active && current == nil) }
-        .onChange(of: session.catalogGeneration) { _ in
+        .onLiyaChange(of: scenePhase) { phase in preview.resumeIfWanted(active: active && phase == .active && panel == nil) }
+        .onLiyaChange(of: panel) { current in preview.resumeIfWanted(active: active && scenePhase == .active && current == nil) }
+        .onLiyaChange(of: session.catalogGeneration) { _ in
             if session.videos.isEmpty { preview.clear() }
             else { preview.select(min(preview.index, session.videos.count - 1), active: active && scenePhase == .active && panel == nil, session: session) }
         }

@@ -155,7 +155,7 @@ final class SocialStore: ObservableObject {
             follows = relations.filter { $0.ownerID == owner }.map(\.targetID)
             followers = relations.filter { $0.targetID == owner }.map(\.ownerID)
             blocked = blocks.map(\.targetID); likes = Set(liked.map(\.postID))
-        } catch { if owner == session.userID { error = "Couldn't load the community. Please try again." } }
+        } catch { if owner == session.userID { self.error = "Couldn't load the community. Please try again." } }
     }
 
     func join(_ session: LiyaSession, name: String, signature: String, shareAvatar: Bool) async -> Bool {
@@ -421,7 +421,7 @@ final class SocialStore: ObservableObject {
     func markRead(_ session: LiyaSession, id: Int64) async {
         struct Read: Encodable { let is_read: Bool }
         do {
-            try await session.client.from("liya_social_notifications").update(Read(is_read: true)).eq("id", value: id).execute()
+            try await session.client.from("liya_social_notifications").update(Read(is_read: true)).eq("id", value: String(id)).execute()
             await refreshNotifications(session)
         } catch { notificationsError = "Couldn't update activity." }
     }

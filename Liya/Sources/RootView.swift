@@ -20,6 +20,7 @@ struct RootView: View {
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
+    @EnvironmentObject private var calls: LiyaCalls
     @State private var selection: LiyaTab = .discover
 
     var body: some View {
@@ -41,7 +42,11 @@ struct RootView: View {
             .task(id: session.userID) {
                 if session.userID != nil { await social.refresh(session); social.watchMessages(session) }
             }
-            .onChange(of: store.videoRequest) { request in
+            .task(id: session.userID) { await calls.watch(session) }
+            .fullScreenCover(item: Binding(get: { calls.call }, set: { _ in })) { call in
+                LiyaCallScreen(initial: call).environmentObject(calls).environmentObject(session).environmentObject(social)
+            }
+            .onLiyaChange(of: store.videoRequest) { request in
                 if request != nil { selection = .discover }
             }
             .sheet(item: $session.welcomeGift) { gift in
@@ -79,37 +84,202 @@ private struct WelcomeView: View {
     let enter: () -> Void
     @EnvironmentObject private var session: LiyaSession
     @State private var policy: PolicyPage?
+    @State private var agreed = false
+    @State private var showAgreementReminder = false
     var body: some View {
         ZStack {
-            LiyaBackground(name: "color-background")
-            GeometryReader { geometry in
+            LiyaBackground(name: "welcome-art")
+            DuoControlRegion { size in
                 ScrollView {
-                    VStack(spacing: 22) {
-                        Spacer(minLength: 50)
-                        Image("app-mark").resizable().scaledToFit().frame(width: 150, height: 150).clipShape(RoundedRectangle(cornerRadius: 30)).accessibilityHidden(true)
-                        Text("Liya").font(.system(size: 38, weight: .bold)).foregroundStyle(.white)
-                        Text("A little space for how you feel.").font(.headline).foregroundStyle(.white).multilineTextAlignment(.center)
-                        Spacer(minLength: 100)
-                        Button(action: enter) {
-                            Text(session.isSigningIn ? "Connecting…" : "Continue to Liya").fontWeight(.semibold).foregroundStyle(liyaInk).frame(maxWidth: .infinity).frame(minHeight: 50).background(.white, in: Capsule())
-                        }.buttonStyle(.plain).disabled(session.isSigningIn)
-                        if let errorMessage = session.errorMessage {
-                            Text(errorMessage).font(.footnote).foregroundStyle(.white).multilineTextAlignment(.center)
+                    VStack(spacing: 0) {
+                        Spacer().frame(height: max(200, size.height * 0.42))
+                        VStack(spacing: 6) {
+                            Text("Share how you feel")
+                                .font(.system(.title3, design: .rounded).weight(.semibold))
+                                .foregroundStyle(.white)
+                            Text("Every mood belongs here.")
+                                .font(.system(.subheadline, design: .rounded).weight(.medium))
+                                .foregroundStyle(.white.opacity(0.9))
                         }
-                        Text("Your local drafts remain on this device.")
-                            .font(.footnote).foregroundStyle(.white).multilineTextAlignment(.center)
-                        HStack {
-                            Button("Terms of Service") { policy = .terms }
-                            Text("·")
-                            Button("Privacy Policy") { policy = .privacy }
-                        }.font(.footnote).foregroundStyle(.white)
-                    }.padding(.horizontal, 32).padding(.vertical, 32).frame(minHeight: geometry.size.height)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityElement(children: .combine)
+                        Spacer(minLength: 45)
+                        WelcomeAction(title: session.isSigningIn ? "Connecting…" : "Continue to Liya", image: "welcome-button-v2", foreground: liyaInk, isLoading: session.isSigningIn, fullArtwork: true) {
+                            if agreed { enter() } else { showAgreementReminder = true }
+                        }
+                        .disabled(session.isSigningIn)
+                        if let errorMessage = session.errorMessage {
+                            Text(errorMessage).font(.footnote).foregroundStyle(.white)
+                                .multilineTextAlignment(.center).padding(.top, 8)
+                        }
+                        agreementRow
+                            .padding(.top, 10)
+                    }
+                    .frame(maxWidth: 390)
+                    .frame(maxWidth: .infinity, minHeight: size.height, alignment: .top)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 16)
                 }
+            }
+            .accessibilityHidden(showAgreementReminder)
+            .allowsHitTesting(!showAgreementReminder)
+
+            if showAgreementReminder {
+                Color.black.opacity(0.55).ignoresSafeArea()
+                DuoControlRegion { size in
+                    ScrollView {
+                        agreementReminder
+                            .frame(maxWidth: 360)
+                            .frame(maxWidth: .infinity, minHeight: size.height)
+                            .padding(.horizontal, 20)
+                    }
+                }
+                .transition(.opacity)
             }
         }.sheet(item: $policy) { page in
             NavigationStack {
                 LegalDocumentView(page: page)
             }
         }
+    }
+
+    private var agreementRow: some View {
+        HStack(alignment: .top, spacing: 4) {
+            Button { agreed.toggle() } label: {
+                Image(agreed ? "consent-on" : "consent-off")
+                    .resizable().scaledToFit().frame(width: 34, height: 34)
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Agree to the Terms of Service and Privacy Policy")
+            .accessibilityValue(agreed ? "Agreed" : "Not agreed")
+            .accessibilityAddTraits(agreed ? .isSelected : [])
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text("I agree to the following (tap to read):")
+                    .font(.footnote).foregroundStyle(liyaInk)
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 4) {
+                        policyLink(.terms)
+                        Text("and").foregroundStyle(liyaInk)
+                        policyLink(.privacy)
+                    }.fixedSize(horizontal: true, vertical: false)
+                    VStack(alignment: .leading, spacing: 0) {
+                        policyLink(.terms)
+                        policyLink(.privacy)
+                    }
+                }
+                .font(.footnote.weight(.semibold))
+                .buttonStyle(.plain)
+                .frame(minHeight: 44, alignment: .leading)
+            }
+            .padding(.top, 5)
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var agreementReminder: some View {
+        VStack(spacing: 14) {
+            Text("Before we begin")
+                .font(.title3.bold()).foregroundStyle(liyaInk)
+                .multilineTextAlignment(.center)
+            Text("Please read and agree to our Terms of Service and Privacy Policy before continuing.")
+                .font(.subheadline).foregroundStyle(liyaInk.opacity(0.8))
+                .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 18) {
+                    policyLink(.terms, fromReminder: true)
+                    policyLink(.privacy, fromReminder: true)
+                }.fixedSize(horizontal: true, vertical: false)
+                VStack(spacing: 0) {
+                    policyLink(.terms, fromReminder: true)
+                    policyLink(.privacy, fromReminder: true)
+                }
+            }
+            .font(.footnote.weight(.semibold))
+            .buttonStyle(.plain).frame(minHeight: 44)
+            WelcomeAction(title: "Back to agreement", image: "consent-button", foreground: .white) {
+                showAgreementReminder = false
+            }
+        }
+        .padding(.horizontal, 28).padding(.top, 96).padding(.bottom, 26)
+        .background(WelcomePanelBackground())
+        .accessibilityElement(children: .contain)
+    }
+
+    private func policyLink(_ page: PolicyPage, fromReminder: Bool = false) -> some View {
+        Button {
+            if fromReminder { showAgreementReminder = false }
+            policy = page
+        } label: {
+            Text(page.title).underline()
+                .foregroundStyle(Color(red: 0.18, green: 0.12, blue: 0.48))
+                .frame(minHeight: 44)
+        }
+        .accessibilityHint("Opens \(page.title) for reading")
+    }
+}
+
+private struct WelcomePanelBackground: View {
+    var body: some View {
+        GeometryReader { geometry in
+            let artworkHeight = geometry.size.width * 958 / 778
+            VStack(spacing: 0) {
+                Image("panel-background")
+                    .resizable().scaledToFit()
+                    .frame(width: geometry.size.width, height: artworkHeight)
+                Color.white
+            }
+            .frame(width: geometry.size.width, height: max(geometry.size.height, artworkHeight), alignment: .top)
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
+            .clipped()
+            .accessibilityHidden(true)
+            .allowsHitTesting(false)
+        }
+    }
+}
+
+private struct WelcomeAction: View {
+    let title: String
+    let image: String
+    let foreground: Color
+    var isLoading = false
+    var fullArtwork = false
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            if fullArtwork {
+                ZStack {
+                    Image(image).resizable().scaledToFit().accessibilityHidden(true)
+                    label
+                }
+                .aspectRatio(2172.0 / 724.0, contentMode: .fit)
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .contentShape(Rectangle())
+            } else {
+                label
+                    .frame(maxWidth: .infinity, minHeight: 56)
+                    .background {
+                        GeometryReader { geometry in
+                            Image(image).resizable().scaledToFill()
+                                .frame(width: geometry.size.width, height: geometry.size.height).clipped()
+                        }
+                    }
+                    .contentShape(Rectangle())
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var label: some View {
+        HStack(spacing: 8) {
+            if isLoading { LiyaLoadingIndicator(size: 30).accessibilityHidden(true) }
+            Text(title)
+                .font(fullArtwork ? .system(size: 17, weight: .semibold, design: .rounded) : .system(size: 16, weight: .semibold))
+                .foregroundStyle(foreground)
+        }
+        .padding(.horizontal, 16)
     }
 }

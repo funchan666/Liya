@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 from xml.sax.saxutils import escape
 from reportlab.lib import colors
 from reportlab.lib.styles import ParagraphStyle
@@ -15,7 +16,7 @@ styles = {
     "heading": ParagraphStyle("heading", fontName="LiyaArialBold", fontSize=12, leading=16, textColor=colors.HexColor("#5A42B8"), spaceBefore=12, spaceAfter=6),
     "body": ParagraphStyle("body", fontName="LiyaArial", fontSize=10.5, leading=15.5, textColor=colors.HexColor("#20243B"), spaceAfter=8),
 }
-for name in ("terms", "privacy"):
+for name in (sys.argv[1:] or ["terms", "privacy"]):
     doc = SimpleDocTemplate(str(base / f"{name}.pdf"), pagesize=(148 * mm, 210 * mm),
                             leftMargin=15 * mm, rightMargin=15 * mm, topMargin=16 * mm,
                             bottomMargin=16 * mm, title=f"Liya {name.title()}")
