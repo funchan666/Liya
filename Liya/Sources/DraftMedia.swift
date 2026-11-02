@@ -232,7 +232,10 @@ struct DraftVideoPreview: View {
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            if let player { PlayerView(player: player).accessibilityHidden(true) }
+            if let player {
+                PlayerView(player: player).frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .ignoresSafeArea(.container).accessibilityHidden(true)
+            }
             DuoControlRegion { size in
               ScrollView {
                VStack {

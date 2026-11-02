@@ -411,7 +411,10 @@ private struct SocialMediaPreview: View {
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            if let player { PlayerView(player: player) }
+            if let player {
+                PlayerView(player: player).frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .ignoresSafeArea(.container).accessibilityHidden(true)
+            }
             else if let url { AsyncImage(url: url) { image in image.resizable().scaledToFit() } placeholder: { Text("Loading…").foregroundStyle(.white) } }
             else if failed { Text("Media unavailable").foregroundStyle(.white) }
             DuoControlRegion { size in

@@ -9,40 +9,23 @@ final class VideoPreview: ObservableObject {
     @Published var playing = false
     @Published var unavailable = false
     @Published var loading = false
-    @Published var progress: Double = 0
-    @Published var duration: Double = 0
-    @Published var muted = false
-    private var timeObserver: Any?
+    @Published private(set) var requestedIndex = 0
     private var wantsPlayback = true
     private var reachedEnd = false
     private var isActive = false
     private var loadTask: Task<Void, Never>?
 
-    init() {
-        timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.25, preferredTimescale: 600), queue: .main) { [weak self] time in
-            Task { @MainActor in
-                guard let self else { return }
-                let length = self.player.currentItem?.duration.seconds ?? 0
-                let elapsed = time.seconds
-                self.duration = length.isFinite && length > 0 ? length : 0
-                self.progress = elapsed.isFinite && self.duration > 0 ? min(max(elapsed / self.duration, 0), 1) : 0
-            }
-        }
-    }
-
-    deinit { loadTask?.cancel(); if let timeObserver { player.removeTimeObserver(timeObserver) } }
+    deinit { loadTask?.cancel() }
 
     func select(_ newIndex: Int, active: Bool, session: LiyaSession) {
         guard session.videos.indices.contains(newIndex) else { return }
         loadTask?.cancel()
-        index = newIndex
+        requestedIndex = newIndex
         isActive = active
-        player.replaceCurrentItem(with: nil)
+        player.pause()
         playing = false
         loading = true
         unavailable = false
-        duration = 0
-        progress = 0
         reachedEnd = false
         wantsPlayback = true
         loadTask = Task { [weak self, weak session] in
@@ -50,8 +33,17 @@ final class VideoPreview: ObservableObject {
             do {
                 let url = try await session.mediaURL(kind: "video", index: newIndex)
                 guard !Task.isCancelled else { return }
+                let asset = AVURLAsset(url: url)
+                let playable = try await asset.load(.isPlayable)
+                guard !Task.isCancelled else { return }
+                guard playable else {
+                    self.loading = false
+                    self.unavailable = true
+                    return
+                }
+                self.player.replaceCurrentItem(with: AVPlayerItem(asset: asset))
+                self.index = newIndex
                 self.loading = false
-                self.player.replaceCurrentItem(with: AVPlayerItem(url: url))
                 self.resumeIfWanted(active: self.isActive)
             } catch {
                 guard !Task.isCancelled else { return }
@@ -79,16 +71,6 @@ final class VideoPreview: ObservableObject {
         }
     }
 
-    func seek(to fraction: Double) {
-        guard duration > 0 else { return }
-        let value = min(max(fraction, 0), 1)
-        progress = value
-        player.seek(to: CMTime(seconds: value * duration, preferredTimescale: 600))
-        if reachedEnd { reachedEnd = false }
-    }
-
-    func toggleMute() { muted.toggle(); player.isMuted = muted }
-
     func resumeIfWanted(active: Bool) {
         isActive = active
         if active && wantsPlayback && !unavailable && !loading && player.currentItem != nil { player.play(); playing = true } else { pause() }
@@ -107,7 +89,8 @@ struct PlayerView: UIViewRepresentable {
     func makeUIView(context: Context) -> PlayerSurface {
         let view = PlayerSurface()
         view.playerLayer.player = player
-        view.playerLayer.videoGravity = .resizeAspect
+        view.playerLayer.videoGravity = .resizeAspectFill
+        view.clipsToBounds = true
         return view
     }
     func updateUIView(_ view: PlayerSurface, context: Context) { view.playerLayer.player = player }
@@ -118,37 +101,124 @@ private enum VideoPanel: String, Identifiable {
     var id: String { rawValue }
 }
 
+// The supplied photos and videos have no known author relationship. These
+// stable display-only pairings are examples, not real user accounts.
+private struct ExampleVideoCreator {
+    let name: String
+    let photoID: String
+    let caption: String
+
+    static let byVideoID: [String: ExampleVideoCreator] = [
+        "example-video-001": .init(name: "Maya Bennett", photoID: "example-photo-001", caption: "A little time by the sea."),
+        "example-video-002": .init(name: "Elena Rivers", photoID: "example-photo-002", caption: "Some views are worth the climb."),
+        "example-video-003": .init(name: "Sofia Hayes", photoID: "example-photo-003", caption: "Letting the noise wash away for a while."),
+        "example-video-004": .init(name: "Theo Parker", photoID: "example-photo-004", caption: "Taking the long way, one step at a time."),
+        "example-video-005": .init(name: "Nora Ellis", photoID: "example-photo-005", caption: "A moment to remember."),
+        "example-video-006": .init(name: "Leo Martin", photoID: "example-photo-006", caption: "A little sunshine on an ordinary day."),
+        "example-video-007": .init(name: "Iris Chen", photoID: "example-photo-007", caption: "Nature never stops surprising me."),
+        "example-video-008": .init(name: "Noah Brooks", photoID: "example-photo-008", caption: "A ride with a view."),
+        "example-video-009": .init(name: "Ava Morgan", photoID: "example-photo-009", caption: "A quiet moment above the city."),
+        "example-video-010": .init(name: "Jules Carter", photoID: "example-photo-010", caption: "Finding a little peace on the water.")
+    ]
+}
+
+private struct ExampleVideoAvatar: View {
+    @EnvironmentObject private var session: LiyaSession
+    let photoID: String?
+    @State private var url: URL?
+
+    var body: some View {
+        Group {
+            if let url {
+                AsyncImage(url: url) { phase in
+                    if let image = phase.image {
+                        image.resizable().scaledToFill()
+                            .frame(width: 44, height: 44).clipped()
+                    } else {
+                        Color.white.opacity(0.15)
+                    }
+                }
+            } else {
+                Color.white.opacity(0.15)
+            }
+        }
+        .frame(width: 44, height: 44)
+        .clipShape(Circle())
+        .accessibilityHidden(true)
+        .task(id: "\(session.imageGeneration)-\(photoID ?? "")") {
+            url = nil
+            guard let photoID, let index = session.photos.firstIndex(where: { $0.id == photoID }) else { return }
+            if let signedURL = try? await session.mediaURL(kind: "photo", index: index), !Task.isCancelled {
+                url = signedURL
+            }
+        }
+    }
+}
+
+private struct VideoScrollBounce: ViewModifier {
+    @ViewBuilder func body(content: Content) -> some View {
+        if #available(iOS 16.4, *) {
+            content.scrollBounceBehavior(.basedOnSize, axes: .vertical)
+        } else {
+            content
+        }
+    }
+}
+
 struct VideoHome: View {
     let active: Bool
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     @State private var panel: VideoPanel?
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject private var preview = VideoPreview()
+    @GestureState private var swipeTranslation: CGFloat = 0
     var body: some View {
         ZStack {
-            Color(red: 0.04, green: 0.04, blue: 0.11).ignoresSafeArea()
-            PlayerView(player: preview.player).accessibilityHidden(true)
+            if session.catalogLoading || preview.loading {
+                DuoControlRegion { _ in
+                    LiyaLoadingIndicator(size: 68)
+                        .accessibilityLabel("Loading video")
+                }
+                .allowsHitTesting(false)
+            }
             DuoControlRegion { available in
               ScrollView {
                VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image("video-title").resizable().scaledToFit().frame(width: 145, height: 42).accessibilityLabel("Liya videos")
                     Spacer()
-                    Text(session.videos.isEmpty ? "Videos" : "Example video \(preview.index + 1) / \(session.videos.count)").font(.caption.bold())
                 }
-                Spacer()
-                if session.catalogLoading || preview.loading { Text("Loading videos…").font(.headline) }
+                Text("Curated videos · names are aliases")
+                    .font(.caption2).shadow(color: .black.opacity(0.85), radius: 3)
+                Spacer(minLength: 16)
+                if session.catalogLoading || preview.loading { EmptyView() }
                 else if let error = session.catalogError {
                     Text(error).font(.headline)
                     Button("Try again") { Task { await session.refreshCatalog() } }.frame(minHeight: 44)
                 } else if session.videos.isEmpty { Text("No videos yet.").font(.headline) }
                 else if preview.unavailable {
                     Text("This video is unavailable.").font(.headline)
-                    Button("Try again") { preview.select(preview.index, active: active, session: session) }.frame(minHeight: 44)
+                    Button("Try again") { preview.select(preview.requestedIndex, active: active && scenePhase == .active && panel == nil, session: session) }.frame(minHeight: 44)
                 }
-                HStack {
-                    Spacer()
+                HStack(alignment: .bottom, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        if session.videos.indices.contains(preview.index) {
+                            let creator = ExampleVideoCreator.byVideoID[session.videos[preview.index].id]
+                            HStack(spacing: 10) {
+                                ExampleVideoAvatar(photoID: creator?.photoID)
+                                Text(creator?.name ?? "Liya collection").font(.headline)
+                            }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(creator?.name ?? "Liya collection")
+                            if let caption = creator?.caption {
+                                Text(caption).font(.subheadline).fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                    .shadow(color: .black.opacity(0.85), radius: 4, y: 1)
+                    Spacer(minLength: 8)
                     VStack(spacing: 12) {
                         Button { Task { await session.toggleLike(kind: "video", index: preview.index) } } label: {
                             Image("heart").resizable().scaledToFit().frame(width: 44, height: 44)
@@ -165,36 +235,49 @@ struct VideoHome: View {
                     Text(error).font(.footnote)
                     Button("Retry likes") { Task { await session.refreshLikes() } }.frame(minHeight: 44)
                 }
-                HStack {
-                    Button { preview.toggle() } label: {
-                        Image(preview.playing ? "pause" : "play").resizable().scaledToFit().frame(width: 48, height: 48)
-                    }.buttonStyle(.plain).accessibilityLabel(preview.playing ? "Pause" : "Play")
-                    Spacer()
-                    Button { preview.select(preview.index - 1, active: active, session: session) } label: {
-                        Image("back").renderingMode(.template).resizable().scaledToFit().foregroundStyle(.white).frame(width: 20, height: 20).frame(width: 44, height: 44)
-                    }.buttonStyle(.plain).disabled(preview.index == 0).accessibilityLabel("Previous video")
-                    Button { preview.select(preview.index + 1, active: active, session: session) } label: {
-                        Image("back").renderingMode(.template).resizable().scaledToFit().foregroundStyle(.white).scaleEffect(x: -1, y: 1).frame(width: 20, height: 20).frame(width: 44, height: 44)
-                    }.buttonStyle(.plain).disabled(preview.index >= session.videos.count - 1).accessibilityLabel("Next video")
-                }
-                HStack(spacing: 8) {
-                    Button(preview.muted ? "Sound off" : "Sound on") { preview.toggleMute() }
-                        .font(.caption.bold()).foregroundStyle(.white).frame(minWidth: 68, minHeight: 44)
-                    VideoProgress(progress: preview.progress, enabled: preview.duration > 0) { preview.seek(to: $0) }
-                    Text(timeLabel(preview.progress * preview.duration) + " / " + timeLabel(preview.duration))
-                        .font(.caption.monospacedDigit()).foregroundStyle(.white)
-                }
-                Text("Example content · Community features are not connected.").font(.footnote)
                }.foregroundStyle(.white).padding(20).frame(maxWidth: 620).frame(maxWidth: .infinity).frame(minHeight: available.height).modifier(AdaptiveContainerMargins())
-              }
+              }.modifier(VideoScrollBounce())
+            }
+            .padding(.bottom, LiyaTabBarLayout.contentClearance)
+        }
+        .background {
+            ZStack {
+                Color(red: 0.04, green: 0.04, blue: 0.11)
+                PlayerView(player: preview.player)
+                    .offset(y: reduceMotion ? 0 : max(-28, min(28, swipeTranslation * 0.14)))
+                    .animation(reduceMotion ? nil : .interactiveSpring(response: 0.3, dampingFraction: 0.85), value: swipeTranslation)
+                    .accessibilityHidden(true)
+            }
+            .ignoresSafeArea(.container)
+        }
+        .overlay {
+            if !session.catalogLoading && !preview.loading && !preview.unavailable && !session.videos.isEmpty {
+                DuoControlRegion { _ in
+                    Button { preview.toggle() } label: {
+                        Image(preview.playing ? "pause" : "play")
+                            .resizable().scaledToFit().frame(width: 56, height: 56)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(preview.playing ? "Pause video" : "Play video")
+                }
             }
         }
         .contentShape(Rectangle())
-        .simultaneousGesture(DragGesture(minimumDistance: 60).onEnded { value in
-            if abs(value.translation.height) > abs(value.translation.width) {
-                preview.select(preview.index + (value.translation.height < 0 ? 1 : -1), active: active, session: session)
-            }
-        })
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 30)
+                .updating($swipeTranslation) { value, state, _ in
+                    if abs(value.translation.height) > abs(value.translation.width) * 1.3 {
+                        state = value.translation.height
+                    }
+                }
+                .onEnded { value in
+                    guard abs(value.translation.height) > 60,
+                          abs(value.translation.height) > abs(value.translation.width) * 1.3 else { return }
+                    let current = preview.loading ? preview.requestedIndex : preview.index
+                    let target = current + (value.translation.height < 0 ? 1 : -1)
+                    preview.select(target, active: active && scenePhase == .active && panel == nil, session: session)
+                }
+        )
         .onAppear {
             if preview.player.currentItem == nil { preview.select(preview.index, active: active && scenePhase == .active && panel == nil, session: session) }
             else { preview.resumeIfWanted(active: active && scenePhase == .active && panel == nil) }
@@ -225,37 +308,6 @@ struct VideoHome: View {
         }
         .onDisappear { preview.resumeIfWanted(active: false) }
         .navigationBarHidden(true)
-    }
-    private func timeLabel(_ value: Double) -> String {
-        let seconds = value.isFinite ? max(0, Int(value)) : 0
-        return String(format: "%d:%02d", seconds / 60, seconds % 60)
-    }
-}
-
-private struct VideoProgress: View {
-    let progress: Double
-    let enabled: Bool
-    let seek: (Double) -> Void
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                Capsule().fill(.white.opacity(0.35)).frame(height: 4)
-                Capsule().fill(.white).frame(width: max(0, geometry.size.width * CGFloat(progress)), height: 4)
-            }.frame(maxHeight: .infinity).contentShape(Rectangle())
-                .gesture(DragGesture(minimumDistance: 0).onChanged { value in
-                    guard enabled, geometry.size.width > 0 else { return }
-                    seek(Double(value.location.x / geometry.size.width))
-                })
-        }.frame(height: 44).accessibilityElement().accessibilityLabel("Video progress")
-            .accessibilityValue("\(Int(progress * 100)) percent")
-            .accessibilityAdjustableAction { direction in
-                guard enabled else { return }
-                switch direction {
-                case .increment: seek(progress + 0.05)
-                case .decrement: seek(progress - 0.05)
-                @unknown default: break
-                }
-            }
     }
 }
 

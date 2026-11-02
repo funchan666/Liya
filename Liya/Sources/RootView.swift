@@ -1,17 +1,23 @@
 import SwiftUI
 
+enum LiyaTabBarLayout {
+    static let height: CGFloat = 68
+    static let bottomPadding: CGFloat = 4
+    static let contentClearance: CGFloat = height + bottomPadding + 12
+}
+
 private enum LiyaTab: Int, CaseIterable {
     case discover, square, compose, messages, profile
     var title: String {
         switch self { case .discover: return "Video"; case .square: return "Square"; case .compose: return "Create"; case .messages: return "Messages"; case .profile: return "Profile" }
     }
-    func image(selected: Bool) -> String {
+    var image: String {
         switch self {
-        case .discover: return selected ? "tab-square" : "tab-video-inactive"
-        case .square: return selected ? "tab-discover" : "tab-square-inactive"
+        case .discover: return "tab-square"
+        case .square: return "tab-discover"
         case .compose: return "tab-create"
-        case .messages: return selected ? "tab-message" : "tab-message-inactive"
-        case .profile: return selected ? "tab-profile" : "tab-profile-inactive"
+        case .messages: return "tab-message"
+        case .profile: return "tab-profile"
         }
     }
 }
@@ -21,6 +27,7 @@ struct RootView: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     @EnvironmentObject private var calls: LiyaCalls
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var selection: LiyaTab = .discover
 
     var body: some View {
@@ -58,16 +65,34 @@ struct RootView: View {
                         HStack(spacing: 0) {
                             ForEach(LiyaTab.allCases, id: \.rawValue) { item in
                                 Button { selection = item } label: {
-                                    VStack(spacing: 3) {
-                                        Image(item.image(selected: selection == item)).resizable().scaledToFit().frame(width: item == .compose ? 34 : 24, height: 34)
-                                        Text(item.title).font(.system(size: 10, weight: selection == item ? .bold : .regular))
-                                            .foregroundStyle(selection == item ? liyaAccent : .secondary)
-                                    }.frame(width: max(52, (size.width - 16) / CGFloat(LiyaTab.allCases.count)), height: 52).contentShape(Rectangle())
+                                    Image(item.image)
+                                        .renderingMode(.original)
+                                        .resizable().scaledToFit()
+                                        .frame(width: item == .compose ? 32 : 25, height: 32)
+                                        .saturation(selection == item ? 1 : 0.45)
+                                        .opacity(selection == item ? 1 : 0.72)
+                                        .scaleEffect(selection == item ? 1.08 : 1)
+                                        .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: selection == item)
+                                        .frame(width: max(54, (size.width - 24) / CGFloat(LiyaTab.allCases.count)), height: 64)
+                                        .contentShape(Rectangle())
                                 }.buttonStyle(.plain).accessibilityLabel(item.title).accessibilityAddTraits(selection == item ? .isSelected : [])
                             }
-                        }.padding(.horizontal, 8).modifier(AdaptiveContainerMargins())
+                        }.padding(.horizontal, 12).modifier(AdaptiveContainerMargins())
                     }
-                }.frame(height: 52).background(.white)
+                    .background {
+                        GeometryReader { geometry in
+                            Image("tabbar-surface").resizable().scaledToFit()
+                                .frame(width: geometry.size.width, height: geometry.size.width * 724 / 2172)
+                                .frame(width: geometry.size.width, height: geometry.size.height)
+                                .clipped().accessibilityHidden(true)
+                        }
+                    }
+                }
+                .frame(height: LiyaTabBarLayout.height)
+                .frame(maxWidth: 620)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 8)
+                .padding(.bottom, LiyaTabBarLayout.bottomPadding)
             }
         }
     }
