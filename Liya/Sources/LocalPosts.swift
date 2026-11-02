@@ -32,12 +32,16 @@ struct LocalPostCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
-                if let avatar = store.avatar { MediaThumbnail(item: avatar).frame(width: 42, height: 42).clipShape(Circle()) }
-                else { Image("app-mark").resizable().scaledToFill().frame(width: 42, height: 42).clipShape(Circle()) }
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(store.nickname.isEmpty ? "Your local profile" : store.nickname).font(.subheadline.bold()).foregroundStyle(liyaInk)
-                    Text("On this device · not shared").font(.caption).foregroundStyle(.secondary)
-                }
+                NavigationLink { DeviceProfileView() } label: {
+                    HStack(spacing: 10) {
+                        if let avatar = store.avatar { MediaThumbnail(item: avatar).frame(width: 42, height: 42).clipShape(Circle()) }
+                        else { Image("app-mark").resizable().scaledToFill().frame(width: 42, height: 42).clipShape(Circle()) }
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(store.nickname.isEmpty ? "Your local profile" : store.nickname).font(.subheadline.bold()).foregroundStyle(liyaInk)
+                            Text("On this device · not shared").font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }.buttonStyle(.plain)
                 Spacer()
                 NavigationLink { EditDraftView(draft: post) } label: { Text("Edit").font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44) }
                     .buttonStyle(.plain)

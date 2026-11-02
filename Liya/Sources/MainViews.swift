@@ -173,16 +173,19 @@ struct MessagesHome: View {
                         if !messageIndexes.isEmpty { OfflineNote(text: "Earlier drafts for example profiles are private and have not been sent.") }
                         ForEach(messageIndexes, id: \.self) { index in
                             HStack(spacing: 12) {
-                                NavigationLink { ExampleChatView(index: index) } label: {
-                                    HStack(spacing: 12) {
+                                NavigationLink { ExampleProfileView(index: index) } label: {
                                         ExampleAvatar(index: index)
-                                        VStack(alignment: .leading, spacing: 4) {
+                                }.buttonStyle(.plain).accessibilityLabel("View profile")
+                                VStack(alignment: .leading, spacing: 4) {
+                                    NavigationLink { ExampleProfileView(index: index) } label: {
                                             Text("Example profile \(index + 1)").font(.subheadline.bold()).foregroundStyle(liyaInk)
+                                    }.buttonStyle(.plain)
+                                    NavigationLink { ExampleChatView(index: index) } label: {
                                             Text("Draft · \(store.messageDrafts[String(index)] ?? "")").font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                                        }
-                                        Spacer()
-                                    }
-                                }.buttonStyle(.plain)
+                                    }.buttonStyle(.plain)
+                                }
+                                Spacer()
+                                NavigationLink("Open") { ExampleChatView(index: index) }.font(.caption.bold()).foregroundStyle(liyaAccent)
                                 Button { deleteMessage = DraftMessageSelection(id: index) } label: {
                                     Image("close").resizable().scaledToFit().frame(width: 22, height: 22).frame(width: 44, height: 44)
                                 }.buttonStyle(.plain).accessibilityLabel("Delete message draft")
@@ -197,10 +200,13 @@ struct MessagesHome: View {
                         }
                         ForEach(session.photos.indices, id: \.self) { index in
                             if session.isLiked(kind: "photo", index: index) && !store.blockedExamples.contains(index) {
-                                NavigationLink { ExamplePhotoDetail(index: index) } label: {
-                                    HStack { ExampleAvatar(index: index); Text("Account like · example photo \(index + 1)"); Spacer() }
-                                        .foregroundStyle(liyaInk).padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
-                                }.buttonStyle(.plain)
+                                HStack {
+                                    NavigationLink { ExampleProfileView(index: index) } label: { ExampleAvatar(index: index) }
+                                        .buttonStyle(.plain).accessibilityLabel("View profile")
+                                    NavigationLink("Account like · example photo \(index + 1)") { ExamplePhotoDetail(index: index) }
+                                        .foregroundStyle(liyaInk)
+                                    Spacer()
+                                }.padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                             }
                         }
                         ForEach(session.videos.indices, id: \.self) { index in
@@ -215,10 +221,13 @@ struct MessagesHome: View {
                             EmptyState(title: "No local activity", detail: "Likes and notes on example photos will appear here.")
                         }
                         ForEach(visibleLikes, id: \.self) { index in
-                            NavigationLink { ExamplePhotoDetail(index: index) } label: {
-                                HStack { ExampleAvatar(index: index); Text("Liked example photo \(index + 1)"); Spacer() }
-                                    .foregroundStyle(liyaInk).padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
-                            }.buttonStyle(.plain)
+                            HStack {
+                                NavigationLink { ExampleProfileView(index: index) } label: { ExampleAvatar(index: index) }
+                                    .buttonStyle(.plain).accessibilityLabel("View profile")
+                                NavigationLink("Liked example photo \(index + 1)") { ExamplePhotoDetail(index: index) }
+                                    .foregroundStyle(liyaInk)
+                                Spacer()
+                            }.padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                         }
                         ForEach(store.likedVideos.sorted(), id: \.self) { index in
                             Button { store.videoRequest = VideoRequest(index: index) } label: {
@@ -236,12 +245,17 @@ struct MessagesHome: View {
                             }.buttonStyle(.plain)
                         }
                         ForEach(visibleNotes.reversed()) { comment in
-                            NavigationLink { ExampleCommentsView(index: comment.photoIndex) } label: {
-                                HStack { ExampleAvatar(index: comment.photoIndex); VStack(alignment: .leading) {
+                            HStack {
+                                NavigationLink { ExampleProfileView(index: comment.photoIndex) } label: { ExampleAvatar(index: comment.photoIndex) }
+                                    .buttonStyle(.plain).accessibilityLabel("View profile")
+                                NavigationLink { ExampleCommentsView(index: comment.photoIndex) } label: {
+                                    VStack(alignment: .leading) {
                                     Text("Private note · Photo \(comment.photoIndex + 1)").font(.subheadline.bold())
                                     Text(comment.text).font(.caption).lineLimit(2)
-                                }; Spacer() }.foregroundStyle(liyaInk).padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
-                            }.buttonStyle(.plain)
+                                    }.foregroundStyle(liyaInk)
+                                }.buttonStyle(.plain)
+                                Spacer()
+                            }.padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                         }
                     }
                 }.frame(maxWidth: 620).frame(maxWidth: .infinity).padding(20)

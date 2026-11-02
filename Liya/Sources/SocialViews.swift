@@ -435,6 +435,12 @@ private struct SocialMediaPreview: View {
                 if item.kind == "video" { player = AVPlayer(url: value) } else { url = value }
             } catch { if !Task.isCancelled { failed = true } }
         }.onLiyaChange(of: phase) { if $0 != .active { player?.pause(); playing = false } }
+            .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
+                if let endedItem = notification.object as? AVPlayerItem, endedItem === player?.currentItem {
+                    player?.seek(to: .zero)
+                    if playing && phase == .active { player?.play() }
+                }
+            }
             .onDisappear { player?.pause(); player = nil }
     }
 }
@@ -477,17 +483,25 @@ struct CommunityMessagesView: View {
             }
             if !social.realtimeConnected { Button("Reconnect live updates") { social.watchMessages(session) }.font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44) }
             ForEach(peers, id: \.self) { id in
-                NavigationLink { CommunityConversationView(personID: id) } label: {
-                    HStack(spacing: 12) {
+                HStack(spacing: 12) {
+                    NavigationLink { CommunityPersonView(personID: id) } label: {
                         SocialAvatar(personID: id).frame(width: 44, height: 44).clipShape(Circle())
-                        VStack(alignment: .leading, spacing: 4) {
+                    }.buttonStyle(.plain).accessibilityLabel("View member profile")
+                    VStack(alignment: .leading, spacing: 4) {
+                        NavigationLink { CommunityPersonView(personID: id) } label: {
                             Text(social.person(id)?.displayName ?? "Liya member").font(.subheadline.bold())
+                        }.buttonStyle(.plain)
+                        NavigationLink { CommunityConversationView(personID: id) } label: {
                             if let last = social.messages.last(where: { $0.senderID == id || $0.recipientID == id }) {
                                 Text(last.body.isEmpty ? "Attachment" : last.body).font(.caption).lineLimit(2).foregroundStyle(.secondary)
+                            } else {
+                                Text("Open conversation").font(.caption).foregroundStyle(liyaAccent)
                             }
-                        }; Spacer()
-                    }.foregroundStyle(liyaInk).padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
-                }.buttonStyle(.plain)
+                        }.buttonStyle(.plain)
+                    }
+                    Spacer()
+                    NavigationLink("Open") { CommunityConversationView(personID: id) }.font(.caption.bold()).foregroundStyle(liyaAccent)
+                }.foregroundStyle(liyaInk).padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
             }
         }.task { await social.refreshMessages(session) }
     }
@@ -513,8 +527,15 @@ struct CommunityConversationView: View {
         return social.messages.filter { ($0.senderID == owner && $0.recipientID == personID) || ($0.senderID == personID && $0.recipientID == owner) }
     }
     var body: some View {
-        PageShell(title: social.person(personID)?.displayName ?? "Conversation") {
+        PageShell(title: "Conversation") {
             VStack(alignment: .leading, spacing: 12) {
+                NavigationLink { CommunityPersonView(personID: personID) } label: {
+                    HStack(spacing: 10) {
+                        SocialAvatar(personID: personID).frame(width: 44, height: 44).clipShape(Circle())
+                        Text(social.person(personID)?.displayName ?? "Liya member").font(.headline)
+                        Spacer()
+                    }.foregroundStyle(liyaInk).frame(minHeight: 44)
+                }.buttonStyle(.plain)
                 OfflineNote(text: "Messages are free and visible only to you and this member.")
                 if social.isJoined(session) && social.person(personID) != nil {
                     HStack(spacing: 12) {
@@ -535,7 +556,10 @@ struct CommunityConversationView: View {
                 if social.messagesLoading { Text("Loading messages…").foregroundStyle(.secondary) }
                 ForEach(conversation) { message in
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(message.senderID == session.userID ? "You" : (social.person(personID)?.displayName ?? "Member")).font(.caption.bold()).foregroundStyle(liyaAccent)
+                        NavigationLink { CommunityPersonView(personID: message.senderID) } label: {
+                            Text(message.senderID == session.userID ? "You" : (social.person(message.senderID)?.displayName ?? "Member"))
+                                .font(.caption.bold()).foregroundStyle(liyaAccent)
+                        }.buttonStyle(.plain)
                         if !message.body.isEmpty { Text(message.body).foregroundStyle(liyaInk).frame(maxWidth: .infinity, alignment: .leading) }
                         SocialMediaStrip(paths: message.mediaPaths, kinds: message.mediaKinds)
                         if message.senderID == session.userID { Button("Delete for everyone") { deleting = message }.font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44) }

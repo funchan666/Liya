@@ -12,6 +12,8 @@ struct ExampleAvatar: View {
 struct ExampleProfileView: View {
     @EnvironmentObject private var store: LocalStore
     let index: Int
+    var displayName: String? = nil
+    var introduction: String? = nil
     @State private var section = 0
     @State private var options = false
 
@@ -27,7 +29,8 @@ struct ExampleProfileView: View {
                     }
                     CloudPhoto(index: index, contentMode: .fill).frame(maxWidth: .infinity).frame(height: 240)
                         .clipped().clipShape(RoundedRectangle(cornerRadius: 18))
-                    Text("Example profile \(index + 1)").font(.title2.bold()).foregroundStyle(liyaInk)
+                    Text(displayName ?? "Example profile \(index + 1)").font(.title2.bold()).foregroundStyle(liyaInk)
+                    if let introduction { Text(introduction).font(.subheadline).foregroundStyle(.secondary) }
                     OfflineNote(text: "Illustrative profile from supplied media. Follows, notes and blocks here are local to this device.")
                     HStack {
                         Button {
@@ -66,7 +69,7 @@ struct ExampleChatView: View {
     let index: Int
     @State private var draft = ""
     var body: some View {
-        PageShell(title: "Example profile \(index + 1)") {
+        PageShell(title: "Messages") {
             VStack(spacing: 16) {
                 NavigationLink { ExampleProfileView(index: index) } label: {
                     HStack { ExampleAvatar(index: index); Text("Example profile \(index + 1)").font(.headline); Spacer() }

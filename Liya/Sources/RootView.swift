@@ -13,11 +13,11 @@ private enum LiyaTab: Int, CaseIterable {
     }
     var image: String {
         switch self {
-        case .discover: return "tab-square"
-        case .square: return "tab-discover"
-        case .compose: return "tab-create"
-        case .messages: return "tab-message"
-        case .profile: return "tab-profile"
+        case .discover: return "nav-v2-video"
+        case .square: return "nav-v2-square"
+        case .compose: return "nav-v2-create"
+        case .messages: return "nav-v2-messages"
+        case .profile: return "nav-v2-profile"
         }
     }
 }
@@ -68,10 +68,10 @@ struct RootView: View {
                                     Image(item.image)
                                         .renderingMode(.original)
                                         .resizable().scaledToFit()
-                                        .frame(width: item == .compose ? 32 : 25, height: 32)
-                                        .saturation(selection == item ? 1 : 0.45)
-                                        .opacity(selection == item ? 1 : 0.72)
-                                        .scaleEffect(selection == item ? 1.08 : 1)
+                                        .frame(width: 40, height: 40)
+                                        .saturation(selection == item ? 0.85 : 0.6)
+                                        .opacity(selection == item ? 1 : 0.78)
+                                        .scaleEffect(selection == item ? 1.06 : 1)
                                         .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: selection == item)
                                         .frame(width: max(54, (size.width - 24) / CGFloat(LiyaTab.allCases.count)), height: 64)
                                         .contentShape(Rectangle())
@@ -80,11 +80,10 @@ struct RootView: View {
                         }.padding(.horizontal, 12).modifier(AdaptiveContainerMargins())
                     }
                     .background {
-                        GeometryReader { geometry in
-                            Image("tabbar-surface").resizable().scaledToFit()
-                                .frame(width: geometry.size.width, height: geometry.size.width * 724 / 2172)
-                                .frame(width: geometry.size.width, height: geometry.size.height)
-                                .clipped().accessibilityHidden(true)
+                        if #available(iOS 26.0, *) {
+                            Color.clear.glassEffect(.regular, in: Capsule())
+                        } else {
+                            Capsule().fill(.ultraThinMaterial)
                         }
                     }
                 }

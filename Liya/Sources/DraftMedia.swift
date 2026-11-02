@@ -228,7 +228,6 @@ struct DraftVideoPreview: View {
     let item: DraftAttachment
     @State private var player: AVPlayer?
     @State private var playing = false
-    @State private var reachedEnd = false
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
@@ -249,10 +248,7 @@ struct DraftVideoPreview: View {
                 if player == nil { Text("Video unavailable").foregroundStyle(.white) }
                 Button {
                     guard let player else { return }
-                    if playing { player.pause() } else {
-                        if reachedEnd { player.seek(to: .zero); reachedEnd = false }
-                        player.play()
-                    }
+                    if playing { player.pause() } else { player.play() }
                     playing.toggle()
                 } label: { Image(playing ? "pause" : "play").resizable().scaledToFit().frame(width: 50, height: 50) }
                     .buttonStyle(.plain).accessibilityLabel(playing ? "Pause video" : "Play video")
@@ -265,7 +261,10 @@ struct DraftVideoPreview: View {
         }.onLiyaChange(of: scenePhase) { phase in
             if phase != .active { player?.pause(); playing = false }
         }.onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
-            if let item = notification.object as? AVPlayerItem, item === player?.currentItem { playing = false; reachedEnd = true }
+            if let item = notification.object as? AVPlayerItem, item === player?.currentItem {
+                player?.seek(to: .zero)
+                if playing && scenePhase == .active { player?.play() }
+            }
         }.onDisappear { player?.pause(); player = nil; playing = false }
     }
 }

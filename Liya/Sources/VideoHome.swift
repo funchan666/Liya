@@ -11,7 +11,6 @@ final class VideoPreview: ObservableObject {
     @Published var loading = false
     @Published private(set) var requestedIndex = 0
     private var wantsPlayback = true
-    private var reachedEnd = false
     private var isActive = false
     private var loadTask: Task<Void, Never>?
 
@@ -26,7 +25,6 @@ final class VideoPreview: ObservableObject {
         playing = false
         loading = true
         unavailable = false
-        reachedEnd = false
         wantsPlayback = true
         loadTask = Task { [weak self, weak session] in
             guard let self, let session else { return }
@@ -65,7 +63,6 @@ final class VideoPreview: ObservableObject {
             pause()
         } else {
             wantsPlayback = true
-            if reachedEnd { player.seek(to: .zero); reachedEnd = false }
             player.play()
             playing = true
         }
@@ -76,7 +73,10 @@ final class VideoPreview: ObservableObject {
         if active && wantsPlayback && !unavailable && !loading && player.currentItem != nil { player.play(); playing = true } else { pause() }
     }
     func pause() { player.pause(); playing = false }
-    func finished() { reachedEnd = true; wantsPlayback = false; pause() }
+    func finished() {
+        player.seek(to: .zero)
+        resumeIfWanted(active: isActive)
+    }
 }
 
 final class PlayerSurface: UIView {
@@ -190,8 +190,6 @@ struct VideoHome: View {
                     Image("video-title").resizable().scaledToFit().frame(width: 145, height: 42).accessibilityLabel("Liya videos")
                     Spacer()
                 }
-                Text("Curated videos · names are aliases")
-                    .font(.caption2).shadow(color: .black.opacity(0.85), radius: 3)
                 Spacer(minLength: 16)
                 if session.catalogLoading || preview.loading { EmptyView() }
                 else if let error = session.catalogError {
@@ -206,12 +204,23 @@ struct VideoHome: View {
                     VStack(alignment: .leading, spacing: 16) {
                         if session.videos.indices.contains(preview.index) {
                             let creator = ExampleVideoCreator.byVideoID[session.videos[preview.index].id]
-                            HStack(spacing: 10) {
-                                ExampleVideoAvatar(photoID: creator?.photoID)
-                                Text(creator?.name ?? "Liya collection").font(.headline)
+                            NavigationLink {
+                                if let creator, let photoIndex = session.photos.firstIndex(where: { $0.id == creator.photoID }) {
+                                    ExampleProfileView(index: photoIndex, displayName: creator.name, introduction: creator.caption)
+                                } else {
+                                    PageShell(title: "Profile") {
+                                        EmptyState(title: "Profile unavailable", detail: "Please try again when the content has loaded.")
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 10) {
+                                    ExampleVideoAvatar(photoID: creator?.photoID)
+                                    Text(creator?.name ?? "Liya collection").font(.headline)
+                                }
+                                .foregroundStyle(.white)
                             }
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityLabel(creator?.name ?? "Liya collection")
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("View \(creator?.name ?? "profile")")
                             if let caption = creator?.caption {
                                 Text(caption).font(.subheadline).fixedSize(horizontal: false, vertical: true)
                             }

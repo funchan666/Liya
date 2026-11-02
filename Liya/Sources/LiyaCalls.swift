@@ -184,6 +184,7 @@ struct LiyaCallScreen: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     @Environment(\.openURL) private var openURL
+    @State private var showingProfile = false
     let initial: LiyaCall
     private var call: LiyaCall { calls.call ?? initial }
     private var peer: UUID { call.callerID == session.userID ? call.calleeID : call.callerID }
@@ -193,7 +194,9 @@ struct LiyaCallScreen: View {
             DuoControlRegion { size in
                 ScrollView {
                     VStack(spacing: 18) {
-                        Text(social.person(peer)?.displayName ?? "Liya member").font(.title2.bold()).foregroundStyle(.white)
+                        Button { showingProfile = true } label: {
+                            Text(social.person(peer)?.displayName ?? "Liya member").font(.title2.bold()).foregroundStyle(.white)
+                        }.buttonStyle(.plain).accessibilityLabel("View member profile")
                         Text(call.kind == "video" ? "Video call" : "Voice call").foregroundStyle(.white.opacity(0.85))
                         if let room = calls.room, call.kind == "video" {
                             CallVideo(room: room).frame(height: min(max(size.height * 0.42, 200), 420)).clipShape(RoundedRectangle(cornerRadius: 20))
@@ -228,6 +231,9 @@ struct LiyaCallScreen: View {
                 }
             }
         }.interactiveDismissDisabled()
+            .sheet(isPresented: $showingProfile) {
+                NavigationStack { CommunityPersonView(personID: peer) }
+            }
     }
 }
 
