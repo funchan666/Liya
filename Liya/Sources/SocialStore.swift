@@ -400,7 +400,9 @@ final class SocialStore: ObservableObject {
                 guard session.userID == owner, accountGeneration == generation, message.senderID == owner && message.recipientID == target && message.body == body && message.mediaPaths.count == attachments.count else { throw SocialError.conflict }
                 await refreshMessages(session); return session.userID == owner && accountGeneration == generation
             }
+            guard session.userID == owner, accountGeneration == generation else { return false }
             let (paths, kinds) = try await upload(session, owner: owner, id: id, attachments: attachments)
+            guard session.userID == owner, accountGeneration == generation else { return false }
             let input = SocialMessageInput(id: id, senderID: owner, recipientID: target, body: body, mediaPaths: paths, mediaKinds: kinds)
             do { try await session.client.from("liya_messages").insert(input).execute() } catch { }
             let saved: [SocialMessage] = try await session.client.from("liya_messages").select("id,sender_id,recipient_id,body,media_paths,media_kinds,created_at").eq("id", value: id.uuidString).execute().value

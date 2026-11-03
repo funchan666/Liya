@@ -733,6 +733,7 @@ struct CommunityConversationView: View {
     @State private var deleting: SocialMessage?
     @State private var showMediaPicker = false
     @State private var draftOwner: UUID?
+    @State private var positionedHistory = false
     private var key: String { "liya.social.messageDraft.\(draftOwner?.uuidString ?? "none").\(personID.uuidString)" }
     private var conversation: [SocialMessage] {
         guard let owner = session.userID else { return [] }
@@ -788,10 +789,13 @@ struct CommunityConversationView: View {
                     .safeAreaInset(edge: .bottom, spacing: 0) { conversationComposer }
                     .task {
                         await social.refreshMessages(session)
-                        if let id = conversation.last?.id { proxy.scrollTo(id, anchor: .bottom) }
+                        if let id = conversation.last?.id { proxy.scrollTo(id, anchor: .bottom); positionedHistory = true }
                     }
                     .onLiyaChange(of: conversation.last?.id) { id in
-                        if sending, let id { withAnimation { proxy.scrollTo(id, anchor: .bottom) } }
+                        if let id, sending || !positionedHistory {
+                            withAnimation { proxy.scrollTo(id, anchor: .bottom) }
+                            positionedHistory = true
+                        }
                     }
                 }
             }
