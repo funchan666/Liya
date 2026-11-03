@@ -85,7 +85,11 @@ struct WalletView: View {
                 }.padding(18).frame(maxWidth: .infinity, alignment: .leading)
                     .background(.white.opacity(0.78), in: RoundedRectangle(cornerRadius: 18))
             }.padding(.top, 12).modifier(AdaptiveContainerMargins())
-        }.sheet(item: $selection) { pack in AppleCoinPackSheet(pack: pack) }
+        }.sheet(item: $selection) { pack in
+            AppleCoinPackSheet(pack: pack)
+                .presentationDetents([.fraction(0.72), .large])
+                .presentationDragIndicator(.visible)
+        }
             .task { await session.refreshWallet() }
     }
 
@@ -140,41 +144,81 @@ private struct AppleCoinPackSheet: View {
     var body: some View {
         ZStack {
             LiyaBackground()
-            DuoControlRegion { size in
+            DuoControlRegion { _ in
                 ScrollView {
-                    VStack(spacing: 18) {
-                        Image("wallet-coin").resizable().scaledToFit().frame(width: 94, height: 94).accessibilityHidden(true)
-                        Text("\(pack.coins.formatted()) coins").font(.title2.bold()).foregroundStyle(liyaInk)
-                        if loading {
-                            Text("Checking the App Store…").font(.subheadline).foregroundStyle(.secondary)
-                        } else if let product {
-                            Text(product.displayPrice).font(.title3.bold()).foregroundStyle(liyaAccent)
-                            Text("The price shown is supplied by the App Store.").font(.footnote).foregroundStyle(.secondary)
-                            if product.type != .consumable {
-                                Text("This product is not configured as a coin pack.")
-                                    .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    VStack(alignment: .leading, spacing: 18) {
+                        HStack(alignment: .center) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Your coin pack").font(.title3.weight(.bold)).foregroundStyle(liyaInk)
+                                Text("Ready for a little more?").font(.footnote).foregroundStyle(.secondary)
                             }
-                        } else {
-                            Text(message ?? "This pack is not available from the App Store right now.")
-                                .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                            Button("Try again") { Task { await loadProduct() } }.font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                            Spacer(minLength: 8)
+                            Button("Close") { dismiss() }
+                                .font(.footnote.weight(.semibold)).foregroundStyle(liyaInk.opacity(0.75))
+                                .padding(.horizontal, 15).frame(minHeight: 44)
+                                .background(.white.opacity(0.75), in: Capsule())
+                                .buttonStyle(.plain)
                         }
-                        if !checkout.isConnected {
-                            Text("Purchasing is unavailable until account and secure coin delivery are connected.")
-                                .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                        packSummary
+                        if loading {
+                            HStack(spacing: 10) {
+                                LiyaLoadingIndicator(size: 24)
+                                Text("Checking the App Store…").font(.subheadline).foregroundStyle(.secondary)
+                            }.frame(maxWidth: .infinity, alignment: .leading)
+                        } else if product == nil {
+                            statusCard(title: "This pack is taking a moment", detail: message ?? "This pack is not available from the App Store right now.")
+                        } else if product?.type != .consumable {
+                            statusCard(title: "This pack isn't ready", detail: "This product is not configured as a coin pack.")
+                        }
+                        if !loading && product != nil && !checkout.isConnected {
+                            statusCard(title: "Purchases are unavailable", detail: "Please reconnect your account before purchasing.")
                         }
                         if let message = checkout.message {
-                            Text(message).font(.footnote).foregroundStyle(liyaInk).multilineTextAlignment(.center)
+                            Text(message).font(.footnote).foregroundStyle(liyaInk)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        PrimaryButton(title: checkout.busy ? "Processing…" : "Continue with Apple",
-                                      disabled: product?.type != .consumable || !checkout.canPurchase) {
-                            if let product { Task { await checkout.purchase(product, pack: pack) } }
+                        if !loading && product == nil {
+                            PrimaryButton(title: "Try again") { Task { await loadProduct() } }
+                        } else {
+                            PrimaryButton(title: checkout.busy ? "Processing…" : "Continue with Apple",
+                                          disabled: loading || product?.type != .consumable || !checkout.canPurchase) {
+                                if let product { Task { await checkout.purchase(product, pack: pack) } }
+                            }
                         }
-                        Button("Close") { dismiss() }.font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                    }.padding(24).frame(maxWidth: 420).frame(maxWidth: .infinity).frame(minHeight: size.height)
+                    }.padding(.horizontal, 22).padding(.top, 26).padding(.bottom, 24)
+                        .frame(maxWidth: 440).frame(maxWidth: .infinity)
                 }
             }
         }.task { await loadProduct() }
+    }
+
+    private var packSummary: some View {
+        HStack(spacing: 14) {
+            Image("wallet-coin").resizable().scaledToFit().frame(width: 72, height: 72).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 5) {
+                Text("\(pack.coins.formatted()) coins")
+                    .font(.system(.title2, design: .rounded).weight(.bold)).foregroundStyle(liyaInk)
+                    .monospacedDigit().fixedSize(horizontal: false, vertical: true)
+                if let product {
+                    Text(product.displayPrice).font(.headline.weight(.bold)).foregroundStyle(liyaAccent)
+                    Text("App Store price").font(.caption).foregroundStyle(.secondary)
+                } else {
+                    Text("App Store price").font(.caption.weight(.medium)).foregroundStyle(.secondary)
+                }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+        }.padding(18).frame(maxWidth: .infinity, alignment: .leading)
+            .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 22))
+            .overlay(RoundedRectangle(cornerRadius: 22).stroke(liyaAccent.opacity(0.12), lineWidth: 1))
+    }
+
+    private func statusCard(title: String, detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+            Text(LocalizedStringKey(detail)).font(.footnote).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
+            .background(.white.opacity(0.65), in: RoundedRectangle(cornerRadius: 16))
     }
 
     @MainActor private func loadProduct() async {

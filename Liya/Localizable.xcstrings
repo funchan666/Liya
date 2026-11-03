@@ -1,6 +1,286 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+      "Your coin pack": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "你的金币包"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Tu paquete de monedas"
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Votre pack de pièces"
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "コインパック"
+            }
+          }
+        }
+      },
+      "Ready for a little more?": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "为美好时刻添点光亮"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Un poco más para tus momentos"
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Un petit éclat en plus"
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "毎日に、もう少し輝きを"
+            }
+          }
+        }
+      },
+      "App Store price": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "App Store 价格"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Precio de App Store"
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Prix App Store"
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "App Store の価格"
+            }
+          }
+        }
+      },
+      "This pack is taking a moment": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "暂时无法获取商品"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Este paquete está tardando"
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Ce pack prend un peu de temps"
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "パックを取得できませんでした"
+            }
+          }
+        }
+      },
+      "This pack isn't ready": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "该商品暂不可用"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Este paquete aún no está listo"
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Ce pack n’est pas encore disponible"
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "このパックはまだ利用できません"
+            }
+          }
+        }
+      },
+      "Purchases are unavailable": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "暂时无法购买"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Compras no disponibles"
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Achats indisponibles"
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "購入できません"
+            }
+          }
+        }
+      },
+      "Please reconnect your account before purchasing.": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "请重新连接账号后再购买。"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Vuelve a conectar tu cuenta antes de comprar."
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Reconnectez votre compte avant de poursuivre."
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "購入前にアカウントを再接続してください。"
+            }
+          }
+        }
+      },
+      "This pack is not available from the App Store right now.": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "App Store 暂时无法提供该商品。"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Este paquete no está disponible en App Store ahora mismo."
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Ce pack n’est pas disponible sur l’App Store pour le moment."
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "このパックは現在 App Store で利用できません。"
+            }
+          }
+        }
+      },
+      "Could not load the App Store price. Please try again.": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "暂时无法获取 App Store 价格，请重试。"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "No se pudo cargar el precio de App Store. Inténtalo de nuevo."
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Impossible de charger le prix App Store. Réessayez."
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "App Store の価格を取得できませんでした。もう一度お試しください。"
+            }
+          }
+        }
+      },
+      "Continue with Apple": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "通过 Apple 继续"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Continuar con Apple"
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Continuer avec Apple"
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Apple で続ける"
+            }
+          }
+        }
+      },
       "Couldn't refresh your connections.": {
         "localizations": {
           "zh-Hans": {
@@ -1370,7 +1650,32 @@
       }
     },
     "Checking the App Store…" : {
-
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在连接 App Store…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consultando App Store…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion à l’App Store…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Store を確認中…"
+          }
+        }
+      }
     },
     "Checking…" : {
       "extractionState" : "stale",
@@ -5454,7 +5759,32 @@
 
     },
     "This product is not configured as a coin pack." : {
-
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该商品尚未配置为金币包。"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este producto no está configurado como paquete de monedas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce produit n’est pas configuré comme pack de pièces."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この商品はコインパックとして設定されていません。"
+          }
+        }
+      }
     },
     "This thought will be removed from the community and your profile." : {
 
