@@ -37,6 +37,7 @@ enum DraftFiles {
 
 struct CameraPhotoButton: View {
     @Environment(\.openURL) private var openURL
+    var compact: Bool = false
     let onPhoto: (DraftAttachment) -> Void
     let onError: (String) -> Void
     @State private var requesting = false
@@ -64,10 +65,14 @@ struct CameraPhotoButton: View {
                 } else { showingSettings = true }
             }
         } label: {
-            Text(requesting ? "Opening…" : "Take photo")
-                .font(.caption.bold()).foregroundStyle(liyaAccent)
-                .frame(minWidth: 100, minHeight: 44)
-                .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
+            if compact {
+                ComposeMediaActionLabel(title: requesting ? "Opening…" : "Take photo", subtitle: "Camera", image: "avatar-camera")
+            } else {
+                Text(requesting ? "Opening…" : "Take photo")
+                    .font(.caption.bold()).foregroundStyle(liyaAccent)
+                    .frame(minWidth: 100, minHeight: 44)
+                    .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
+            }
         }.buttonStyle(.plain).disabled(requesting)
             .fullScreenCover(isPresented: $showingCamera) {
                 SystemCameraPicker { image in
@@ -83,6 +88,27 @@ struct CameraPhotoButton: View {
                     if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                 } cancel: { showingSettings = false }
             }
+    }
+}
+
+private struct ComposeMediaActionLabel: View {
+    let title: String
+    let subtitle: String
+    let image: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(image).resizable().scaledToFit().frame(width: 40, height: 40).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(LocalizedStringKey(subtitle)).font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }.frame(maxWidth: .infinity, alignment: .leading)
+        }.padding(.horizontal, 11).padding(.vertical, 10).frame(maxWidth: .infinity, minHeight: 76)
+            .background(.white.opacity(0.86), in: RoundedRectangle(cornerRadius: 18))
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(liyaAccent.opacity(0.13), lineWidth: 1))
+            .contentShape(RoundedRectangle(cornerRadius: 18))
     }
 }
 
@@ -137,9 +163,15 @@ struct DraftMediaPicker: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Photos and videos").font(.headline).foregroundStyle(liyaInk)
+            if compactButtons && attachments.count < 9 {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 10) { compactLibraryButton; cameraButton }.frame(minWidth: 300)
+                    VStack(spacing: 10) { compactLibraryButton; cameraButton }
+                }
+            }
             ScrollView(.horizontal) {
                 HStack(spacing: 10) {
-                    if attachments.count < 9 {
+                    if attachments.count < 9 && !compactButtons {
                         PhotosPicker(selection: $selection, maxSelectionCount: 9 - attachments.count,
                                      matching: .any(of: [.images, .videos])) {
                             VStack(spacing: 5) {
@@ -147,7 +179,6 @@ struct DraftMediaPicker: View {
                                 Text("Add media").font(.caption.bold()).foregroundStyle(liyaAccent)
                             }.frame(width: 100, height: 120).background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
                         }.disabled(loading).accessibilityLabel("Add photos or videos")
-                        if compactButtons { cameraButton }
                     }
                     ForEach(attachments) { item in
                         ZStack(alignment: .topTrailing) {
@@ -160,7 +191,7 @@ struct DraftMediaPicker: View {
                         }
                     }
                 }
-            }
+            }.scrollIndicators(.hidden)
             if attachments.count < 9 && !compactButtons { cameraButton }
             if loading { Text("Loading selected media…").font(.footnote).foregroundStyle(.secondary) }
             if let errorMessage { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
@@ -191,8 +222,15 @@ struct DraftMediaPicker: View {
         }
     }
 
+    private var compactLibraryButton: some View {
+        PhotosPicker(selection: $selection, maxSelectionCount: 9 - attachments.count,
+                     matching: .any(of: [.images, .videos])) {
+            ComposeMediaActionLabel(title: "Add media", subtitle: "Photos & videos", image: "nav-v2-create")
+        }.buttonStyle(.plain).disabled(loading).accessibilityLabel("Add photos or videos")
+    }
+
     private var cameraButton: some View {
-        CameraPhotoButton { item in
+        CameraPhotoButton(compact: compactButtons) { item in
             if attachments.count < 9 { attachments.append(item) }
         } onError: { errorMessage = $0 }.disabled(loading)
     }

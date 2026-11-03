@@ -20,6 +20,10 @@ struct ComposeHome: View {
     private var hasContent: Bool {
         !store.composeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !store.composeAttachments.isEmpty
     }
+    private var canShare: Bool {
+        !publishing && !store.composeLoading && !social.loading && store.composeText.count <= 4000 && hasContent
+    }
+    private var canSave: Bool { !publishing && !store.composeLoading && hasContent }
 
     var body: some View {
         ZStack {
@@ -56,7 +60,7 @@ struct ComposeHome: View {
                     PostTagSelector(selection: $store.composeTags).disabled(publishing)
                     DraftMediaPicker(attachments: $store.composeAttachments, loading: $store.composeLoading, note: "Add up to 9 photos or videos.", compactButtons: true).disabled(publishing)
                     if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
-                    PrimaryButton(title: publishing ? "Sharing…" : "Share post", disabled: publishing || store.composeLoading || social.loading || store.composeText.count > 4000 || !hasContent) {
+                    Button {
                         guard social.isJoined(session) else { showCommunitySetup = true; return }
                         guard let owner = session.userID else { return }
                         let body = store.composeText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -71,27 +75,38 @@ struct ComposeHome: View {
                             }
                             publishing = false
                         }
-                    }
+                    } label: {
+                        HStack(spacing: 8) {
+                            if publishing { LiyaLoadingIndicator(size: 24) }
+                            else { Image("profile-home-posts").resizable().scaledToFit().frame(width: 34, height: 34).accessibilityHidden(true) }
+                            Text(LocalizedStringKey(publishing ? "Sharing…" : "Share post")).font(.subheadline.weight(.bold))
+                        }.foregroundStyle(canShare ? Color.white : liyaInk.opacity(0.58))
+                            .frame(maxWidth: .infinity, minHeight: 56)
+                            .background {
+                                if canShare { RoundedRectangle(cornerRadius: 18).fill(liyaGradient) }
+                                else { RoundedRectangle(cornerRadius: 18).fill(Color.white.opacity(0.82)) }
+                            }
+                            .overlay(RoundedRectangle(cornerRadius: 18).stroke(liyaAccent.opacity(canShare ? 0 : 0.15), lineWidth: 1))
+                    }.buttonStyle(.plain).disabled(!canShare)
                     Button {
                         store.saveDraft(store.composeText.trimmingCharacters(in: .whitespacesAndNewlines), attachments: store.composeAttachments, tags: store.composeTags)
                         store.composeText = ""; store.composeAttachments = []; store.composeTags = []; savedMessage = "Draft saved."
                     } label: {
-                        Text("Save draft").font(.subheadline.weight(.semibold))
-                            .foregroundStyle(liyaAccent.opacity(hasContent && !publishing && !store.composeLoading ? 1 : 0.6))
+                        HStack(spacing: 8) {
+                            Image("profile-home-edit").resizable().scaledToFit().frame(width: 34, height: 34).accessibilityHidden(true)
+                            Text("Save draft").font(.subheadline.weight(.semibold))
+                        }.foregroundStyle(canSave ? liyaAccent : liyaInk.opacity(0.58))
                             .frame(maxWidth: .infinity, minHeight: 56)
-                            .background {
-                                Image("consent-button").resizable()
-                                    .opacity(hasContent && !publishing && !store.composeLoading ? 0.28 : 0.16)
-                                    .accessibilityHidden(true)
-                            }
+                            .background(.white.opacity(0.82), in: RoundedRectangle(cornerRadius: 18))
+                            .overlay(RoundedRectangle(cornerRadius: 18).stroke(liyaAccent.opacity(canSave ? 0.23 : 0.10), lineWidth: 1))
                     }.buttonStyle(.plain)
-                        .disabled(publishing || store.composeLoading || !hasContent)
+                        .disabled(!canSave)
                     if let savedMessage { Text(savedMessage).font(.footnote).foregroundStyle(liyaAccent) }
                     NavigationLink { DraftsView() } label: {
                         HStack { Text("Your drafts").fontWeight(.semibold); Spacer(); Text("\(store.drafts.filter { $0.publishedLocally != true }.count)") }
                             .foregroundStyle(liyaInk).padding(16).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                     }.buttonStyle(.plain)
-                }.frame(maxWidth: 620).frame(maxWidth: .infinity).padding(20).padding(.bottom, tabBarClearance)
+                }.frame(maxWidth: 620).frame(maxWidth: .infinity).padding(20).padding(.bottom, tabBarClearance + 24)
             }.scrollDismissesKeyboard(.interactively)
             }
         }.navigationBarHidden(true)
