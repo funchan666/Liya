@@ -128,6 +128,7 @@ final class SocialStore: ObservableObject {
     @Published private(set) var messagesReady = false
     @Published var error: String?
     @Published var messageError: String?
+    @Published var messageLoadError: String?
     private var messageTask: Task<Void, Never>?
     private var watchID = UUID()
     private var accountGeneration = UUID()
@@ -143,7 +144,7 @@ final class SocialStore: ObservableObject {
         refreshAgain = false; refreshMessagesAgain = false
         watchID = UUID(); messageTask?.cancel(); messageTask = nil; realtimeConnected = false
         people = []; posts = []; likes = []; follows = []; followers = []; blocked = []
-        messages = []; notifications = []; error = nil; messageError = nil; notificationsError = nil
+        messages = []; notifications = []; error = nil; messageError = nil; messageLoadError = nil; notificationsError = nil
         syncGeneration = UUID()
     }
 
@@ -377,7 +378,7 @@ final class SocialStore: ObservableObject {
         guard let owner = session.userID else { return }
         if messagesLoading { refreshMessagesAgain = true; return }
         let generation = accountGeneration
-        messagesLoading = true; messageError = nil
+        messagesLoading = true; messageLoadError = nil
         defer {
             if accountGeneration == generation {
                 messagesLoading = false
@@ -392,7 +393,7 @@ final class SocialStore: ObservableObject {
             messages = rows; messagesReady = true
         } catch {
             if session.userID == owner && accountGeneration == generation {
-                messageError = "Couldn't load your messages. Please try again."
+                messageLoadError = "Couldn't load your messages. Please try again."
             }
         }
     }
@@ -410,6 +411,7 @@ final class SocialStore: ObservableObject {
 
     func sendMessage(_ session: LiyaSession, id: UUID, target: UUID, body: String, attachments: [DraftAttachment]) async -> Bool {
         guard let owner = session.userID, isJoined(session) else { messageError = "Create your community profile first."; return false }
+        messageError = nil
         let generation = accountGeneration
         do {
             let old: [SocialMessage] = try await session.client.from("liya_messages").select("id,sender_id,recipient_id,body,media_paths,media_kinds,created_at").eq("id", value: id.uuidString).execute().value

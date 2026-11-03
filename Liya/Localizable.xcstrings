@@ -1,6 +1,342 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+      "Couldn't refresh your connections.": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "暂时无法更新关注信息。"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "No se pudieron actualizar tus conexiones."
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Impossible d’actualiser vos relations."
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "つながりを更新できませんでした。"
+            }
+          }
+        }
+      },
+      "Couldn't refresh your posts.": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "暂时无法更新你的动态。"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "No se pudieron actualizar tus publicaciones."
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Impossible d’actualiser vos publications."
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "投稿を更新できませんでした。"
+            }
+          }
+        }
+      },
+      "Your posts will appear here.": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "你发布的动态会显示在这里。"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Tus publicaciones aparecerán aquí."
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Vos publications apparaîtront ici."
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "投稿がここに表示されます。"
+            }
+          }
+        }
+      },
+      "No videos yet": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "还没有视频"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Aún no hay videos"
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Pas encore de vidéos"
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "動画はまだありません"
+            }
+          }
+        }
+      },
+      "Videos you share will appear here.": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "你分享的视频会显示在这里。"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Los videos que compartas aparecerán aquí."
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Les vidéos que vous partagez apparaîtront ici."
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "共有した動画がここに表示されます。"
+            }
+          }
+        }
+      },
+    "Your conversations will appear here." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的对话会显示在这里。"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tus conversaciones aparecerán aquí."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos conversations apparaîtront ici."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会話がここに表示されます。"
+          }
+        }
+      }
+    },
+    "Messages are taking a moment" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "消息暂时无法加载"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los mensajes tardan un momento"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les messages tardent à charger"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メッセージを読み込めませんでした"
+          }
+        }
+      }
+    },
+    "Please check your connection and try again." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请检查网络后重试。"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprueba tu conexión e inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifiez votre connexion et réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続を確認してもう一度お試しください。"
+          }
+        }
+      }
+    },
+    "Some profile details are unavailable" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "部分资料暂时无法显示"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algunos perfiles no están disponibles"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certains profils sont indisponibles"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一部のプロフィールを表示できません"
+          }
+        }
+      }
+    },
+    "Updates are paused" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "消息更新已暂停"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las actualizaciones están en pausa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les mises à jour sont en pause"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新が一時停止中です"
+          }
+        }
+      }
+    },
+    "Reconnect to see new messages as they arrive." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新连接后即可及时接收新消息。"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vuelve a conectarte para recibir mensajes nuevos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconnectez-vous pour recevoir les nouveaux messages."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再接続すると新しいメッセージを受け取れます。"
+          }
+        }
+      }
+    },
+    "Try again" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重试"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reintentar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réessayer"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "もう一度試す"
+          }
+        }
+      }
+    },
     "# %@" : {
 
     },
@@ -5188,7 +5524,12 @@
       }
     },
     "Unavailable" : {
-
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂不可用" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "No disponible" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Indisponible" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "利用できません" } }
+      }
     },
     "Unsent reports" : {
       "extractionState" : "stale",

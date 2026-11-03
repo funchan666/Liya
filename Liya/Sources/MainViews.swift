@@ -201,6 +201,7 @@ struct MessagesHome: View {
     @Environment(\.liyaTabBarClearance) private var tabBarClearance
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var social: SocialStore
     @State private var section = 0
     @State private var deleteMessage: DraftMessageSelection?
     private var messageIndexes: [Int] { store.messageDrafts.keys.compactMap(Int.init).filter { !store.blockedExamples.contains($0) }.sorted() }
@@ -272,6 +273,13 @@ struct MessagesHome: View {
                         }
                     }
                 }.frame(maxWidth: 620).frame(maxWidth: .infinity).padding(20).padding(.bottom, tabBarClearance)
+            }.refreshable {
+                if section == 0 {
+                    await social.refreshMessages(session)
+                    if !social.realtimeConnected { social.watchMessages(session) }
+                } else {
+                    await social.refreshNotifications(session)
+                }
             }
         }.navigationBarHidden(true).sheet(item: $deleteMessage) { item in
             LocalConfirmation(title: "Delete message draft?", message: "This unsent draft will be permanently removed.", action: "Delete") {

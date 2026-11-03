@@ -679,7 +679,7 @@ struct CommunityMessagesView: View {
         VStack(alignment: .leading, spacing: 12) {
             if social.messagesLoading && !social.messagesReady {
                 LiyaLoadingIndicator(size: 32).frame(maxWidth: .infinity).padding(.vertical, 48)
-            } else if social.messageError != nil {
+            } else if social.messageLoadError != nil {
                 inboxNotice(title: "Messages are taking a moment", detail: "Please check your connection and try again.") {
                     Task { await social.refreshMessages(session) }
                 }
@@ -791,14 +791,14 @@ struct CommunityConversationView: View {
                                         .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                                 }.frame(maxWidth: .infinity)
                             }
-                            if let error = social.messageError {
+                            if let error = social.messageError ?? social.messageLoadError {
                                 VStack(spacing: 4) {
                                     Text(error).font(.footnote).foregroundStyle(.red)
-                                    Button("Try again") { Task { await social.refreshMessages(session) } }
+                                    Button("Try again") { Task { social.messageError = nil; await social.refreshMessages(session) } }
                                         .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                                 }.frame(maxWidth: .infinity)
                             }
-                            if !social.realtimeConnected && social.isJoined(session) && social.messageError == nil {
+                            if !social.realtimeConnected && social.isJoined(session) && social.messageLoadError == nil {
                                 Button("Reconnect live updates") { social.watchMessages(session) }
                                     .font(.caption.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                             }
@@ -808,7 +808,7 @@ struct CommunityConversationView: View {
                                     .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                             }
                             if social.messagesLoading && conversation.isEmpty { LiyaLoadingIndicator(size: 28) }
-                            if !social.messagesLoading && social.messageError == nil && social.error == nil && conversation.isEmpty {
+                            if social.messagesReady && !social.messagesLoading && social.messageLoadError == nil && conversation.isEmpty {
                                 VStack(spacing: 10) {
                                     Image("profile-action-message").resizable().scaledToFit().frame(width: 68, height: 68).accessibilityHidden(true)
                                     Text("Say hello").font(.headline).foregroundStyle(liyaInk)
@@ -825,6 +825,7 @@ struct CommunityConversationView: View {
                     .scrollDismissesKeyboard(.interactively)
                     .safeAreaInset(edge: .bottom, spacing: 0) { conversationComposer }
                     .task {
+                        social.messageError = nil
                         await social.refreshMessages(session)
                         if let id = conversation.last?.id { proxy.scrollTo(id, anchor: .bottom); positionedHistory = true }
                     }

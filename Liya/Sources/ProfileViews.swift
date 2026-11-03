@@ -3,6 +3,12 @@ import PhotosUI
 import UserNotifications
 import UIKit
 
+private struct ProfileRelationRow: Decodable {
+    let ownerID: UUID
+    let targetID: UUID
+    enum CodingKeys: String, CodingKey { case ownerID = "owner_id", targetID = "target_id" }
+}
+
 struct ProfileHome: View {
     @Environment(\.liyaTabBarClearance) private var tabBarClearance
     @EnvironmentObject private var store: LocalStore
@@ -11,12 +17,17 @@ struct ProfileHome: View {
     @State private var section = 0
     @State private var previewVideo: DraftAttachment?
     @State private var previewCommunityVideo: SocialMediaItem?
+    @State private var profileOwner: UUID?
+    @State private var profileLoadID = UUID()
+    @State private var ownPosts: [SocialPost] = []
+    @State private var postsReady = false
+    @State private var postsLoading = false
+    @State private var postsUnavailable = false
+    @State private var relationCounts: (followers: Int, following: Int)?
+    @State private var relationsUnavailable = false
     private var posts: [LocalDraft] { store.drafts.filter { $0.publishedLocally == true } }
     private var videos: [DraftAttachment] { posts.flatMap { $0.attachments ?? [] }.filter { $0.isVideo } }
-    private var communityPosts: [SocialPost] {
-        guard let owner = session.userID else { return [] }
-        return social.posts.filter { $0.ownerID == owner }
-    }
+    private var communityPosts: [SocialPost] { profileOwner == session.userID ? ownPosts : [] }
     private var communityVideos: [SocialMediaItem] {
         communityPosts.flatMap { post in
             post.mediaPaths.enumerated().compactMap { index, path in
@@ -36,6 +47,9 @@ struct ProfileHome: View {
                     VStack(alignment: .leading, spacing: 12) {
                     Text(session.profile.flatMap { $0.displayName.isEmpty ? nil : $0.displayName } ?? "Your profile").font(.title2.bold()).foregroundStyle(liyaInk)
                     profileRelations
+                    if relationsUnavailable {
+                        profileNotice("Couldn't refresh your connections.") { await refreshProfileContent() }
+                    }
                     Text(session.profile.flatMap { $0.signature.isEmpty ? nil : $0.signature } ?? "Add a little about yourself.")
                         .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     if let tags = session.profile?.tags, !tags.isEmpty { Text(tags.map { "# " + $0 }.joined(separator: "   ")).font(.caption).foregroundStyle(liyaAccent) }
@@ -49,18 +63,18 @@ struct ProfileHome: View {
                     }.buttonStyle(.plain)
                     ProfileHomeTabs(selection: $section)
                     if section == 0 {
-                        if social.loading { Text("Loading posts…").font(.footnote).foregroundStyle(.secondary) }
-                        if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
-                        if !social.loading && social.error == nil && communityPosts.isEmpty && posts.isEmpty {
-                            EmptyState(title: "No posts yet", detail: "Your posts will appear here.")
+                        if postsLoading && !postsReady { LiyaLoadingIndicator().frame(maxWidth: .infinity).padding(24) }
+                        if postsUnavailable { profileNotice("Couldn't refresh your posts.") { await refreshProfileContent() } }
+                        if postsReady && !postsUnavailable && communityPosts.isEmpty && posts.isEmpty {
+                            profileEmpty(title: "No posts yet", detail: "Your posts will appear here.")
                         }
                         ForEach(communityPosts) { CommunityPostCard(post: $0) }
                         ForEach(posts) { post in LocalPostCard(post: post) }
                     } else {
-                        if social.loading { Text("Loading videos…").font(.footnote).foregroundStyle(.secondary) }
-                        if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
-                        if !social.loading && social.error == nil && videos.isEmpty && communityVideos.isEmpty {
-                            EmptyState(title: "No videos yet", detail: "Videos you share will appear here.")
+                        if postsLoading && !postsReady { LiyaLoadingIndicator().frame(maxWidth: .infinity).padding(24) }
+                        if postsUnavailable { profileNotice("Couldn't refresh your posts.") { await refreshProfileContent() } }
+                        if postsReady && !postsUnavailable && videos.isEmpty && communityVideos.isEmpty {
+                            profileEmpty(title: "No videos yet", detail: "Videos you share will appear here.")
                         }
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
                             ForEach(Array(communityVideos.enumerated()), id: \.offset) { _, item in
@@ -78,9 +92,14 @@ struct ProfileHome: View {
                     }.frame(maxWidth: 620, alignment: .leading).frame(maxWidth: .infinity).padding(.horizontal, 20)
                         .padding(.bottom, 24 + tabBarClearance).modifier(AdaptiveContainerMargins())
                 }
-            }.ignoresSafeArea(.container, edges: .top)
+            }.refreshable { await refreshProfileContent() }.ignoresSafeArea(.container, edges: .top)
             }
         }.navigationBarHidden(true)
+            .task(id: session.userID) { await refreshProfileContent() }
+            .onLiyaChange(of: social.syncGeneration) { _ in Task { await refreshProfileContent() } }
+            .onLiyaChange(of: social.loading) { loading in
+                if !loading { Task { await refreshProfileContent() } }
+            }
             .sheet(item: $previewVideo) { item in DraftVideoPreview(item: item) }
             .sheet(item: $previewCommunityVideo) { item in SocialMediaPreview(item: item) }
     }
@@ -94,13 +113,81 @@ struct ProfileHome: View {
 
     private var followersLink: some View {
         NavigationLink { CommunityRelationList(title: "Followers", relation: "followers") } label: {
-            ProfileHomeRelationLabel(title: "Followers", count: social.loading || social.error != nil ? "—" : String(social.followers.count))
+            ProfileHomeRelationLabel(title: "Followers", count: profileOwner == session.userID ? relationCounts.map { String($0.followers) } : nil, unavailable: relationsUnavailable)
         }
     }
 
     private var followingLink: some View {
         NavigationLink { CommunityRelationList(title: "Following", relation: "following") } label: {
-            ProfileHomeRelationLabel(title: "Following", count: social.loading || social.error != nil ? "—" : String(social.follows.count))
+            ProfileHomeRelationLabel(title: "Following", count: profileOwner == session.userID ? relationCounts.map { String($0.following) } : nil, unavailable: relationsUnavailable)
+        }
+    }
+
+    private func profileEmpty(title: String, detail: String) -> some View {
+        VStack(spacing: 10) {
+            Image("empty-art").resizable().scaledToFit().frame(width: 104, height: 96).accessibilityHidden(true)
+            Text(LocalizedStringKey(title)).font(.headline).foregroundStyle(liyaInk)
+            Text(LocalizedStringKey(detail)).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+        }.frame(maxWidth: .infinity).padding(.vertical, 30).padding(.horizontal, 20)
+    }
+
+    private func profileNotice(_ title: String, retry: @escaping () async -> Void) -> some View {
+        HStack(spacing: 12) {
+            Image("empty-art").resizable().scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
+            Text(LocalizedStringKey(title)).font(.footnote.weight(.medium)).foregroundStyle(liyaInk).fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 4)
+            Button { Task { await retry() } } label: {
+                Text("Try again").font(.caption.weight(.semibold)).foregroundStyle(liyaAccent)
+                    .padding(.horizontal, 12).frame(minHeight: 44)
+                    .background(liyaAccent.opacity(0.09), in: Capsule())
+            }.buttonStyle(.plain)
+        }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
+            .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 18))
+    }
+
+    private func refreshProfileContent() async {
+        guard let owner = session.userID else { return }
+        let request = UUID()
+        profileLoadID = request
+        if profileOwner != owner {
+            profileOwner = owner; ownPosts = []; postsReady = false; relationCounts = nil
+        }
+        postsLoading = true; postsUnavailable = false; relationsUnavailable = false
+        do {
+            var rows: [SocialPost] = []
+            var offset = 0
+            while true {
+                let page: [SocialPost] = try await session.client.from("liya_posts")
+                    .select("id,owner_id,body,tags,media_paths,media_kinds,created_at,updated_at")
+                    .eq("owner_id", value: owner.uuidString).order("created_at", ascending: false)
+                    .order("id", ascending: false).range(from: offset, to: offset + 499).execute().value
+                rows.append(contentsOf: page)
+                if page.count < 500 { break }; offset += 500
+            }
+            guard session.userID == owner, profileLoadID == request else { return }
+            ownPosts = rows; postsReady = true; postsLoading = false
+        } catch {
+            guard session.userID == owner, profileLoadID == request else { return }
+            postsLoading = false; postsUnavailable = true
+        }
+        do {
+            func countRelations(column: String, order: String) async throws -> Int {
+                var count = 0
+                while true {
+                    let page: [ProfileRelationRow] = try await session.client.from("liya_follows")
+                        .select("owner_id,target_id").eq(column, value: owner.uuidString)
+                        .order(order).range(from: count, to: count + 499).execute().value
+                    count += page.count
+                    if page.count < 500 { return count }
+                }
+            }
+            let followers = try await countRelations(column: "target_id", order: "owner_id")
+            let following = try await countRelations(column: "owner_id", order: "target_id")
+            guard session.userID == owner, profileLoadID == request else { return }
+            relationCounts = (followers, following)
+        } catch {
+            guard session.userID == owner, profileLoadID == request else { return }
+            relationsUnavailable = true
         }
     }
 
@@ -148,11 +235,14 @@ struct ProfileHome: View {
 
 private struct ProfileHomeRelationLabel: View {
     let title: String
-    let count: String
+    let count: String?
+    let unavailable: Bool
     var body: some View {
         HStack(spacing: 6) {
             Image("profile-home-people").resizable().scaledToFit().frame(width: 25, height: 25).accessibilityHidden(true)
-            Text(count).font(.caption.weight(.bold)).monospacedDigit().foregroundStyle(liyaInk)
+            if let count { Text(count).font(.caption.weight(.bold)).monospacedDigit().foregroundStyle(liyaInk) }
+            else if unavailable { Text("Unavailable").font(.caption2.weight(.medium)).foregroundStyle(.secondary) }
+            else { LiyaLoadingIndicator(size: 16) }
             Text(title).font(.caption.weight(.medium)).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
         }
         .padding(.horizontal, 10).frame(minHeight: 44)
