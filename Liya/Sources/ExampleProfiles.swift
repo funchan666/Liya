@@ -322,26 +322,47 @@ private struct CuratedVideoThumbnail: View {
 
 struct ExampleChatView: View {
     @EnvironmentObject private var store: LocalStore
+    @EnvironmentObject private var session: LiyaSession
     let index: Int
-    @State private var draft = ""
+    private var name: String {
+        guard session.photos.indices.contains(index) else { return "Collection" }
+        let id = session.photos[index].id
+        return ExampleVideoCreator.byVideoID.values.first { $0.photoID == id }?.name ?? "Collection"
+    }
     var body: some View {
         PageShell(title: "Messages") {
-            VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 18) {
                 NavigationLink { ExampleProfileView(index: index) } label: {
-                    HStack { ExampleAvatar(index: index); Text("Example profile \(index + 1)").font(.headline); Spacer() }
-                        .foregroundStyle(liyaInk).padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
+                    HStack(spacing: 12) {
+                        ExampleAvatar(index: index, size: 48)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(name).font(.headline).foregroundStyle(liyaInk)
+                            Text("Collection").font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer(minLength: 0)
+                    }.padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 18))
                 }.buttonStyle(.plain)
-                OfflineNote(text: store.blockedExamples.contains(index) ? "This example is blocked. Unblock it before editing a message draft." : "Messaging is not connected. Your text is a private draft and will not be delivered.")
-                EmptyState(title: "No messages", detail: "Messages will appear after the service is connected.")
-                TextField("Write a private draft", text: $draft, axis: .vertical).lineLimit(2...6).padding(14)
-                    .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14)).disabled(store.blockedExamples.contains(index))
-                PrimaryButton(title: "Save draft", disabled: store.blockedExamples.contains(index) || draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) {
-                    store.saveMessageDraft(draft, index: index)
+                VStack(spacing: 12) {
+                    Image("profile-action-message").resizable().scaledToFit().frame(width: 76, height: 76).accessibilityHidden(true)
+                    Text("This profile can't receive messages").font(.headline).foregroundStyle(liyaInk)
+                    Text("Explore the community to start a conversation with a member.")
+                        .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    NavigationLink { CommunityMembersView() } label: {
+                        Text("Find people").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                            .padding(.horizontal, 26).frame(minHeight: 46).background(liyaGradient, in: Capsule())
+                    }.buttonStyle(.plain)
+                }.frame(maxWidth: .infinity).padding(.vertical, 28).padding(.horizontal, 16)
+                    .background(.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 20))
+                if let draft = store.messageDrafts[String(index)], !draft.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Unsent message").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                        Text(draft).font(.subheadline).foregroundStyle(liyaInk).textSelection(.enabled)
+                    }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
+                        .background(.white.opacity(0.82), in: RoundedRectangle(cornerRadius: 16))
                 }
-                if store.messageDrafts[String(index)] == draft && !draft.isEmpty { Text("Draft saved").font(.footnote).foregroundStyle(liyaAccent) }
             }.padding(.top, 12)
-        }.onAppear { draft = store.messageDrafts[String(index)] ?? "" }
-            .onDisappear { if !store.blockedExamples.contains(index) { store.saveMessageDraft(draft, index: index) } }
+        }
     }
 }
 
