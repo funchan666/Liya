@@ -91,9 +91,14 @@ final class AutomaticChat: ObservableObject {
             return true
         } catch {
             guard !Task.isCancelled, sendGeneration == current, session.userID == owner else { return false }
-            if let functionError = error as? FunctionsError, case let .httpError(code, _) = functionError {
+            if let functionError = error as? FunctionsError, case let .httpError(code, data) = functionError {
+                let serverCode = (try? JSONDecoder().decode(ServerError.self, from: data))?.code
                 switch code {
                 case 401: self.error = "Your session has expired. Please sign in again."
+                case 403 where serverCode == "consent_required":
+                    consentLoaded = false; consentGranted = false
+                    self.error = "Please review your AI privacy choice to continue."
+                case 503 where serverCode == "ai_not_configured": self.error = "AI chat is being prepared. Please try again later."
                 case 409: self.error = "Your reply is still being prepared. Please try again shortly."
                 case 429: self.error = "A little busy right now. Please wait and try again."
                 default: self.error = "Couldn't get a reply right now. Please try again."
@@ -103,7 +108,9 @@ final class AutomaticChat: ObservableObject {
         }
     }
 
-    func stop() { generation = UUID(); sendGeneration = UUID(); loading = false; sending = false; waiting = false; consentLoaded = false; consentGranted = false }
+    func stop() { generation = UUID(); sendGeneration = UUID(); loading = false; sending = false; waiting = false }
+    func resetConsent() { consentLoaded = false; consentGranted = false }
+    private struct ServerError: Decodable { let code: String }
     private enum ChatError: Error { case unconfirmed }
 }
 
@@ -220,7 +227,7 @@ struct AutomaticChatView: View {
             }
         }.navigationBarHidden(true)
             .task(id: session.userID) {
-                sendTask?.cancel(); pendingRequest = nil; chat.stop(); restoreDraft()
+                sendTask?.cancel(); pendingRequest = nil; chat.stop(); chat.resetConsent(); restoreDraft()
                 await chat.loadConsent(session)
                 await chat.load(session)
             }

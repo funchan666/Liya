@@ -21,11 +21,6 @@ Deno.serve(async (request: Request) => {
   const owner = userData?.user?.id;
   if (userError || !owner || !uuid.test(owner) || userData.user.role !== "authenticated") return respond(401, "unauthorized");
   const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data: consent, error: consentError } = await admin.from("liya_ai_consents")
-    .select("granted,consent_version").eq("owner_id", owner).maybeSingle();
-  if (consentError) return respond(503, "service_unavailable");
-  if (!consent?.granted || consent.consent_version !== "groq-v1") return respond(403, "consent_required");
-
   let body: { request_id?: unknown; text?: unknown };
   try {
     const raw = await request.text();
@@ -37,6 +32,10 @@ Deno.serve(async (request: Request) => {
   if (text.length < 1 || [...text].length > 2000) return respond(400, "invalid_request");
   const requestID = body.request_id;
   const lease = crypto.randomUUID();
+  const { data: consent, error: consentError } = await admin.from("liya_ai_consents")
+    .select("granted,consent_version").eq("owner_id", owner).maybeSingle();
+  if (consentError) return respond(503, "service_unavailable");
+  if (!consent?.granted || consent.consent_version !== "groq-v1") return respond(403, "consent_required");
   const params = { p_owner: owner, p_request: requestID, p_lease: lease };
   const { data: claim, error: claimError } = await admin.rpc("liya_ai_claim", { ...params, p_body: text });
   if (claimError || !claim || typeof claim.status !== "string") return respond(503, "service_unavailable");
