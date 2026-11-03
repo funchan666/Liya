@@ -125,6 +125,7 @@ final class SocialStore: ObservableObject {
     @Published var notificationsError: String?
     @Published private(set) var loading = false
     @Published private(set) var messagesLoading = false
+    @Published private(set) var messagesReady = false
     @Published var error: String?
     @Published var messageError: String?
     private var messageTask: Task<Void, Never>?
@@ -138,7 +139,7 @@ final class SocialStore: ObservableObject {
     func isJoined(_ session: LiyaSession) -> Bool { session.userID.map { person($0) != nil } ?? false }
 
     func clearAccount() {
-        accountGeneration = UUID(); loading = false; messagesLoading = false
+        accountGeneration = UUID(); loading = false; messagesLoading = false; messagesReady = false
         refreshAgain = false; refreshMessagesAgain = false
         watchID = UUID(); messageTask?.cancel(); messageTask = nil; realtimeConnected = false
         people = []; posts = []; likes = []; follows = []; followers = []; blocked = []
@@ -315,7 +316,9 @@ final class SocialStore: ObservableObject {
         do {
             let rows: [VideoComment] = try await session.client.from("liya_video_comments")
                 .select("id,media_id,owner_id,body,created_at").eq("id", value: id.uuidString).execute().value
-            return session.userID == owner && rows.contains { $0.id == id && $0.mediaID == mediaID && $0.ownerID == owner && $0.body == body }
+            guard session.userID == owner, rows.contains(where: { $0.id == id && $0.mediaID == mediaID && $0.ownerID == owner && $0.body == body }) else { return false }
+            syncGeneration = UUID()
+            return true
         } catch { return false }
     }
 
@@ -325,7 +328,9 @@ final class SocialStore: ObservableObject {
             try await session.client.from("liya_video_comments").delete().eq("id", value: id.uuidString).eq("owner_id", value: owner.uuidString).execute()
             let rows: [VideoComment] = try await session.client.from("liya_video_comments")
                 .select("id,media_id,owner_id,body,created_at").eq("id", value: id.uuidString).execute().value
-            return session.userID == owner && rows.isEmpty
+            guard session.userID == owner, rows.isEmpty else { return false }
+            syncGeneration = UUID()
+            return true
         } catch { return false }
     }
 
@@ -383,10 +388,11 @@ final class SocialStore: ObservableObject {
             let rows: [SocialMessage] = try await pages { offset in
                 try await session.client.from("liya_messages").select("id,sender_id,recipient_id,body,media_paths,media_kinds,created_at").order("created_at").order("id").range(from: offset, to: offset + 499).execute().value
             }
-            guard session.userID == owner, accountGeneration == generation else { return }; messages = rows
+            guard session.userID == owner, accountGeneration == generation else { return }
+            messages = rows; messagesReady = true
         } catch {
             if session.userID == owner && accountGeneration == generation {
-                messages = []; messageError = "Couldn't load your messages. Please try again."
+                messageError = "Couldn't load your messages. Please try again."
             }
         }
     }
@@ -485,7 +491,7 @@ final class SocialStore: ObservableObject {
                     try await channel.subscribeWithError()
                     await userUpdateTask.value
                 } catch {
-                    if !Task.isCancelled, self?.watchID == generation { self?.messageError = "Live updates are unavailable. Refresh or reconnect." }
+                    if !Task.isCancelled, self?.watchID == generation { self?.realtimeConnected = false }
                 }
             } onCancel: {
                 userInsertTask.cancel(); userUpdateTask.cancel(); feedTask.cancel(); statusTask.cancel()

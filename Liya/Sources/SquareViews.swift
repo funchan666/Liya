@@ -3,6 +3,7 @@ import UIKit
 
 struct SquareHome: View {
     @Environment(\.liyaTabBarClearance) private var tabBarClearance
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
@@ -27,9 +28,10 @@ struct SquareHome: View {
                         feature("diary-card", label: "Mood diary") { MoodDiaryView() }
                         feature("tree-card", label: "Mood tree hole") { TreeHoleView() }
                     }
-                    HStack(spacing: 10) {
-                        wellbeingLink("mood-calm", title: "A quiet moment", subtitle: "Take a gentle pause") { QuietMomentView() }
-                        wellbeingLink("diary-happy", title: "Mood reflections", subtitle: "Look back on your days") { MoodReflectionsView() }
+                    if dynamicTypeSize.isAccessibilitySize {
+                        VStack(spacing: 10) { wellbeingLinks }
+                    } else {
+                        HStack(alignment: .top, spacing: 10) { wellbeingLinks }
                     }
                     CommunityFeed()
                     if store.drafts.contains(where: { $0.publishedLocally == true }) {
@@ -65,18 +67,32 @@ struct SquareHome: View {
         }.buttonStyle(.plain).accessibilityLabel(label)
     }
 
+    @ViewBuilder private var wellbeingLinks: some View {
+        wellbeingLink("wellbeing-quiet", title: "A quiet moment", subtitle: "Take a gentle pause") { QuietMomentView() }
+        wellbeingLink("wellbeing-reflections", title: "Mood reflections", subtitle: "Look back on your days") { MoodReflectionsView() }
+    }
+
     private func wellbeingLink<Destination: View>(_ image: String, title: String, subtitle: String, @ViewBuilder destination: () -> Destination) -> some View {
         NavigationLink(destination: destination()) {
             VStack(alignment: .leading, spacing: 7) {
-                Image(image).resizable().scaledToFit().frame(width: 36, height: 36).accessibilityHidden(true)
-                Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(LocalizedStringKey(subtitle)).font(.caption).foregroundStyle(liyaInk.opacity(0.62))
-                    .fixedSize(horizontal: false, vertical: true)
-            }.frame(maxWidth: .infinity, minHeight: 108, alignment: .leading).padding(12)
-                .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 18))
-                .overlay(RoundedRectangle(cornerRadius: 18).stroke(liyaAccent.opacity(0.12), lineWidth: 1))
-        }.buttonStyle(.plain)
+                HStack(alignment: .center) {
+                    Image(image).resizable().scaledToFit().frame(width: 76, height: 64).accessibilityHidden(true)
+                    Spacer(minLength: 2)
+                    Image("back").resizable().scaledToFit().frame(width: 12, height: 12)
+                        .scaleEffect(x: -1, y: 1).opacity(0.55).accessibilityHidden(true)
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(LocalizedStringKey(title)).font(.subheadline.weight(.bold)).foregroundStyle(liyaInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(LocalizedStringKey(subtitle)).font(.caption).foregroundStyle(liyaInk.opacity(0.62))
+                        .fixedSize(horizontal: false, vertical: true)
+                }.frame(maxWidth: .infinity, alignment: .leading)
+            }.padding(14).frame(maxWidth: .infinity, minHeight: 146, alignment: .topLeading)
+                .background(.white.opacity(0.91), in: RoundedRectangle(cornerRadius: 20))
+                .overlay(RoundedRectangle(cornerRadius: 20).stroke(liyaAccent.opacity(0.11), lineWidth: 1))
+        }.buttonStyle(.plain).accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(LocalizedStringKey(title)))
+            .accessibilityHint(Text(LocalizedStringKey(subtitle)))
     }
 }
 
@@ -930,35 +946,6 @@ private struct PhotoCounts: Decodable {
     }
 }
 
-// Sample engagement is kept separate from real account activity and keyed by
-// media ID so catalog reordering cannot move it to a different post.
-private struct ExamplePhotoSample {
-    let likes: Int
-    let comments: [String]
-
-    static let byID: [String: ExamplePhotoSample] = [
-        "example-photo-001": .init(likes: 38, comments: ["This has such a quiet feel to it.", "The details make this one memorable."]),
-        "example-photo-002": .init(likes: 74, comments: ["These colours are beautiful together.", "I keep noticing something new in this photo.", "What a lovely moment to keep."]),
-        "example-photo-003": .init(likes: 21, comments: ["There is something so peaceful about this."]),
-        "example-photo-004": .init(likes: 56, comments: ["This made me pause for a second.", "Such a natural little moment."]),
-        "example-photo-005": .init(likes: 19, comments: ["I love the light here.", "This has a story all of its own."]),
-        "example-photo-006": .init(likes: 91, comments: ["The atmosphere is wonderful.", "A beautiful bit of everyday life.", "I could look at this for ages."]),
-        "example-photo-007": .init(likes: 43, comments: ["This feels like a deep breath.", "The colours are so lovely."]),
-        "example-photo-008": .init(likes: 27, comments: ["A little moment worth remembering."]),
-        "example-photo-009": .init(likes: 64, comments: ["There is so much feeling in this.", "I really like the mood of this photo."]),
-        "example-photo-010": .init(likes: 32, comments: ["This one brought a smile to my day.", "It feels wonderfully candid."]),
-        "example-photo-011": .init(likes: 83, comments: ["What a beautiful scene.", "The little details are my favourite part.", "This feels like a memory in the making."]),
-        "example-photo-013": .init(likes: 46, comments: ["There is a lovely calmness here.", "This is such a nice capture."]),
-        "example-photo-014": .init(likes: 17, comments: ["Something about this feels really comforting."]),
-        "example-photo-015": .init(likes: 69, comments: ["The whole mood of this is lovely.", "Thank you for sharing this moment."]),
-        "example-photo-016": .init(likes: 35, comments: ["I love the way this feels so unhurried.", "A beautiful moment to look back on."]),
-        "example-photo-017": .init(likes: 52, comments: ["This has such a lovely energy.", "The composition is wonderful.", "It feels like a little escape."]),
-        "example-photo-018": .init(likes: 24, comments: ["This is the kind of moment I would keep too."]),
-        "example-photo-019": .init(likes: 61, comments: ["So much character in one photo.", "I love how natural this feels."]),
-        "example-photo-020": .init(likes: 29, comments: ["A small moment with a lot of warmth.", "This really brightened my day."])
-    ]
-}
-
 private struct ExamplePhotoRow: View {
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
@@ -966,10 +953,6 @@ private struct ExamplePhotoRow: View {
     let index: Int
     @State private var options = false
     @StateObject private var engagement = PhotoEngagement()
-    private var sample: ExamplePhotoSample? {
-        guard session.photos.indices.contains(index) else { return nil }
-        return ExamplePhotoSample.byID[session.photos[index].id]
-    }
     private var displayName: String {
         let photoID = session.photos.indices.contains(index) ? session.photos[index].id : nil
         return ExampleVideoCreator.byVideoID.values.first { $0.photoID == photoID }?.name ?? "Liya collection"
@@ -1016,15 +999,11 @@ private struct ExamplePhotoRow: View {
                 }.buttonStyle(.plain)
                 Spacer(minLength: 0)
             }
-            if let sample {
-                Text("Sample: \(sample.likes) likes · \(sample.comments.count) comments")
-                    .font(.caption).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }.modifier(LiyaFeedCardSurface())
             .sheet(isPresented: $options) { ExampleOptionsView(index: index, reportTarget: "post") }
             .onLiyaChange(of: session.catalogGeneration) { _ in Task { await engagement.refresh(session, index: index) } }
             .onLiyaChange(of: social.syncGeneration) { _ in Task { await engagement.refresh(session, index: index) } }
+            .onLiyaChange(of: session.likedMediaIDs) { _ in Task { await engagement.refresh(session, index: index) } }
             .onAppear { Task { await engagement.refresh(session, index: index) } }
     }
 }
@@ -1078,7 +1057,6 @@ struct ExamplePhotoDetail: View {
     @StateObject private var engagement = PhotoEngagement()
     let index: Int
     private var mediaID: String? { session.photos.indices.contains(index) ? session.photos[index].id : nil }
-    private var sample: ExamplePhotoSample? { mediaID.flatMap { ExamplePhotoSample.byID[$0] } }
     private var displayName: String {
         ExampleVideoCreator.byVideoID.values.first { $0.photoID == mediaID }?.name ?? "Liya collection"
     }
@@ -1127,28 +1105,13 @@ struct ExamplePhotoDetail: View {
                             }
                             Spacer(minLength: 0)
                         }.font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                        if let sample {
-                            Text("Sample: \(sample.likes) likes · \(sample.comments.count) comments")
-                                .font(.caption).foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
                         if let likesError = session.likesError {
                             Text(likesError).font(.footnote).foregroundStyle(.red)
                             Button("Retry likes") { Task { await session.refreshLikes() } }.foregroundStyle(liyaAccent)
                         }
                         Text("Comments").font(.headline).foregroundStyle(liyaInk)
-                        if let sample {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Sample comments").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                                ForEach(Array(sample.comments.enumerated()), id: \.offset) { _, text in
-                                    Text(text).font(.subheadline).foregroundStyle(liyaInk)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                            }.padding(14).frame(maxWidth: .infinity, alignment: .leading)
-                                .background(.white.opacity(0.75), in: RoundedRectangle(cornerRadius: 14))
-                        }
                         if loading { LiyaLoadingIndicator(size: 24) }
-                        if !loading && error == nil && comments.isEmpty && sample == nil { Text("Be the first to share a thought.").font(.subheadline).foregroundStyle(.secondary) }
+                        if !loading && error == nil && comments.isEmpty { Text("Be the first to share a thought.").font(.subheadline).foregroundStyle(.secondary) }
                         ForEach(comments) { item in
                             HStack(alignment: .top, spacing: 10) {
                                 NavigationLink { CommunityPersonView(personID: item.ownerID) } label: {
@@ -1187,6 +1150,7 @@ struct ExamplePhotoDetail: View {
             .sheet(isPresented: $options) { ExampleOptionsView(index: index, reportTarget: "post") }
             .task(id: mediaID) { await refresh() }
             .onLiyaChange(of: social.syncGeneration) { _ in Task { await refresh() } }
+            .onLiyaChange(of: session.likedMediaIDs) { _ in Task { await engagement.refresh(session, index: index) } }
     }
 
     private func refresh() async {

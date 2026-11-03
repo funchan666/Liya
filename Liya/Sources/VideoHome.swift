@@ -354,8 +354,6 @@ private struct VideoCommentsView: View {
     let index: Int
     @State private var comments: [VideoComment] = []
     @State private var text = ""
-    @State private var noteText = ""
-    @State private var showNotes = false
     @State private var loading = false
     @State private var sending = false
     @State private var error: String?
@@ -387,18 +385,12 @@ private struct VideoCommentsView: View {
 
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
-            GeometryReader { geometry in
-                let artworkHeight = geometry.size.width * 958 / 778
-                VStack(spacing: 0) {
-                    Image("panel-background").resizable().scaledToFit().frame(width: geometry.size.width, height: artworkHeight)
-                    Spacer(minLength: 0)
-                }
-            }.ignoresSafeArea(.container, edges: .bottom).allowsHitTesting(false).accessibilityHidden(true)
+            LiyaBackground()
             VStack(spacing: 0) {
                 PageHeader(title: "Comments")
+                    .padding(.top, 12)
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
+                    LazyVStack(alignment: .leading, spacing: 10) {
                         if let mediaID, !session.photos.isEmpty {
                             ForEach(0..<2, id: \.self) { position in
                                 let photoIndex = (10 + index * 2 + position) % session.photos.count
@@ -411,33 +403,25 @@ private struct VideoCommentsView: View {
                                 }
                             }
                         }
-                        if loading { LiyaLoadingIndicator(size: 28) }
+                        if loading {
+                            LiyaLoadingIndicator(size: 28).frame(maxWidth: .infinity).padding(.vertical, 18)
+                        }
                         if !loading && error == nil && comments.isEmpty && !hasVisibleStarters {
-                            Text("No comments yet").font(.subheadline).foregroundStyle(.secondary)
+                            VStack(spacing: 10) {
+                                Image("profile-action-message").resizable().scaledToFit().frame(width: 52, height: 52).accessibilityHidden(true)
+                                Text("No comments yet").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                            }.frame(maxWidth: .infinity).padding(.vertical, 28)
                         }
                         ForEach(comments) { comment in
                             let name = comment.ownerID == session.userID ? "You" : (social.person(comment.ownerID)?.displayName ?? "Liya member")
                             let action = VideoCommentTarget(id: comment.id.uuidString, mediaID: comment.mediaID, commentID: comment.id, presetKey: nil, ownerID: comment.ownerID, photoIndex: nil, name: name, body: comment.body)
                             commentRow(name: name, body: comment.body, imageIndex: nil, personID: comment.ownerID, target: action)
                         }
-                        Button(showNotes ? "Hide private notes" : "Private notes") { showNotes.toggle() }
-                            .font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                        if showNotes {
-                            Text("Private notes are not synced.").font(.caption).foregroundStyle(.secondary)
-                            ForEach(store.videoNotes.filter { $0.videoIndex == index }) { note in
-                                HStack { Text(note.text).foregroundStyle(liyaInk); Spacer(); Button("Delete") { store.deleteVideoNote(note.id) }.foregroundStyle(liyaAccent) }
-                            }
-                            TextField("Write a private note", text: $noteText, axis: .vertical).lineLimit(1...4)
-                                .padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
-                            Button("Save private note") {
-                                let value = noteText.trimmingCharacters(in: .whitespacesAndNewlines)
-                                if !value.isEmpty { store.addVideoNote(value, index: index); noteText = "" }
-                            }.foregroundStyle(liyaAccent).frame(minHeight: 44)
-                        }
-                    }.padding(16).frame(maxWidth: 620, alignment: .leading)
-                        .background(.white.opacity(0.94), in: RoundedRectangle(cornerRadius: 18))
-                        .frame(maxWidth: .infinity).padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 16)
+                    }.frame(maxWidth: 620, alignment: .leading)
+                        .frame(maxWidth: .infinity).padding(.horizontal, 16).padding(.top, 8).padding(.bottom, 20)
+                        .modifier(AdaptiveContainerMargins())
                 }
+                .scrollDismissesKeyboard(.interactively)
                 .safeAreaInset(edge: .bottom, spacing: 0) { commentComposer }
             }
         }
@@ -461,7 +445,8 @@ private struct VideoCommentsView: View {
         HStack(alignment: .bottom, spacing: 10) {
             TextField("Share a thought…", text: Binding(get: { text }, set: { text = $0; attempt = UUID(); persistDraft() }), axis: .vertical)
                 .lineLimit(1...4).padding(.horizontal, 14).padding(.vertical, 12)
-                .background(Color(red: 0.95, green: 0.95, blue: 0.97), in: RoundedRectangle(cornerRadius: 20))
+                .background(.white.opacity(0.96), in: RoundedRectangle(cornerRadius: 18))
+                .overlay(RoundedRectangle(cornerRadius: 18).stroke(liyaAccent.opacity(0.12), lineWidth: 1))
                 .focused($commentFocused).disabled(sending).accessibilityLabel("Write a comment")
             Button(sending ? "Sending…" : "Send") { send() }
                 .font(.subheadline.weight(.semibold)).foregroundStyle(.white)
@@ -469,16 +454,16 @@ private struct VideoCommentsView: View {
                 .background(liyaGradient.opacity(sending || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || text.count > 2000 ? 0.45 : 1), in: Capsule())
                 .disabled(sending || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || text.count > 2000)
         }
-        }.padding(.horizontal, 16).padding(.vertical, 10).frame(maxWidth: .infinity)
-            .background(.white.opacity(0.98))
+        }.padding(.horizontal, 16).padding(.vertical, 12).frame(maxWidth: .infinity)
+            .background(.ultraThinMaterial).modifier(AdaptiveContainerMargins())
     }
 
     private func commentRow(name: String, body: String, imageIndex: Int?, personID: UUID?, target action: VideoCommentTarget) -> some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: 12) {
             if let imageIndex {
-                NavigationLink { ExampleProfileView(index: imageIndex, displayName: name) } label: { ExampleAvatar(index: imageIndex, size: 40) }.buttonStyle(.plain)
+                NavigationLink { ExampleProfileView(index: imageIndex, displayName: name) } label: { ExampleAvatar(index: imageIndex, size: 42) }.buttonStyle(.plain)
             } else if let personID {
-                NavigationLink { CommunityPersonView(personID: personID) } label: { SocialAvatar(personID: personID).frame(width: 40, height: 40).clipShape(Circle()) }.buttonStyle(.plain)
+                NavigationLink { CommunityPersonView(personID: personID) } label: { SocialAvatar(personID: personID).frame(width: 42, height: 42).clipShape(Circle()) }.buttonStyle(.plain)
             }
             VStack(alignment: .leading, spacing: 5) {
                 if let imageIndex {
@@ -489,7 +474,7 @@ private struct VideoCommentsView: View {
                 if action.presetKey != nil {
                     Text("Suggested").font(.caption2.weight(.medium)).foregroundStyle(.secondary)
                 }
-                Text(body).font(.subheadline).foregroundStyle(liyaInk).fixedSize(horizontal: false, vertical: true)
+                Text(body).font(.subheadline).foregroundStyle(liyaInk.opacity(0.9)).lineSpacing(3).fixedSize(horizontal: false, vertical: true)
             }.frame(maxWidth: .infinity, alignment: .leading)
             if personID == session.userID, let id = action.commentID {
                 Button("Delete") { Task { if await social.deleteVideoComment(session, id: id) { await load() } else { error = "Couldn't delete this comment. Please try again." } } }
@@ -498,7 +483,8 @@ private struct VideoCommentsView: View {
                 Button { target = action } label: { Image("more").resizable().scaledToFit().frame(width: 18, height: 18).frame(width: 44, height: 44) }
                     .buttonStyle(.plain).accessibilityLabel("Comment options")
             }
-        }
+        }.padding(14).frame(maxWidth: .infinity, alignment: .leading)
+            .background(.white.opacity(0.84), in: RoundedRectangle(cornerRadius: 18))
     }
 
     private func load() async {

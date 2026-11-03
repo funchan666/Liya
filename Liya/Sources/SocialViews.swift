@@ -638,11 +638,16 @@ private struct MessageDraft: Codable {
 
 private struct InboxEmptyState: View {
     let title: String
+    var detail: String? = nil
     var body: some View {
-        VStack(spacing: 10) {
-            Image("empty-art").resizable().scaledToFit().frame(width: 78, height: 72).accessibilityHidden(true)
-            Text(title).font(.subheadline.weight(.medium)).foregroundStyle(liyaInk)
-        }.frame(maxWidth: .infinity).padding(.vertical, 48)
+        VStack(spacing: 12) {
+            Image("empty-art").resizable().scaledToFit().frame(width: 104, height: 96).accessibilityHidden(true)
+            Text(LocalizedStringKey(title)).font(.headline.weight(.semibold)).foregroundStyle(liyaInk)
+            if let detail {
+                Text(LocalizedStringKey(detail)).font(.subheadline).foregroundStyle(liyaInk.opacity(0.58))
+                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+            }
+        }.frame(maxWidth: .infinity).padding(.horizontal, 20).padding(.vertical, 54)
     }
 }
 
@@ -672,19 +677,23 @@ struct CommunityMessagesView: View {
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if social.messagesLoading { LiyaLoadingIndicator(size: 28).frame(maxWidth: .infinity).padding(.vertical, 32) }
-            if let error = social.messageError {
-                Text(error).font(.footnote).foregroundStyle(.red)
-                Button("Refresh messages") { Task { await social.refreshMessages(session) } }.foregroundStyle(liyaAccent)
-            } else if !social.messagesLoading && !social.loading && social.error == nil && peers.isEmpty && !hasLocalDrafts {
-                InboxEmptyState(title: "No messages yet")
+            if social.messagesLoading && !social.messagesReady {
+                LiyaLoadingIndicator(size: 32).frame(maxWidth: .infinity).padding(.vertical, 48)
+            } else if social.messageError != nil {
+                inboxNotice(title: "Messages are taking a moment", detail: "Please check your connection and try again.") {
+                    Task { await social.refreshMessages(session) }
+                }
+            } else if social.messagesReady && peers.isEmpty && !hasLocalDrafts {
+                InboxEmptyState(title: "No messages yet", detail: "Your conversations will appear here.")
             }
-            if let error = social.error {
-                Text(error).font(.footnote).foregroundStyle(.red)
-                Button("Try again") { Task { await social.refresh(session) } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
-            }
-            if !social.realtimeConnected && social.isJoined(session) && !social.messagesLoading {
-                Button("Reconnect live updates") { social.watchMessages(session) }.font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+            if !peers.isEmpty && social.error != nil {
+                inboxNotice(title: "Some profile details are unavailable", detail: "Please check your connection and try again.") {
+                    Task { await social.refresh(session) }
+                }
+            } else if !peers.isEmpty && !social.realtimeConnected && social.isJoined(session) && !social.messagesLoading {
+                inboxNotice(title: "Updates are paused", detail: "Reconnect to see new messages as they arrive.") {
+                    social.watchMessages(session)
+                }
             }
             ForEach(peers, id: \.self) { id in
                 let last = social.messages.last(where: { $0.senderID == id || $0.recipientID == id })
@@ -708,7 +717,7 @@ struct CommunityMessagesView: View {
                     }
                 }.foregroundStyle(liyaInk).padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
             }
-            if !social.loading && social.error == nil && social.isJoined(session) {
+            if !peers.isEmpty && !social.loading && social.error == nil && social.isJoined(session) {
                 HStack {
                     Spacer()
                     NavigationLink { CommunityMembersView() } label: { inboxAction("Find people") }
@@ -716,6 +725,24 @@ struct CommunityMessagesView: View {
                 }.buttonStyle(.plain)
             }
         }.task { await social.refreshMessages(session) }
+    }
+
+    private func inboxNotice(title: String, detail: String, retry: @escaping () -> Void) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image("profile-action-message").resizable().scaledToFit().frame(width: 42, height: 42).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(LocalizedStringKey(detail)).font(.caption).foregroundStyle(liyaInk.opacity(0.60))
+                    .fixedSize(horizontal: false, vertical: true)
+                Button(action: retry) {
+                    Text("Try again").font(.caption.weight(.semibold)).foregroundStyle(liyaAccent)
+                        .padding(.horizontal, 14).frame(minHeight: 44)
+                        .background(liyaAccent.opacity(0.09), in: Capsule())
+                }.buttonStyle(.plain)
+            }.frame(maxWidth: .infinity, alignment: .leading)
+        }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
+            .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 20))
     }
 
     private func inboxAction(_ title: String) -> some View {
