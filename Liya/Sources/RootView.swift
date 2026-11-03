@@ -8,6 +8,10 @@ private struct LiyaTabBarClearanceKey: EnvironmentKey {
     static let defaultValue: CGFloat = 0
 }
 
+private struct LiyaTabActiveKey: EnvironmentKey {
+    static let defaultValue = true
+}
+
 extension EnvironmentValues {
     var profileDetailVisible: Binding<Bool> {
         get { self[ProfileDetailVisibilityKey.self] }
@@ -16,6 +20,10 @@ extension EnvironmentValues {
     var liyaTabBarClearance: CGFloat {
         get { self[LiyaTabBarClearanceKey.self] }
         set { self[LiyaTabBarClearanceKey.self] = newValue }
+    }
+    var liyaTabActive: Bool {
+        get { self[LiyaTabActiveKey.self] }
+        set { self[LiyaTabActiveKey.self] = newValue }
     }
 }
 
@@ -128,6 +136,7 @@ struct RootView: View {
 
     private func tab<Content: View>(_ item: LiyaTab, @ViewBuilder content: () -> Content) -> some View {
         NavigationStack { content() }
+            .environment(\.liyaTabActive, selection == item)
             .opacity(selection == item ? 1 : 0)
             .allowsHitTesting(selection == item)
             .accessibilityHidden(selection != item)

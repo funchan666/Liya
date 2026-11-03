@@ -11,6 +11,7 @@ struct LiyaApp: App {
     @StateObject private var calls = LiyaCalls()
     @StateObject private var voip = LiyaVoIP.shared
     @State private var showingLaunch = true
+    @State private var didBeginSessionRestore = false
     @AppStorage("liya.language") private var language = "en"
 
     var body: some Scene {
@@ -22,6 +23,12 @@ struct LiyaApp: App {
                     if showingLaunch { LiyaLaunchOverlay() }
                 }
                 .task {
+                    guard !didBeginSessionRestore else { return }
+                    didBeginSessionRestore = true
+                    if await session.restoreSavedAccount(), let owner = session.userID {
+                        store.restoreAccountMaterial(owner)
+                        store.inPreview = true
+                    }
                     try? await Task.sleep(nanoseconds: 850_000_000)
                     showingLaunch = false
                 }

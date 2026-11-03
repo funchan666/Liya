@@ -41,6 +41,7 @@ final class LiyaSession: ObservableObject {
     private var walletWatchGeneration = UUID()
     private var profileGeneration = UUID()
     private var moodGeneration = UUID()
+    private var accountGeneration = UUID()
     private static let projectURL = URL(string: "https://hymfjhuglaqoftrcxfjx.supabase.co")!
     private static let publishableKey = "sb_publishable_taByCR_N24fMyWxw4aFUqw_eZMldttB"
 
@@ -59,8 +60,19 @@ final class LiyaSession: ObservableObject {
     }()
 
     func signIn() async -> Bool {
+        await connectAccount(restoring: false)
+    }
+
+    /// Resume only an existing account. A launch must never create a new one.
+    func restoreSavedAccount() async -> Bool {
+        guard client.auth.currentSession != nil || UserDefaults.standard.bool(forKey: "liya.hasSupabaseAccount") else { return false }
+        return await connectAccount(restoring: true)
+    }
+
+    private func connectAccount(restoring: Bool) async -> Bool {
         guard !isSigningIn else { return false }
         isSigningIn = true
+        let generation = accountGeneration
         errorMessage = nil
         defer { isSigningIn = false }
         do {
@@ -69,11 +81,12 @@ final class LiyaSession: ObservableObject {
             if client.auth.currentSession != nil {
                 session = try await client.auth.session
             } else {
-                guard !UserDefaults.standard.bool(forKey: "liya.hasSupabaseAccount") else {
+                guard !restoring, !UserDefaults.standard.bool(forKey: "liya.hasSupabaseAccount") else {
                     throw SessionError.savedSessionUnavailable
                 }
                 session = try await client.auth.signInAnonymously()
             }
+            guard generation == accountGeneration else { return false }
             UserDefaults.standard.set(true, forKey: "liya.hasSupabaseAccount")
             let response: BootstrapResponse = try await client.functions.invoke(
                 "liya-bootstrap", options: FunctionInvokeOptions(body: [String: String]())
@@ -81,6 +94,7 @@ final class LiyaSession: ObservableObject {
             guard response.code == 0, response.data.isEmpty else {
                 throw SessionError.invalidBootstrap
             }
+            guard generation == accountGeneration else { return false }
             userID = session.user.id
             welcomeNotice = nil
             Task { await refreshCatalog() }
@@ -90,9 +104,11 @@ final class LiyaSession: ObservableObject {
             startWalletUpdates(for: session.user.id)
             return true
         } catch SessionError.savedSessionUnavailable {
+            guard generation == accountGeneration else { return false }
             errorMessage = "Your saved anonymous account is unavailable. Account recovery is not connected yet."
             return false
         } catch {
+            guard generation == accountGeneration else { return false }
             errorMessage = "Couldn't connect to Liya. Check your connection and try again."
             return false
         }
@@ -153,6 +169,7 @@ final class LiyaSession: ObservableObject {
     func deleteAccount() async -> Bool {
         guard let owner = userID, !isDeletingAccount else { return false }
         isDeletingAccount = true; deletionError = nil
+        accountGeneration = UUID()
         defer { isDeletingAccount = false }
         let key = "liya.deleteRequest.\(owner.uuidString.lowercased())"
         let requestID: UUID
@@ -191,6 +208,7 @@ final class LiyaSession: ObservableObject {
     func signOut() async -> Bool {
         guard userID != nil, !isSigningOut, !isDeletingAccount else { return false }
         isSigningOut = true; signOutError = nil
+        accountGeneration = UUID()
         defer { isSigningOut = false }
         var serverConfirmed = client.auth.currentSession != nil
         do {

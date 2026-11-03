@@ -27,6 +27,10 @@ struct SquareHome: View {
                         feature("diary-card", label: "Mood diary") { MoodDiaryView() }
                         feature("tree-card", label: "Mood tree hole") { TreeHoleView() }
                     }
+                    HStack(spacing: 10) {
+                        wellbeingLink("mood-calm", title: "A quiet moment", subtitle: "Take a gentle pause") { QuietMomentView() }
+                        wellbeingLink("diary-happy", title: "Mood reflections", subtitle: "Look back on your days") { MoodReflectionsView() }
+                    }
                     CommunityFeed()
                     if store.drafts.contains(where: { $0.publishedLocally == true }) {
                         Text("Unshared posts").font(.headline).foregroundStyle(liyaInk)
@@ -60,19 +64,38 @@ struct SquareHome: View {
             Image(image).resizable().scaledToFit().frame(maxWidth: .infinity)
         }.buttonStyle(.plain).accessibilityLabel(label)
     }
+
+    private func wellbeingLink<Destination: View>(_ image: String, title: String, subtitle: String, @ViewBuilder destination: () -> Destination) -> some View {
+        NavigationLink(destination: destination()) {
+            VStack(alignment: .leading, spacing: 7) {
+                Image(image).resizable().scaledToFit().frame(width: 36, height: 36).accessibilityHidden(true)
+                Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(LocalizedStringKey(subtitle)).font(.caption).foregroundStyle(liyaInk.opacity(0.62))
+                    .fixedSize(horizontal: false, vertical: true)
+            }.frame(maxWidth: .infinity, minHeight: 108, alignment: .leading).padding(12)
+                .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 18))
+                .overlay(RoundedRectangle(cornerRadius: 18).stroke(liyaAccent.opacity(0.12), lineWidth: 1))
+        }.buttonStyle(.plain)
+    }
 }
 
 struct MoodDiaryView: View {
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
-    @State private var date = Date()
-    @State private var month = Calendar.current.dateInterval(of: .month, for: Date())?.start ?? Date()
+    @State private var date: Date
+    @State private var month: Date
     @State private var mood = "mood-happy"
     @State private var note = ""
     @State private var saved = false
     @State private var dirty = false
     @State private var saving = false
     private let moods = [("mood-teal", "Tired"), ("mood-happy", "Happy"), ("mood-yellow", "Thoughtful"), ("mood-calm", "Calm"), ("mood-blue", "Blue"), ("mood-upset", "Upset")]
+
+    init(initialDate: Date = Date()) {
+        _date = State(initialValue: initialDate)
+        _month = State(initialValue: Calendar.current.dateInterval(of: .month, for: initialDate)?.start ?? initialDate)
+    }
 
     var body: some View {
         PageShell(title: "Mood Diary") {
@@ -81,6 +104,17 @@ struct MoodDiaryView: View {
                     diaryStat("diary-count", label: "Total record days", value: session.moodEntries.count)
                     diaryStat("diary-happy", label: "Happy days", value: session.moodEntries.filter { $0.mood == "mood-happy" }.count)
                 }
+                NavigationLink { MoodReflectionsView() } label: {
+                    HStack(spacing: 10) {
+                        Image("mood-calm").resizable().scaledToFit().frame(width: 32, height: 32).accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Mood reflections").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                            Text("Explore your recent entries").font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer(minLength: 8)
+                        Image("back").resizable().scaledToFit().frame(width: 14, height: 14).scaleEffect(x: -1, y: 1).accessibilityHidden(true)
+                    }.padding(12).frame(minHeight: 56).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 16))
+                }.buttonStyle(.plain)
                 HStack(alignment: .center) {
                     Text("Mood journal").font(.system(.title3, design: .serif).bold().italic()).foregroundStyle(liyaInk)
                     Spacer(minLength: 8)
@@ -236,6 +270,191 @@ struct MoodDiaryView: View {
                 }
             }
             .accessibilityElement(children: .ignore).accessibilityLabel("\(label): \(value)")
+    }
+}
+
+private struct MoodReflectionsView: View {
+    @EnvironmentObject private var session: LiyaSession
+    @State private var days = 7
+    private let moods = [("mood-happy", "Happy"), ("mood-calm", "Calm"), ("mood-yellow", "Thoughtful"), ("mood-teal", "Tired"), ("mood-blue", "Blue"), ("mood-upset", "Upset")]
+
+    private var recentEntries: [CloudMood] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        guard let first = calendar.date(byAdding: .day, value: 1 - days, to: today) else { return [] }
+        let lower = CloudMood.dayKey(first), upper = CloudMood.dayKey(today)
+        return session.moodEntries.filter { $0.day >= lower && $0.day <= upper }.sorted { $0.day > $1.day }
+    }
+
+    var body: some View {
+        PageShell(title: "Mood reflections") {
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(alignment: .center, spacing: 14) {
+                    Image("diary-happy").resizable().scaledToFit().frame(width: 90, height: 90).accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Your days, at a glance").font(.title3.weight(.bold)).foregroundStyle(liyaInk)
+                        Text("A gentle look back at the moods you recorded.").font(.subheadline).foregroundStyle(.secondary)
+                    }
+                }.frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: 8) {
+                    periodButton("Last 7 days", count: 7)
+                    periodButton("Last 30 days", count: 30)
+                }
+                if session.moodLoading {
+                    HStack(spacing: 8) { LiyaLoadingIndicator(size: 24); Text("Loading journal…").font(.footnote).foregroundStyle(.secondary) }
+                } else if let error = session.moodError {
+                    OfflineNote(text: error)
+                    Button("Reload journal") { Task { await session.refreshMoods() } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
+                } else if recentEntries.isEmpty {
+                    EmptyState(title: "No moods recorded in this period", detail: "Your reflections will appear after you record a mood.")
+                    NavigationLink { MoodDiaryView() } label: {
+                        Text("Record a mood").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                            .frame(maxWidth: .infinity).frame(minHeight: 48).background(liyaGradient, in: Capsule())
+                    }.buttonStyle(.plain)
+                } else {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Moods you recorded").font(.headline).foregroundStyle(liyaInk)
+                        HStack(spacing: 4) {
+                            Text("\(recentEntries.count)").monospacedDigit()
+                            Text("recorded days")
+                        }.font(.subheadline).foregroundStyle(.secondary)
+                        ForEach(moods.indices, id: \.self) { index in
+                            let item = moods[index]
+                            let count = recentEntries.filter { $0.mood == item.0 }.count
+                            if count > 0 {
+                                HStack(spacing: 10) {
+                                    Image(item.0).resizable().scaledToFit().frame(width: 32, height: 32).accessibilityHidden(true)
+                                    Text(LocalizedStringKey(item.1)).font(.subheadline.weight(.medium)).foregroundStyle(liyaInk)
+                                    Spacer()
+                                    Text("\(count)").font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(liyaAccent)
+                                }.frame(minHeight: 38).accessibilityElement(children: .combine)
+                            }
+                        }
+                    }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 20))
+                    Text("Recent entries").font(.headline).foregroundStyle(liyaInk)
+                    LazyVStack(spacing: 10) {
+                        ForEach(recentEntries) { entry in
+                            if let day = date(for: entry.day) {
+                                NavigationLink { MoodDiaryView(initialDate: day) } label: {
+                                    HStack(alignment: .top, spacing: 12) {
+                                        Image(entry.mood).resizable().scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(day, format: .dateTime.weekday(.wide).month(.abbreviated).day()).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                                            if entry.note.isEmpty {
+                                                Text(LocalizedStringKey(moodName(entry.mood))).font(.subheadline).foregroundStyle(.secondary)
+                                            } else {
+                                                Text(entry.note).font(.subheadline).foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.leading)
+                                            }
+                                        }
+                                        Spacer(minLength: 4)
+                                        Image("back").resizable().scaledToFit().frame(width: 14, height: 14).scaleEffect(x: -1, y: 1).accessibilityHidden(true)
+                                    }.padding(14).frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+                                        .background(.white.opacity(0.86), in: RoundedRectangle(cornerRadius: 16))
+                                }.buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+            }.padding(.top, 16).modifier(AdaptiveContainerMargins())
+        }.task { await session.refreshMoods() }
+    }
+
+    private func periodButton(_ title: String, count: Int) -> some View {
+        Button { days = count } label: {
+            Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold))
+                .foregroundStyle(days == count ? .white : liyaAccent).frame(maxWidth: .infinity).frame(minHeight: 44)
+                .background { if days == count { Capsule().fill(liyaGradient) } else { Capsule().fill(.white.opacity(0.85)) } }
+        }.buttonStyle(.plain).accessibilityAddTraits(days == count ? .isSelected : [])
+    }
+
+    private func date(for key: String) -> Date? {
+        let values = key.split(separator: "-").compactMap { Int($0) }
+        guard values.count == 3 else { return nil }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        return calendar.date(from: DateComponents(year: values[0], month: values[1], day: values[2]))
+    }
+
+    private func moodName(_ mood: String) -> String {
+        moods.first(where: { $0.0 == mood })?.1 ?? "Mood"
+    }
+}
+
+private struct QuietMomentView: View {
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.liyaTabActive) private var tabActive
+    @State private var remaining = 60
+    @State private var running = false
+    @State private var deadline: Date?
+
+    private var prompt: String {
+        if remaining > 40 { return "Notice three things you can see." }
+        if remaining > 20 { return "Notice two sounds around you." }
+        return "Notice one sensation you can feel."
+    }
+
+    var body: some View {
+        PageShell(title: "A quiet moment") {
+            VStack(alignment: .center, spacing: 20) {
+                Image("mood-calm").resizable().scaledToFit().frame(width: 96, height: 96).accessibilityHidden(true)
+                Text("Make a little room for yourself").font(.title2.weight(.bold)).foregroundStyle(liyaInk).multilineTextAlignment(.center)
+                Text("Take a minute to notice the world around you, at your own pace.")
+                    .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                VStack(spacing: 14) {
+                    Text(LocalizedStringKey(remaining == 0 ? "A moment just for you" : prompt))
+                        .font(.title3.weight(.semibold)).foregroundStyle(liyaInk).multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if remaining == 0 {
+                        Text("Finished").font(.title2.weight(.semibold)).foregroundStyle(liyaAccent)
+                    } else {
+                        Text(String(format: "%d:%02d", remaining / 60, remaining % 60))
+                            .font(.title2.weight(.semibold)).monospacedDigit().foregroundStyle(liyaAccent)
+                    }
+                    Text(LocalizedStringKey(remaining == 0 ? "You can return whenever you need a pause." : "There is no perfect way to do this."))
+                        .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                }.frame(maxWidth: .infinity, minHeight: 180).padding(16)
+                    .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 22))
+                PrimaryButton(title: running ? "Pause" : (remaining == 60 ? "Begin" : (remaining == 0 ? "Begin again" : "Resume"))) {
+                    if running { pause() } else { start() }
+                }
+                if remaining < 60 {
+                    Button {
+                        running = false; deadline = nil; remaining = 60
+                    } label: {
+                        Text("Start over").font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent)
+                            .frame(maxWidth: .infinity).frame(minHeight: 44)
+                            .background(.white.opacity(0.85), in: Capsule())
+                    }.buttonStyle(.plain)
+                }
+            }.frame(maxWidth: 440).frame(maxWidth: .infinity).padding(.top, 32).modifier(AdaptiveContainerMargins())
+        }
+        .task(id: running) {
+            while running && !Task.isCancelled {
+                guard let deadline else { break }
+                let seconds = max(0, Int(ceil(deadline.timeIntervalSinceNow)))
+                remaining = seconds
+                if seconds == 0 { running = false; self.deadline = nil; break }
+                do { try await Task.sleep(nanoseconds: 250_000_000) } catch { break }
+            }
+        }
+        .onLiyaChange(of: scenePhase) { phase in if phase != .active { pause() } }
+        .onLiyaChange(of: tabActive) { active in if !active { pause() } }
+        .onDisappear { pause() }
+    }
+
+    private func start() {
+        guard scenePhase == .active, tabActive else { return }
+        if remaining == 0 { remaining = 60 }
+        deadline = Date().addingTimeInterval(TimeInterval(remaining))
+        running = true
+    }
+
+    private func pause() {
+        guard running else { return }
+        if let deadline { remaining = max(0, Int(ceil(deadline.timeIntervalSinceNow))) }
+        self.deadline = nil
+        running = false
     }
 }
 
