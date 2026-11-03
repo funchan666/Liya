@@ -287,15 +287,15 @@ struct CommunityPersonView: View {
                                 Button {
                                     busy = true; Task { await social.setRelation(session, target: personID, table: "liya_follows", enabled: !social.follows.contains(personID)); busy = false }
                                 } label: {
-                                    ProfileDetailActionLabel(title: social.follows.contains(personID) ? "Following" : "Follow", style: social.follows.contains(personID) ? .secondary : .follow)
+                                    ProfileDetailActionLabel(title: social.follows.contains(personID) ? "Following" : "Follow", style: social.follows.contains(personID) ? .following : .follow)
                                 }.buttonStyle(.plain).disabled(busy || !social.isJoined(session) || social.loading)
                                 NavigationLink { CommunityConversationView(personID: personID) } label: {
                                     ProfileDetailActionLabel(title: "Message", style: .message)
                                 }.buttonStyle(.plain)
                             }
                             HStack(spacing: 10) {
-                                Button { startCall(kind: "audio") } label: { ProfileDetailActionLabel(title: "Voice call", style: .secondary) }
-                                Button { startCall(kind: "video") } label: { ProfileDetailActionLabel(title: "Video call", style: .secondary) }
+                                Button { startCall(kind: "audio") } label: { ProfileDetailActionLabel(title: "Voice call", style: .voice) }
+                                Button { startCall(kind: "video") } label: { ProfileDetailActionLabel(title: "Video call", style: .video) }
                             }.buttonStyle(.plain).disabled(calls.busy || calls.call != nil)
                             if let callNotice { Text(callNotice).font(.footnote).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading) }
                             if attemptedCall, let error = calls.error { Text(error).font(.footnote).foregroundStyle(.red).frame(maxWidth: .infinity, alignment: .leading) }

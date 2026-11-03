@@ -112,25 +112,32 @@ struct ProfileActionLabel: View {
 }
 
 struct ProfileDetailActionLabel: View {
-    enum Style: Equatable { case follow, message, secondary }
+    enum Style: Equatable { case follow, following, message, voice, video }
+    @Environment(\.isEnabled) private var isEnabled
     let title: String
     let style: Style
+    private var icon: String {
+        switch style {
+        case .follow, .following: return "profile-action-follow"
+        case .message: return "profile-action-message"
+        case .voice: return "profile-action-voice"
+        case .video: return "profile-action-video"
+        }
+    }
     var body: some View {
-        Text(title).font(.subheadline.weight(.semibold))
-            .foregroundStyle(style == .secondary ? liyaAccent : .white)
-            .lineLimit(1).minimumScaleFactor(0.85)
-            .frame(maxWidth: .infinity, minHeight: 46)
-            .background {
-                switch style {
-                case .follow:
-                    Capsule().fill(LinearGradient(colors: [.orange.opacity(0.88), .pink.opacity(0.85)], startPoint: .leading, endPoint: .trailing))
-                case .message:
-                    Capsule().fill(liyaGradient.opacity(0.88))
-                case .secondary:
-                    Capsule().fill(.white.opacity(0.85))
-                        .overlay(Capsule().stroke(liyaAccent.opacity(0.2), lineWidth: 1))
-                }
-            }
+        HStack(spacing: 7) {
+            Image(icon).resizable().scaledToFit().frame(width: 30, height: 30).accessibilityHidden(true)
+            Text(title).font(.subheadline.weight(.semibold))
+                .lineLimit(1).minimumScaleFactor(0.8)
+        }
+        .foregroundStyle(style == .following ? liyaAccent : liyaInk)
+        .frame(maxWidth: .infinity, minHeight: 54)
+        .padding(.horizontal, 8)
+        .background(style == .following ? Color(red: 0.93, green: 0.90, blue: 1.0) : Color.white.opacity(0.84),
+                    in: RoundedRectangle(cornerRadius: 17))
+        .overlay(RoundedRectangle(cornerRadius: 17).stroke(liyaAccent.opacity(style == .following ? 0.28 : 0.10), lineWidth: 1))
+        .opacity(isEnabled ? 1 : 0.5)
+        .accessibilityAddTraits(style == .following ? .isSelected : [])
     }
 }
 
@@ -138,14 +145,27 @@ struct ProfileSingleVideoRow<Thumbnail: View>: View {
     let thumbnail: Thumbnail
     init(@ViewBuilder thumbnail: () -> Thumbnail) { self.thumbnail = thumbnail() }
     var body: some View {
-        HStack(spacing: 16) {
-            thumbnail.frame(width: 96, height: 120).clipped().clipShape(RoundedRectangle(cornerRadius: 12))
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Video").font(.headline).foregroundStyle(liyaInk)
-                Text("Watch video").font(.subheadline.weight(.medium)).foregroundStyle(liyaAccent)
-            }.frame(maxWidth: .infinity, alignment: .leading)
-        }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
-            .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 18))
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 16) {
+                thumbnail.frame(width: 112, height: 126).clipped().clipShape(RoundedRectangle(cornerRadius: 14))
+                videoDetails
+            }
+            VStack(alignment: .leading, spacing: 12) {
+                thumbnail.frame(maxWidth: .infinity).frame(height: 150).clipped().clipShape(RoundedRectangle(cornerRadius: 14))
+                videoDetails
+            }
+        }
+        .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+        .background(.white.opacity(0.86), in: RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(liyaAccent.opacity(0.08), lineWidth: 1))
+    }
+    private var videoDetails: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Image("profile-action-video").resizable().scaledToFit().frame(width: 34, height: 30).accessibilityHidden(true)
+            Text("Video").font(.headline).foregroundStyle(liyaInk)
+            Text("Watch this moment").font(.subheadline.weight(.medium)).foregroundStyle(liyaAccent)
+                .fixedSize(horizontal: false, vertical: true)
+        }.frame(minWidth: 100, maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -233,15 +253,15 @@ struct ExampleProfileView: View {
                                 if store.followedExamples.contains(index) { store.toggleFollow(index) }
                                 else { confirmLocalFollow = true }
                             } label: {
-                                ProfileDetailActionLabel(title: store.followedExamples.contains(index) ? "Following" : "Follow", style: store.followedExamples.contains(index) ? .secondary : .follow)
+                                ProfileDetailActionLabel(title: store.followedExamples.contains(index) ? "Following" : "Follow", style: store.followedExamples.contains(index) ? .following : .follow)
                             }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
                             NavigationLink { ExampleChatView(index: index) } label: {
                                 ProfileDetailActionLabel(title: "Message", style: .message)
                             }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
                         }
                         HStack(spacing: 10) {
-                            Button { callUnavailable = true } label: { ProfileDetailActionLabel(title: "Voice call", style: .secondary) }
-                            Button { callUnavailable = true } label: { ProfileDetailActionLabel(title: "Video call", style: .secondary) }
+                            Button { callUnavailable = true } label: { ProfileDetailActionLabel(title: "Voice call", style: .voice) }
+                            Button { callUnavailable = true } label: { ProfileDetailActionLabel(title: "Video call", style: .video) }
                         }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
                     }
         } content: {
