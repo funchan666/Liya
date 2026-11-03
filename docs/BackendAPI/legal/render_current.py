@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import re
 from xml.sax.saxutils import escape
 from reportlab.lib import colors
 from reportlab.lib.styles import ParagraphStyle
@@ -13,9 +14,18 @@ pdfmetrics.registerFont(TTFont("LiyaArial", "/System/Library/Fonts/Supplemental/
 pdfmetrics.registerFont(TTFont("LiyaArialBold", "/System/Library/Fonts/Supplemental/Arial Bold.ttf"))
 styles = {
     "title": ParagraphStyle("title", fontName="LiyaArialBold", fontSize=21, leading=26, textColor=colors.HexColor("#28356D"), spaceAfter=10),
-    "heading": ParagraphStyle("heading", fontName="LiyaArialBold", fontSize=12, leading=16, textColor=colors.HexColor("#5A42B8"), spaceBefore=12, spaceAfter=6),
-    "body": ParagraphStyle("body", fontName="LiyaArial", fontSize=10.5, leading=15.5, textColor=colors.HexColor("#20243B"), spaceAfter=8),
+    "heading": ParagraphStyle("heading", fontName="LiyaArialBold", fontSize=12, leading=16, textColor=colors.HexColor("#5A42B8"), spaceBefore=12, spaceAfter=6, keepWithNext=True),
+    "body": ParagraphStyle("body", fontName="LiyaArial", fontSize=10.5, leading=14.5, textColor=colors.HexColor("#20243B"), spaceAfter=8),
 }
+def inline_markup(text):
+    result, position = [], 0
+    for match in re.finditer(r"\[([^\]]+)\]\((https://[^\s)]+)\)", text):
+        result.append(escape(text[position:match.start()]))
+        result.append('<link href="' + escape(match.group(2), {'"': '&quot;'}) + '" color="#5042a3">' + escape(match.group(1)) + '</link>')
+        position = match.end()
+    result.append(escape(text[position:]))
+    return ''.join(result)
+
 for name in (sys.argv[1:] or ["terms", "privacy"]):
     doc = SimpleDocTemplate(str(base / f"{name}.pdf"), pagesize=(148 * mm, 210 * mm),
                             leftMargin=15 * mm, rightMargin=15 * mm, topMargin=16 * mm,
@@ -25,9 +35,9 @@ for name in (sys.argv[1:] or ["terms", "privacy"]):
         if block.startswith("# "):
             story.append(Paragraph(escape(block[2:]), styles["title"]))
         elif block.startswith("## "):
-            if section: story.append(KeepTogether(section))
+            if section: story.extend(section)
             section = [Paragraph(escape(block[3:]), styles["heading"])]
         else:
-            (section if section else story).append(Paragraph(escape(block.replace("\n", " ")), styles["body"]))
-    if section: story.append(KeepTogether(section))
+            (section if section else story).append(Paragraph(inline_markup(block.replace("\n", " ")), styles["body"]))
+    if section: story.extend(section)
     doc.build(story)

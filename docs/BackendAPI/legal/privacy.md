@@ -1,6 +1,6 @@
 # Liya Privacy Policy
 
-Effective 2 November 2026.
+Effective 3 November 2026.
 
 ## Information handled
 
@@ -8,7 +8,15 @@ Liya uses an anonymous account identifier and session to connect to the service.
 
 ## How information is used
 
-The account and session support access to Liya, its example content, community and your saved account information. Your community name and introduction, and any avatar you choose to share, are visible to other signed-in members. Posts, attachments and comments are visible to the community; messages and their attachments are available to their participants. People you block cannot interact with you through the community while the block is in place. The automated chat selects a prewritten response based on words in your message; it is not a human or a professional support service. Supabase provides authentication, database and file hosting for the service. Reports are stored, but a review service has not yet been configured. When you choose to view a coin pack, Apple supplies its App Store product information. Purchases are not currently enabled.
+The account and session support access to Liya, its example content, community and your saved account information. Your community name and introduction, and any avatar you choose to share, are visible to other signed-in members. Posts, attachments and comments are visible to the community; messages and their attachments are available to their participants. People you block cannot interact with you through the community while the block is in place. Supabase provides authentication, database and file hosting for the service. Reports are stored, but a review service has not yet been configured. When you choose to view a coin pack, Apple supplies its App Store product information. Purchases are not currently enabled.
+
+## AI conversations and third-party processing
+
+If you choose to use Liya AI and give permission, Liya sends your message and a limited amount of recent AI conversation through Supabase to GroqCloud to generate a response. Supabase stores your conversation and forwards the request. Groq processes the text to produce the response and may process technical information needed to provide and secure its service. This AI feature sends text, not your photos, videos or audio. AI responses are automated, can be inaccurate, and are not professional or emergency support. Please consider carefully before sharing sensitive information.
+
+Your AI conversation is stored with your Liya account. You can stop further AI requests by withdrawing permission in AI privacy settings; this does not recall a request already sent or erase saved conversation. Deleting your account removes the Liya account's stored AI conversation and consent records; it does not guarantee immediate deletion from a provider's systems. Service logs and backups may be retained as needed for security, reliability and legal obligations.
+
+Groq states that inference data is not retained by default, but inputs and outputs may be temporarily logged for troubleshooting or suspected abuse, generally for up to 30 days unless longer retention is required by law. Groq's published service agreement does not permit model training or fine-tuning on inputs or outputs without the customer's explicit permission or instruction. Retained customer data is stored in the United States according to Groq; processing and storage may involve a transfer outside your country. These provider statements do not mean that Liya itself has zero data retention. For further details see [Groq customer data](https://console.groq.com/docs/your-data), [Groq data processing addendum](https://console.groq.com/docs/legal/customer-data-processing-addendum), [Groq services agreement](https://console.groq.com/docs/legal/services-agreement), and [Supabase data processing addendum](https://supabase.com/legal/dpa).
 
 ## Voice and video calls
 
