@@ -19,6 +19,8 @@ create policy video_comments_insert on public.liya_video_comments for insert to 
   ));
 create policy video_comments_delete on public.liya_video_comments for delete to authenticated
   using (owner_id = (select auth.uid()));
+create trigger liya_sync_video_comments after insert or delete on public.liya_video_comments
+  for each statement execute function liya_social_private.signal_feed();
 
 -- Reports retain a snapshot even if the original comment is later removed.
 create table public.liya_video_comment_reports (
@@ -43,7 +45,7 @@ create policy video_comment_reports_insert on public.liya_video_comment_reports 
   with check (reporter_id = (select auth.uid()) and exists (
     select 1 from public.liya_example_media m where m.id = liya_video_comment_reports.media_id and m.kind = 'video'
   ) and (
-    (comment_id is null and preset_key is not null) or
+    (comment_id is null and preset_key in (liya_video_comment_reports.media_id || ':starter:0', liya_video_comment_reports.media_id || ':starter:1')) or
     (comment_id is not null and exists (
       select 1 from public.liya_video_comments c
       where c.id = liya_video_comment_reports.comment_id and c.media_id = liya_video_comment_reports.media_id
