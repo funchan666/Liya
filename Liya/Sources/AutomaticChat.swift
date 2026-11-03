@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import Supabase
 
 struct AutoChatMessage: Decodable, Identifiable {
     let id: UUID
@@ -17,8 +18,8 @@ final class AutomaticChat: ObservableObject {
     @Published private(set) var sending = false
     @Published private(set) var waiting = false
     @Published var error: String?
-    private var pendingPoll: Task<Void, Never>?
     private var generation = UUID()
+    private var sendGeneration = UUID()
     private var loadedOwner: UUID?
 
     func load(_ session: LiyaSession) async {
@@ -30,7 +31,7 @@ final class AutomaticChat: ObservableObject {
         do {
             var all: [AutoChatMessage] = []; var offset = 0
             while true {
-                let page: [AutoChatMessage] = try await session.client.from("liya_auto_messages")
+                let page: [AutoChatMessage] = try await session.client.from("liya_ai_messages")
                     .select("id,request_id,role,body,created_at").eq("owner_id", value: owner.uuidString)
                     .order("created_at").order("id").range(from: offset, to: offset + 499).execute().value
                 all.append(contentsOf: page)
@@ -43,39 +44,34 @@ final class AutomaticChat: ObservableObject {
 
     func send(_ session: LiyaSession, id: UUID, text: String) async -> Bool {
         guard let owner = session.userID, !sending, !waiting else { return false }
-        sending = true; error = nil
-        defer { sending = false }
+        let current = UUID(); sendGeneration = current
+        sending = true; waiting = true; error = nil
+        defer { if sendGeneration == current { sending = false; waiting = false } }
         do {
-            struct ReplyDue: Decodable { let replyVisibleAt: String; enum CodingKeys: String, CodingKey { case replyVisibleAt = "reply_visible_at" } }
-            let response: [ReplyDue] = try await session.client.rpc("liya_auto_send", params: ["p_request": id.uuidString, "p_body": text]).execute().value
-            guard !response.isEmpty, session.userID == owner else { throw ChatError.unconfirmed }
+            struct Reply: Decodable { let code: String }
+            let response: Reply = try await session.client.functions.invoke("liya-ai-chat", options: FunctionInvokeOptions(body: ["request_id": id.uuidString, "text": text]))
+            guard !Task.isCancelled, sendGeneration == current, session.userID == owner else { return false }
+            guard response.code == "completed" else { throw ChatError.unconfirmed }
             await load(session)
-            guard error == nil, messages.contains(where: { $0.requestID == id && $0.role == "user" && $0.body == text }) else { throw ChatError.unconfirmed }
-            schedulePending(session)
+            guard !Task.isCancelled, sendGeneration == current, session.userID == owner else { return false }
+            guard error == nil, messages.contains(where: { $0.requestID == id && $0.role == "user" && $0.body == text }),
+                  messages.contains(where: { $0.requestID == id && $0.role == "assistant" }) else { throw ChatError.unconfirmed }
             return true
         } catch {
-            self.error = "Couldn't confirm the message. Your draft is still here; try again."
+            guard !Task.isCancelled, sendGeneration == current, session.userID == owner else { return false }
+            if case let FunctionsError.httpError(code, _) = error {
+                switch code {
+                case 401: self.error = "Your session has expired. Please sign in again."
+                case 409: self.error = "Your reply is still being prepared. Please try again shortly."
+                case 429: self.error = "A little busy right now. Please wait and try again."
+                default: self.error = "Couldn't get a reply right now. Please try again."
+                }
+            } else { self.error = "Couldn't get a reply right now. Please try again." }
             return false
         }
     }
 
-    func schedulePending(_ session: LiyaSession) {
-        pendingPoll?.cancel()
-        guard messages.last?.role == "user" else { waiting = false; return }
-        waiting = true
-        pendingPoll = Task { [weak self, weak session] in
-            for _ in 0..<12 {
-                do { try await Task.sleep(nanoseconds: 1_000_000_000) } catch { return }
-                guard let self, let session, !Task.isCancelled else { return }
-                await self.load(session)
-                if self.error != nil { self.waiting = false; return }
-                if self.messages.last?.role != "user" { self.waiting = false; return }
-            }
-            if let self { self.waiting = false; self.error = "The reply is taking longer than expected. Refresh to check." }
-        }
-    }
-
-    func stop() { pendingPoll?.cancel(); pendingPoll = nil; waiting = false }
+    func stop() { generation = UUID(); sendGeneration = UUID(); loading = false; sending = false; waiting = false }
     private enum ChatError: Error { case unconfirmed }
 }
 
@@ -83,9 +79,11 @@ struct AutomaticChatView: View {
     @Environment(\.liyaTabBarClearance) private var tabBarClearance
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var session: LiyaSession
-    @AppStorage("liya.aiDraft") private var draft = ""
-    @AppStorage("liya.autoAttempt") private var attempt = ""
-    @AppStorage("liya.autoFingerprint") private var fingerprint = ""
+    @State private var draft = ""
+    @State private var attempt = ""
+    @State private var fingerprint = ""
+    @State private var draftOwner: UUID?
+    @State private var sendTask: Task<Void, Never>?
     @StateObject private var chat = AutomaticChat()
     private var canSend: Bool {
         session.userID != nil && !chat.loading && !chat.sending && !chat.waiting &&
@@ -108,8 +106,9 @@ struct AutomaticChatView: View {
                             if let error = chat.error {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(error).font(.footnote).foregroundStyle(.white)
-                                    Button("Try again") { Task { await chat.load(session); chat.schedulePending(session) } }
+                                    Button("Try again") { if canSend { submit() } else { Task { await chat.load(session) } } }
                                         .font(.footnote.bold()).foregroundStyle(.white).frame(minHeight: 44)
+                                        .disabled(chat.sending)
                                 }
                             }
                             ForEach(chat.messages) { message in
@@ -164,12 +163,7 @@ struct AutomaticChatView: View {
                             .background(.white.opacity(0.96), in: RoundedRectangle(cornerRadius: 20))
                             .disabled(chat.sending)
                         Button {
-                            guard let owner = session.userID else { return }
-                            let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-                            let stamp = SocialAttempt.fingerprint(owner: owner, text: text, files: [])
-                            if stamp != fingerprint || UUID(uuidString: attempt) == nil { fingerprint = stamp; attempt = UUID().uuidString }
-                            guard let id = UUID(uuidString: attempt) else { return }
-                            Task { if await chat.send(session, id: id, text: text) { draft = ""; attempt = ""; fingerprint = "" } }
+                            submit()
                         } label: {
                             Text(chat.sending ? "Sending…" : "Send").font(.subheadline.bold()).foregroundStyle(.white)
                                 .padding(.horizontal, 18).frame(minHeight: 48)
@@ -181,7 +175,42 @@ struct AutomaticChatView: View {
                     .modifier(AdaptiveContainerMargins())
             }
         }.navigationBarHidden(true)
-            .task { await chat.load(session); chat.schedulePending(session) }
-            .onDisappear { chat.stop() }
+            .task(id: session.userID) {
+                sendTask?.cancel(); chat.stop(); restoreDraft()
+                await chat.load(session)
+            }
+            .onLiyaChange(of: draft) { _ in persistDraft() }
+            .onDisappear { persistDraft(); sendTask?.cancel(); chat.stop() }
+    }
+
+    private func submit() {
+        guard canSend, let owner = session.userID, draftOwner == owner else { return }
+        let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        let stamp = SocialAttempt.fingerprint(owner: owner, text: text, files: [])
+        if stamp != fingerprint || UUID(uuidString: attempt) == nil { fingerprint = stamp; attempt = UUID().uuidString }
+        guard let id = UUID(uuidString: attempt) else { return }
+        persistDraft()
+        sendTask = Task {
+            if await chat.send(session, id: id, text: text), !Task.isCancelled, session.userID == owner, draftOwner == owner {
+                draft = ""; attempt = ""; fingerprint = ""; persistDraft()
+            }
+        }
+    }
+
+    private func restoreDraft() {
+        guard let owner = session.userID else { draftOwner = nil; draft = ""; attempt = ""; fingerprint = ""; return }
+        draftOwner = owner
+        let prefix = "liya.ai.\(owner.uuidString)."
+        draft = UserDefaults.standard.string(forKey: prefix + "draft") ?? ""
+        attempt = UserDefaults.standard.string(forKey: prefix + "attempt") ?? ""
+        fingerprint = UserDefaults.standard.string(forKey: prefix + "fingerprint") ?? ""
+    }
+
+    private func persistDraft() {
+        guard let owner = draftOwner, owner == session.userID else { return }
+        let prefix = "liya.ai.\(owner.uuidString)."
+        UserDefaults.standard.set(draft, forKey: prefix + "draft")
+        UserDefaults.standard.set(attempt, forKey: prefix + "attempt")
+        UserDefaults.standard.set(fingerprint, forKey: prefix + "fingerprint")
     }
 }
