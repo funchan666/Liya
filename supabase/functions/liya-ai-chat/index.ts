@@ -56,7 +56,7 @@ Deno.serve(async (request: Request) => {
     context.reverse();
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + apiKey },
       body: JSON.stringify({ model, messages: [{ role: "system", content: systemPrompt }, ...context, { role: "user", content: text }], max_completion_tokens: 1024, reasoning_effort: "low", temperature: 0.7 }),
       signal: AbortSignal.timeout(30000),
     });

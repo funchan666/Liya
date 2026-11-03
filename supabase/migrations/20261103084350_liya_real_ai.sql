@@ -13,6 +13,7 @@ create index if not exists liya_ai_messages_owner_time on public.liya_ai_message
 alter table public.liya_ai_messages enable row level security;
 revoke all on public.liya_ai_messages from public, anon, authenticated;
 grant select on public.liya_ai_messages to authenticated;
+grant all on public.liya_ai_messages to service_role;
 create policy liya_ai_messages_owner_read on public.liya_ai_messages for select to authenticated
   using (owner_id = (select auth.uid()));
 
@@ -31,6 +32,8 @@ create table if not exists liya_social_private.ai_attempts (
 );
 create index if not exists liya_ai_attempts_time on liya_social_private.ai_attempts(created_at);
 create index if not exists liya_ai_attempts_owner_time on liya_social_private.ai_attempts(owner_id, created_at);
+alter table liya_social_private.ai_requests enable row level security;
+alter table liya_social_private.ai_attempts enable row level security;
 revoke all on liya_social_private.ai_requests, liya_social_private.ai_attempts from public, anon, authenticated;
 
 create or replace function public.liya_ai_claim(p_owner uuid, p_request uuid, p_body text, p_lease uuid)

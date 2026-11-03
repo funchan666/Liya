@@ -27,7 +27,7 @@ final class AutomaticChat: ObservableObject {
         let current = UUID(); generation = current
         if loadedOwner != owner { messages = []; loadedOwner = owner }
         loading = true; error = nil
-        defer { loading = false }
+        defer { if generation == current { loading = false } }
         do {
             var all: [AutoChatMessage] = []; var offset = 0
             while true {
@@ -59,7 +59,7 @@ final class AutomaticChat: ObservableObject {
             return true
         } catch {
             guard !Task.isCancelled, sendGeneration == current, session.userID == owner else { return false }
-            if case let FunctionsError.httpError(code, _) = error {
+            if let functionError = error as? FunctionsError, case let .httpError(code, _) = functionError {
                 switch code {
                 case 401: self.error = "Your session has expired. Please sign in again."
                 case 409: self.error = "Your reply is still being prepared. Please try again shortly."
