@@ -393,20 +393,23 @@ final class SocialStore: ObservableObject {
 
     func sendMessage(_ session: LiyaSession, id: UUID, target: UUID, body: String, attachments: [DraftAttachment]) async -> Bool {
         guard let owner = session.userID, isJoined(session) else { messageError = "Create your community profile first."; return false }
+        let generation = accountGeneration
         do {
             let old: [SocialMessage] = try await session.client.from("liya_messages").select("id,sender_id,recipient_id,body,media_paths,media_kinds,created_at").eq("id", value: id.uuidString).execute().value
             if let message = old.first {
-                guard message.senderID == owner && message.recipientID == target && message.body == body && message.mediaPaths.count == attachments.count else { throw SocialError.conflict }
-                await refreshMessages(session); return true
+                guard session.userID == owner, accountGeneration == generation, message.senderID == owner && message.recipientID == target && message.body == body && message.mediaPaths.count == attachments.count else { throw SocialError.conflict }
+                await refreshMessages(session); return session.userID == owner && accountGeneration == generation
             }
             let (paths, kinds) = try await upload(session, owner: owner, id: id, attachments: attachments)
             let input = SocialMessageInput(id: id, senderID: owner, recipientID: target, body: body, mediaPaths: paths, mediaKinds: kinds)
             do { try await session.client.from("liya_messages").insert(input).execute() } catch { }
             let saved: [SocialMessage] = try await session.client.from("liya_messages").select("id,sender_id,recipient_id,body,media_paths,media_kinds,created_at").eq("id", value: id.uuidString).execute().value
-            guard let message = saved.first, message.senderID == owner, message.recipientID == target, message.body == body, message.mediaPaths == paths, session.userID == owner else { throw SocialError.conflict }
-            await refreshMessages(session); return true
+            guard let message = saved.first, message.senderID == owner, message.recipientID == target, message.body == body, message.mediaPaths == paths, session.userID == owner, accountGeneration == generation else { throw SocialError.conflict }
+            await refreshMessages(session); return session.userID == owner && accountGeneration == generation
         } catch {
-            messageError = (error as? VideoCompression.Failure)?.errorDescription ?? "Couldn't confirm the message. Your draft is still here; please try again."
+            if session.userID == owner && accountGeneration == generation {
+                messageError = (error as? VideoCompression.Failure)?.errorDescription ?? "Couldn't confirm the message. Your draft is still here; please try again."
+            }
             return false
         }
     }

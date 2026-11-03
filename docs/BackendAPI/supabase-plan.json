@@ -18,6 +18,21 @@
   "project_ref": "hymfjhuglaqoftrcxfjx",
   "project_url": "https://hymfjhuglaqoftrcxfjx.supabase.co",
   "build_and_tests": "Not authorized by user",
+  "latest_tods_im_review": {
+    "date": "2026-11-03",
+    "status": "client refined; realtime and permissions not runtime verified",
+    "project_reused": "hymfjhuglaqoftrcxfjx",
+    "transport": "Postgres Changes on owner-filtered revision records; message changes trigger participant revisions",
+    "observed_remote_schema": "messages and user revisions in realtime publication; message trigger and participant RLS policies present",
+    "media_metadata": "40 photo records, 10 video records and 50 storage objects observed; content and signed access not verified",
+    "gaps": [
+      "two-user realtime, reconnect, deduplication, attachment and non-member isolation checks not performed",
+      "existing collection identities and locally prewritten sample content remain; latest Tods production-data audit is incomplete",
+      "offset-based full message reload does not provide cursor pagination; upload retries can leave orphan media",
+      "background message push and account recovery are not complete",
+      "actual App build, simulator, device, StoreKit and LiveKit validation not performed"
+    ]
+  },
   "sources": {
     "photos": 40,
     "videos": 10,

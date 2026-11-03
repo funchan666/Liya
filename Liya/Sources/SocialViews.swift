@@ -721,6 +721,7 @@ struct CommunityConversationView: View {
     @EnvironmentObject private var social: SocialStore
     @EnvironmentObject private var calls: LiyaCalls
     @Environment(\.openURL) private var openURL
+    @Environment(\.dismiss) private var dismiss
     let personID: UUID
     @State private var text = ""
     @State private var attachments: [DraftAttachment] = []
@@ -730,93 +731,208 @@ struct CommunityConversationView: View {
     @State private var attempt = ""
     @State private var fingerprint = ""
     @State private var deleting: SocialMessage?
-    private var key: String { "liya.social.messageDraft.\(session.userID?.uuidString ?? "none").\(personID.uuidString)" }
+    @State private var showMediaPicker = false
+    @State private var draftOwner: UUID?
+    private var key: String { "liya.social.messageDraft.\(draftOwner?.uuidString ?? "none").\(personID.uuidString)" }
     private var conversation: [SocialMessage] {
         guard let owner = session.userID else { return [] }
         return social.messages.filter { ($0.senderID == owner && $0.recipientID == personID) || ($0.senderID == personID && $0.recipientID == owner) }
     }
     var body: some View {
-        PageShell(title: "Conversation") {
-            VStack(alignment: .leading, spacing: 12) {
-                NavigationLink { CommunityPersonView(personID: personID) } label: {
-                    HStack(spacing: 10) {
-                        SocialAvatar(personID: personID).frame(width: 44, height: 44).clipShape(Circle())
-                        Text(social.person(personID)?.displayName ?? "Liya member").font(.headline)
-                        Spacer()
-                    }.foregroundStyle(liyaInk).frame(minHeight: 44)
-                }.buttonStyle(.plain)
-                OfflineNote(text: "Messages are free and visible only to you and this member.")
-                if social.isJoined(session) && social.person(personID) != nil {
-                    HStack(spacing: 12) {
-                        Button("Voice call") { Task { await calls.start(session, peer: personID, kind: "audio") } }
-                        Button("Video call") { Task { await calls.start(session, peer: personID, kind: "video") } }
-                    }.font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44).disabled(calls.busy || calls.call != nil)
-                    if let error = calls.error { Text(error).font(.footnote).foregroundStyle(.red) }
-                    if calls.permissionDenied {
-                        Button("Open Settings") { if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) } }
-                            .font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                    }
-                }
-                Button("Refresh messages") { Task { await social.refreshMessages(session) } }.font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                if let error = social.messageError {
-                    Text(error).font(.footnote).foregroundStyle(.red)
-                    Button("Refresh") { Task { await social.refreshMessages(session) } }.foregroundStyle(liyaAccent)
-                }
-                if social.messagesLoading { Text("Loading messages…").foregroundStyle(.secondary) }
-                ForEach(conversation) { message in
-                    VStack(alignment: .leading, spacing: 8) {
-                        NavigationLink { CommunityPersonView(personID: message.senderID) } label: {
-                            Text(message.senderID == session.userID ? "You" : (social.person(message.senderID)?.displayName ?? "Member"))
-                                .font(.caption.bold()).foregroundStyle(liyaAccent)
-                        }.buttonStyle(.plain)
-                        if !message.body.isEmpty { Text(message.body).foregroundStyle(liyaInk).frame(maxWidth: .infinity, alignment: .leading) }
-                        SocialMediaStrip(paths: message.mediaPaths, kinds: message.mediaKinds)
-                        if message.senderID == session.userID { Button("Delete for everyone") { deleting = message }.font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44) }
-                    }.padding(14).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
-                }
-                if social.isJoined(session) && social.person(personID) != nil {
-                    TextField("Write a message", text: $text, axis: .vertical).lineLimit(1...6).padding(14).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14)).disabled(sending)
-                    DraftMediaPicker(attachments: $attachments, loading: $mediaLoading, note: "Up to 9 items. Attachments are sent privately with your message.").disabled(sending)
-                    PrimaryButton(title: sending ? "Sending…" : "Send message", disabled: sending || mediaLoading || text.count > 4000 || (text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && attachments.isEmpty)) {
-                        guard let owner = session.userID else { return }
-                        let body = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                        let stamp = SocialAttempt.fingerprint(owner: owner, target: personID, text: body, files: attachments)
-                        if stamp != fingerprint || UUID(uuidString: attempt) == nil { fingerprint = stamp; attempt = UUID().uuidString }
-                        guard let id = UUID(uuidString: attempt) else { return }
-                        persist(); sending = true
-                        Task {
-                            if await social.sendMessage(session, id: id, target: personID, body: body, attachments: attachments) {
-                                text = ""; attachments = []; attempt = ""; fingerprint = ""; persist()
+        ZStack {
+            LiyaBackground()
+            VStack(spacing: 0) {
+                conversationHeader
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: 14) {
+                            if let error = social.error {
+                                VStack(spacing: 4) {
+                                    Text(error).font(.footnote).foregroundStyle(.red)
+                                    Button("Try again") { Task { await social.refresh(session) } }
+                                        .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                                }.frame(maxWidth: .infinity)
                             }
-                            sending = false
-                        }
+                            if let error = social.messageError {
+                                VStack(spacing: 4) {
+                                    Text(error).font(.footnote).foregroundStyle(.red)
+                                    Button("Try again") { Task { await social.refreshMessages(session) } }
+                                        .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                                }.frame(maxWidth: .infinity)
+                            }
+                            if !social.realtimeConnected && social.isJoined(session) && social.messageError == nil {
+                                Button("Reconnect live updates") { social.watchMessages(session) }
+                                    .font(.caption.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                            }
+                            if let error = calls.error { Text(error).font(.footnote).foregroundStyle(.red) }
+                            if calls.permissionDenied {
+                                Button("Open Settings") { if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) } }
+                                    .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                            }
+                            if social.messagesLoading && conversation.isEmpty { LiyaLoadingIndicator(size: 28) }
+                            if !social.messagesLoading && social.messageError == nil && social.error == nil && conversation.isEmpty {
+                                VStack(spacing: 10) {
+                                    Image("profile-action-message").resizable().scaledToFit().frame(width: 68, height: 68).accessibilityHidden(true)
+                                    Text("Say hello").font(.headline).foregroundStyle(liyaInk)
+                                    Text("Start a conversation when you're ready.").font(.subheadline).foregroundStyle(.secondary)
+                                        .multilineTextAlignment(.center)
+                                }.frame(maxWidth: .infinity).padding(.vertical, 35)
+                            }
+                            ForEach(conversation) { message in
+                                messageBubble(message).id(message.id)
+                            }
+                        }.frame(maxWidth: 620).frame(maxWidth: .infinity).padding(.horizontal, 16).padding(.vertical, 18)
+                            .modifier(AdaptiveContainerMargins())
                     }
-                } else if !social.isJoined(session) {
-                    NavigationLink("Create a community profile to message") { CommunityJoinView() }.foregroundStyle(liyaAccent)
-                } else {
-                    Text("This member is no longer available.").foregroundStyle(.secondary)
+                    .scrollDismissesKeyboard(.interactively)
+                    .safeAreaInset(edge: .bottom, spacing: 0) { conversationComposer }
+                    .task {
+                        await social.refreshMessages(session)
+                        if let id = conversation.last?.id { proxy.scrollTo(id, anchor: .bottom) }
+                    }
+                    .onLiyaChange(of: conversation.last?.id) { id in
+                        if sending, let id { withAnimation { proxy.scrollTo(id, anchor: .bottom) } }
+                    }
                 }
-            }.padding(.top, 12)
-        }.onAppear { restore() }
+            }
+        }.navigationBarHidden(true).onAppear { restore() }
+            .onLiyaChange(of: session.userID) { owner in
+                if let draftOwner, owner != draftOwner { dismiss() }
+                else if !loaded { restore() }
+            }
             .onLiyaChange(of: text) { _ in persist() }
             .onLiyaChange(of: attachments) { _ in persist() }
             .onDisappear { persist() }
-            .task { await social.refreshMessages(session) }
+            .sheet(isPresented: $showMediaPicker) {
+                NavigationStack {
+                    PageShell(title: "Add media") {
+                        DraftMediaPicker(attachments: $attachments, loading: $mediaLoading).padding(.top, 12)
+                    }
+                }.presentationDetents([.medium, .large])
+            }
             .sheet(item: $deleting) { message in
                 LocalConfirmation(title: "Delete this message?", message: "The message will be removed for both participants.", action: "Delete") {
                     deleting = nil; Task { _ = await social.deleteMessage(session, message: message) }
                 } cancel: { deleting = nil }.presentationDetents([.medium])
             }
     }
+
+    private var conversationHeader: some View {
+        DuoControlRegion { _ in
+            HStack(spacing: 4) {
+                Button { dismiss() } label: {
+                    Image("back").resizable().scaledToFit().frame(width: 20, height: 20).frame(width: 44, height: 44)
+                }.buttonStyle(.plain).accessibilityLabel("Back")
+                NavigationLink { CommunityPersonView(personID: personID) } label: {
+                    HStack(spacing: 8) {
+                        SocialAvatar(personID: personID).frame(width: 38, height: 38).clipShape(Circle())
+                        Text(social.person(personID)?.displayName ?? "Liya member")
+                            .font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk).lineLimit(1)
+                    }.frame(maxWidth: .infinity, alignment: .leading).frame(minHeight: 44)
+                }.buttonStyle(.plain)
+                Button { Task { await calls.start(session, peer: personID, kind: "audio") } } label: {
+                    Image("profile-action-voice").resizable().scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44)
+                }.buttonStyle(.plain).accessibilityLabel("Voice call")
+                    .disabled(!social.isJoined(session) || social.person(personID) == nil || calls.busy || calls.call != nil)
+                Button { Task { await calls.start(session, peer: personID, kind: "video") } } label: {
+                    Image("profile-action-video").resizable().scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44)
+                }.buttonStyle(.plain).accessibilityLabel("Video call")
+                    .disabled(!social.isJoined(session) || social.person(personID) == nil || calls.busy || calls.call != nil)
+            }.padding(.horizontal, 8).modifier(AdaptiveContainerMargins())
+        }.frame(height: 54).background(.white.opacity(0.75))
+    }
+
+    private func messageBubble(_ message: SocialMessage) -> some View {
+        let mine = message.senderID == session.userID
+        return HStack(alignment: .bottom, spacing: 8) {
+            if mine { Spacer(minLength: 40) }
+            else {
+                NavigationLink { CommunityPersonView(personID: message.senderID) } label: {
+                    SocialAvatar(personID: message.senderID).frame(width: 32, height: 32).clipShape(Circle())
+                }.buttonStyle(.plain).accessibilityLabel("View member profile")
+            }
+            VStack(alignment: mine ? .trailing : .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 8) {
+                    if !message.body.isEmpty { Text(message.body).foregroundStyle(mine ? .white : liyaInk).fixedSize(horizontal: false, vertical: true) }
+                    SocialMediaStrip(paths: message.mediaPaths, kinds: message.mediaKinds)
+                }.padding(12).background {
+                    if mine { RoundedRectangle(cornerRadius: 18).fill(liyaGradient) }
+                    else { RoundedRectangle(cornerRadius: 18).fill(.white.opacity(0.94)) }
+                }
+                HStack(spacing: 8) {
+                    if let date = inboxDate(message.createdAt) { Text(date).font(.caption2).foregroundStyle(.secondary) }
+                    if mine {
+                        Button("Delete") { deleting = message }.font(.caption2.weight(.semibold))
+                            .foregroundStyle(liyaAccent).frame(minHeight: 44)
+                    }
+                }
+            }.frame(maxWidth: 340, alignment: mine ? .trailing : .leading)
+            if !mine { Spacer(minLength: 40) }
+        }.frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder private var conversationComposer: some View {
+        if social.isJoined(session) && social.person(personID) != nil {
+            VStack(alignment: .leading, spacing: 6) {
+                if !attachments.isEmpty {
+                    Button { showMediaPicker = true } label: {
+                        Text("\(attachments.count) attachments selected").font(.caption.weight(.semibold)).foregroundStyle(liyaAccent)
+                            .frame(minHeight: 36)
+                    }.buttonStyle(.plain).disabled(sending)
+                }
+                HStack(alignment: .bottom, spacing: 8) {
+                    Button { showMediaPicker = true } label: {
+                        Image("avatar-camera").resizable().scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44)
+                    }.buttonStyle(.plain).accessibilityLabel("Add photos or videos").disabled(sending)
+                    TextField("Write a message…", text: $text, axis: .vertical).lineLimit(1...5)
+                        .padding(.horizontal, 14).padding(.vertical, 12)
+                        .background(Color(red: 0.96, green: 0.95, blue: 0.99), in: RoundedRectangle(cornerRadius: 19))
+                        .disabled(sending)
+                    Button(sending ? "Sending…" : "Send") { sendMessage() }
+                        .font(.subheadline.weight(.semibold)).foregroundStyle(.white).padding(.horizontal, 15).frame(minHeight: 44)
+                        .background(liyaGradient.opacity(canSend ? 1 : 0.45), in: Capsule()).disabled(!canSend)
+                }
+            }.padding(.horizontal, 12).padding(.vertical, 8).frame(maxWidth: .infinity)
+                .background(.white.opacity(0.96)).modifier(AdaptiveContainerMargins())
+        } else if !social.isJoined(session) && !social.loading && social.error == nil {
+            NavigationLink("Set up your profile to message") { CommunityJoinView() }
+                .font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 48)
+                .frame(maxWidth: .infinity).background(.white.opacity(0.94))
+        } else if social.person(personID) == nil && !social.loading && social.error == nil {
+            Text("This member is no longer available.").font(.footnote).foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, minHeight: 48).background(.white.opacity(0.94))
+        }
+    }
+
+    private var canSend: Bool {
+        !sending && !mediaLoading && text.count <= 4000 && (!text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty)
+    }
+
+    private func sendMessage() {
+        guard canSend, let owner = session.userID else { return }
+        let body = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let stamp = SocialAttempt.fingerprint(owner: owner, target: personID, text: body, files: attachments)
+        if stamp != fingerprint || UUID(uuidString: attempt) == nil { fingerprint = stamp; attempt = UUID().uuidString }
+        guard let id = UUID(uuidString: attempt) else { return }
+        persist(); sending = true
+        Task {
+            if await social.sendMessage(session, id: id, target: personID, body: body, attachments: attachments) {
+                guard session.userID == owner, draftOwner == owner else { sending = false; return }
+                text = ""; attachments = []; attempt = ""; fingerprint = ""; persist()
+            }
+            sending = false
+        }
+    }
     private func restore() {
-        guard !loaded else { return }
+        guard !loaded, let owner = session.userID else { return }
+        draftOwner = owner
         if let data = UserDefaults.standard.data(forKey: key), let draft = try? JSONDecoder().decode(MessageDraft.self, from: data) {
             text = draft.text; attachments = draft.attachments; attempt = draft.attempt; fingerprint = draft.fingerprint
         }
         loaded = true
     }
     private func persist() {
-        guard loaded, session.userID != nil else { return }
+        guard loaded, let owner = draftOwner, session.userID == owner else { return }
         let draft = MessageDraft(text: text, attachments: attachments, attempt: attempt, fingerprint: fingerprint)
         if let data = try? JSONEncoder().encode(draft) { UserDefaults.standard.set(data, forKey: key) }
     }
