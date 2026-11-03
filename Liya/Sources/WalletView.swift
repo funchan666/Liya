@@ -20,68 +20,112 @@ struct CoinPackage: Identifiable {
 }
 
 struct WalletView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var checkout: CoinCheckout
     @State private var selection: CoinPackage?
-    private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
 
     var body: some View {
         PageShell(title: "My wallet") {
             VStack(alignment: .leading, spacing: 20) {
-                HStack(alignment: .center, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("YOUR LIYA BALANCE").font(.caption.bold()).tracking(1.2).foregroundStyle(liyaAccent)
-                        Text(session.coinBalance.map { $0.formatted() } ?? "—").font(.system(size: 36, weight: .bold, design: .rounded)).foregroundStyle(liyaInk)
-                        Text(session.coinBalance == nil ? "Balance unavailable" : "Coins")
-                            .font(.footnote).foregroundStyle(.secondary)
+                HStack(alignment: .center, spacing: 16) {
+                    Image("wallet-coin").resizable().scaledToFit().frame(width: 66, height: 66).accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Your balance").font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
+                        HStack(alignment: .firstTextBaseline, spacing: 5) {
+                            Text(session.coinBalance.map { $0.formatted() } ?? "—")
+                                .font(.system(.largeTitle, design: .rounded).bold()).foregroundStyle(liyaInk).monospacedDigit()
+                            Text("coins").font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
+                        }
+                        if session.coinBalance == nil { Text("Balance unavailable").font(.caption).foregroundStyle(.secondary) }
                     }
                     Spacer(minLength: 8)
-                    Image("wallet-coin").resizable().scaledToFit().frame(width: 88, height: 88).accessibilityHidden(true)
                 }.padding(18).frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.white.opacity(0.87), in: RoundedRectangle(cornerRadius: 20))
+                    .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 20))
+                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(liyaAccent.opacity(0.08), lineWidth: 1))
 
-                OfflineNote(text: session.walletError ?? "Secure purchase delivery is not connected yet. Purchases are unavailable.")
-                Button("Refresh balance") { Task { await session.refreshWallet() } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
-                VStack(alignment: .leading, spacing: 5) {
-                    Text("Add a little sparkle").font(.title3.bold()).foregroundStyle(liyaInk)
-                    Text("Choose a pack to see its current App Store price.").font(.footnote).foregroundStyle(.secondary)
+                if let error = session.walletError {
+                    OfflineNote(text: error)
+                } else if !checkout.isConnected {
+                    OfflineNote(text: "Purchases are currently unavailable.")
                 }
-                LazyVGrid(columns: columns, spacing: 10) {
-                    ForEach(CoinPackage.all) { pack in
-                        Button { selection = pack } label: {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Image("wallet-coin").resizable().scaledToFit().frame(width: 35, height: 35).accessibilityHidden(true)
-                                Text(pack.coins.formatted()).font(.system(.title3, design: .rounded).bold()).foregroundStyle(liyaInk)
-                                Text("coins").font(.caption).foregroundStyle(.secondary)
-                                Text("See Apple price").font(.caption.bold()).foregroundStyle(liyaAccent)
-                            }.frame(maxWidth: .infinity, minHeight: 132, alignment: .leading).padding(.horizontal, 15)
-                                .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 16))
-                        }.buttonStyle(.plain).accessibilityLabel("\(pack.coins.formatted()) coins, see Apple price")
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Coin packs").font(.title3.bold()).foregroundStyle(liyaInk)
+                        Text("USD reference prices · App Store confirms your final price.")
+                            .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 8)
+                    Button("Refresh") { Task { await session.refreshWallet() } }
+                        .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                        .accessibilityLabel("Refresh balance")
+                }
+                if dynamicTypeSize.isAccessibilitySize {
+                    packageGrid(columns: 2)
+                } else {
+                    ViewThatFits(in: .horizontal) {
+                        packageGrid(columns: 3).frame(minWidth: 285)
+                        packageGrid(columns: 2)
                     }
                 }
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Where coins will go").font(.headline).foregroundStyle(liyaInk)
-                    useRow("Mood Prism", detail: "Unlock a diary appearance", cost: 120)
-                    useRow("Profile Glow", detail: "Activate a profile appearance", cost: 180)
-                    useRow("Post Spotlight", detail: "Highlight an eligible post", cost: 280)
-                    Text("These features are planned and not yet available. No coins are charged in this preview.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                    Text("Chat and messages are always free.").font(.footnote.bold()).foregroundStyle(liyaAccent)
+                VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("A little more with coins").font(.headline).foregroundStyle(liyaInk)
+                        Text("Coming soon · No coins will be charged yet")
+                            .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    }
+                    VStack(spacing: 8) {
+                        useRow("Mood Prism", detail: "A new look for your diary", cost: 120, image: "mood-calm")
+                        useRow("Profile Glow", detail: "Personalize your profile", cost: 180, image: "nav-soft-profile")
+                        useRow("Post Spotlight", detail: "Give your post a little boost", cost: 280, image: "nav-soft-square")
+                    }
+                    Text("Chat is always free")
+                        .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent)
+                        .frame(maxWidth: .infinity, alignment: .leading).padding(.top, 2)
                 }.padding(18).frame(maxWidth: .infinity, alignment: .leading)
                     .background(.white.opacity(0.78), in: RoundedRectangle(cornerRadius: 18))
-            }.padding(.top, 12)
+            }.padding(.top, 12).modifier(AdaptiveContainerMargins())
         }.sheet(item: $selection) { pack in AppleCoinPackSheet(pack: pack) }
             .task { await session.refreshWallet() }
     }
 
-    private func useRow(_ title: String, detail: String, cost: Int) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.subheadline.bold()).foregroundStyle(liyaInk)
-                Text(detail).font(.caption).foregroundStyle(.secondary)
+    private func packageGrid(columns count: Int) -> some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: count), spacing: 8) {
+            ForEach(CoinPackage.all) { pack in
+                Button { selection = pack } label: {
+                    VStack(spacing: 7) {
+                        Image("wallet-coin").resizable().scaledToFit().frame(width: 36, height: 36).accessibilityHidden(true)
+                        VStack(spacing: 2) {
+                            Text(pack.coins.formatted()).font(.system(.headline, design: .rounded).bold())
+                                .foregroundStyle(liyaInk).lineLimit(1).minimumScaleFactor(0.8).monospacedDigit()
+                            Text("coins").font(.caption).foregroundStyle(.secondary)
+                        }
+                        Text("US$\(pack.referenceUSD) ref.").font(.caption.weight(.semibold)).foregroundStyle(liyaAccent)
+                            .lineLimit(1).minimumScaleFactor(0.8)
+                            .padding(.horizontal, 8).padding(.vertical, 6)
+                            .background(liyaAccent.opacity(0.08), in: Capsule())
+                    }.frame(maxWidth: .infinity, minHeight: 132).padding(.horizontal, 4).padding(.vertical, 8)
+                        .background(.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 16))
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(liyaAccent.opacity(0.10), lineWidth: 1))
+                }.buttonStyle(.plain).accessibilityLabel("\(pack.coins.formatted()) coins, reference price US dollars \(pack.referenceUSD). Select to check the App Store price.")
             }
-            Spacer(minLength: 5)
-            Text("\(cost) coins").font(.caption.bold()).foregroundStyle(liyaAccent)
         }
+    }
+
+    private func useRow(_ title: String, detail: String, cost: Int, image: String) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(image).resizable().scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                Text(detail).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }.frame(maxWidth: .infinity, alignment: .leading)
+            Spacer(minLength: 5)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(cost)").font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent).monospacedDigit()
+                Text("coins").font(.caption2).foregroundStyle(.secondary)
+            }.fixedSize(horizontal: true, vertical: false)
+        }.padding(.horizontal, 10).padding(.vertical, 9)
+            .background(.white.opacity(0.75), in: RoundedRectangle(cornerRadius: 14))
     }
 }
 

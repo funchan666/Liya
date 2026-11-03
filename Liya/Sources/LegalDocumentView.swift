@@ -11,6 +11,7 @@ enum PolicyPage: String, Identifiable {
 }
 
 struct LegalDocumentView: View {
+    @Environment(\.liyaTabBarClearance) private var tabBarClearance
     let page: PolicyPage
     @State private var document: PDFDocument?
     @State private var failed = false
@@ -33,7 +34,7 @@ struct LegalDocumentView: View {
                     Text("Opening document…").foregroundStyle(liyaInk).padding(20)
                     Spacer()
                 }
-            }
+            }.padding(.bottom, tabBarClearance)
         }.navigationBarHidden(true)
             .task(id: attempt) { await load() }
     }

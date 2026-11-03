@@ -11,10 +11,12 @@ struct LiyaApp: App {
     @StateObject private var calls = LiyaCalls()
     @StateObject private var voip = LiyaVoIP.shared
     @State private var showingLaunch = true
+    @AppStorage("liya.language") private var language = "en"
 
     var body: some Scene {
         WindowGroup {
             RootView().environmentObject(store).environmentObject(checkout).environmentObject(session).environmentObject(social).environmentObject(calls)
+                .environment(\.locale, Locale(identifier: language))
                 .accessibilityHidden(showingLaunch)
                 .overlay {
                     if showingLaunch { LiyaLaunchOverlay() }

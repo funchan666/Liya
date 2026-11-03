@@ -226,7 +226,7 @@ final class SocialStore: ObservableObject {
             guard let post = saved.first, post.ownerID == owner, post.body == body, post.tags == tags, post.mediaPaths == paths, session.userID == owner else { throw SocialError.conflict }
             await refresh(session); return true
         } catch {
-            self.error = (error as? VideoCompression.Failure)?.errorDescription ?? "Couldn't confirm the post. Your text and attachments remain on this device."
+            self.error = (error as? VideoCompression.Failure)?.errorDescription ?? "Couldn't confirm your post. Your text and attachments are still here; please try again."
             return false
         }
     }
@@ -246,7 +246,7 @@ final class SocialStore: ObservableObject {
             guard saved.body == body && saved.tags == tags && saved.mediaPaths == finalPaths && saved.mediaKinds == finalKinds else { throw SocialError.conflict }
             await refresh(session); return true
         } catch {
-            self.error = (error as? VideoCompression.Failure)?.errorDescription ?? "Couldn't confirm changes. The post may have changed elsewhere; refresh before editing again. Your selected files remain on this device."
+            self.error = (error as? VideoCompression.Failure)?.errorDescription ?? "Couldn't confirm changes. The post may have changed elsewhere; refresh before editing again."
             return false
         }
     }
@@ -388,7 +388,7 @@ final class SocialStore: ObservableObject {
             guard let message = saved.first, message.senderID == owner, message.recipientID == target, message.body == body, message.mediaPaths == paths, session.userID == owner else { throw SocialError.conflict }
             await refreshMessages(session); return true
         } catch {
-            messageError = (error as? VideoCompression.Failure)?.errorDescription ?? "Couldn't confirm the message. Your draft remains on this device."
+            messageError = (error as? VideoCompression.Failure)?.errorDescription ?? "Couldn't confirm the message. Your draft is still here; please try again."
             return false
         }
     }

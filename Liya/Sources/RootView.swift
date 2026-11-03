@@ -4,10 +4,18 @@ private struct ProfileDetailVisibilityKey: EnvironmentKey {
     static let defaultValue: Binding<Bool> = .constant(false)
 }
 
+private struct LiyaTabBarClearanceKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 0
+}
+
 extension EnvironmentValues {
     var profileDetailVisible: Binding<Bool> {
         get { self[ProfileDetailVisibilityKey.self] }
         set { self[ProfileDetailVisibilityKey.self] = newValue }
+    }
+    var liyaTabBarClearance: CGFloat {
+        get { self[LiyaTabBarClearanceKey.self] }
+        set { self[LiyaTabBarClearanceKey.self] = newValue }
     }
 }
 
@@ -24,11 +32,11 @@ private enum LiyaTab: Int, CaseIterable {
     }
     var image: String {
         switch self {
-        case .discover: return "nav-v2-video"
-        case .square: return "nav-v2-square"
-        case .compose: return "nav-v2-create"
-        case .messages: return "nav-v2-messages"
-        case .profile: return "nav-v2-profile"
+        case .discover: return "nav-soft-video"
+        case .square: return "nav-soft-square"
+        case .compose: return "nav-soft-create"
+        case .messages: return "nav-soft-messages"
+        case .profile: return "nav-soft-profile"
         }
     }
 }
@@ -45,8 +53,14 @@ struct RootView: View {
     var body: some View {
         if !store.inPreview {
             WelcomeView {
-                Task { if await session.signIn() { store.inPreview = true } }
+                Task {
+                    if await session.signIn() {
+                        if let owner = session.userID { store.restoreAccountMaterial(owner) }
+                        store.inPreview = true
+                    }
+                }
             }
+            .onAppear { selection = .discover; profileDetailVisible = false }
         } else {
             ZStack {
                 Group {
@@ -81,14 +95,14 @@ struct RootView: View {
                                     Image(item.image)
                                         .renderingMode(.original)
                                         .resizable().scaledToFit()
-                                        .frame(width: 40, height: 40)
-                                        .saturation(selection == item ? 0.85 : 0.6)
-                                        .opacity(selection == item ? 1 : 0.78)
-                                        .scaleEffect(selection == item ? 1.06 : 1)
+                                        .frame(width: 46, height: 46)
+                                        .saturation(selection == item ? 0.90 : 0.55)
+                                        .opacity(selection == item ? 1 : 0.68)
+                                        .scaleEffect(selection == item ? 1.08 : 1)
                                         .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: selection == item)
                                         .frame(width: max(54, (size.width - 24) / CGFloat(LiyaTab.allCases.count)), height: 64)
                                         .contentShape(Rectangle())
-                                }.buttonStyle(.plain).accessibilityLabel(item.title).accessibilityAddTraits(selection == item ? .isSelected : [])
+                                }.buttonStyle(.plain).accessibilityLabel(Text(LocalizedStringKey(item.title))).accessibilityAddTraits(selection == item ? .isSelected : [])
                             }
                         }.padding(.horizontal, 12).modifier(AdaptiveContainerMargins())
                     }
@@ -108,6 +122,7 @@ struct RootView: View {
               }
             }
             .environment(\.profileDetailVisible, $profileDetailVisible)
+            .environment(\.liyaTabBarClearance, profileDetailVisible ? 0 : LiyaTabBarLayout.contentClearance)
         }
     }
 
@@ -127,7 +142,7 @@ private struct WelcomeView: View {
     @State private var showAgreementReminder = false
     var body: some View {
         ZStack {
-            LiyaBackground(name: "welcome-art")
+            LiyaBackground(name: "welcome-clear")
             DuoControlRegion { size in
                 ScrollView {
                     VStack(spacing: 0) {
@@ -151,6 +166,10 @@ private struct WelcomeView: View {
                         if let errorMessage = session.errorMessage {
                             Text(errorMessage).font(.footnote).foregroundStyle(.white)
                                 .multilineTextAlignment(.center).padding(.top, 8)
+                        }
+                        if let notice = session.welcomeNotice {
+                            Text(LocalizedStringKey(notice)).font(.footnote.weight(.medium)).foregroundStyle(.white)
+                                .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true).padding(.top, 8)
                         }
                         agreementRow
                             .padding(.top, 10)
@@ -253,7 +272,7 @@ private struct WelcomeView: View {
             if fromReminder { showAgreementReminder = false }
             policy = page
         } label: {
-            Text(page.title).underline()
+            Text(LocalizedStringKey(page.title)).underline()
                 .foregroundStyle(Color(red: 0.18, green: 0.12, blue: 0.48))
                 .frame(minHeight: 44)
         }
@@ -315,7 +334,7 @@ private struct WelcomeAction: View {
     private var label: some View {
         HStack(spacing: 8) {
             if isLoading { LiyaLoadingIndicator(size: 30).accessibilityHidden(true) }
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(fullArtwork ? .system(size: 17, weight: .semibold, design: .rounded) : .system(size: 16, weight: .semibold))
                 .foregroundStyle(foreground)
         }

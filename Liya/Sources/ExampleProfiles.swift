@@ -25,18 +25,18 @@ struct ProfileDetailLayout<Hero: View, Actions: View, Content: View>: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let heroHeight = min(max(geometry.size.width * 0.95, 300), 440)
+            let heroHeight = min(max(geometry.size.width, 300), 460)
             ZStack(alignment: .top) {
                 LiyaBackground()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        hero.frame(width: geometry.size.width, height: heroHeight, alignment: .top)
+                        hero.frame(width: geometry.size.width, height: heroHeight, alignment: .center)
                             .clipped()
                             .overlay(alignment: .bottom) {
-                                LinearGradient(colors: [.clear, .white.opacity(0.94)], startPoint: .top, endPoint: .bottom)
-                                    .frame(height: 110).allowsHitTesting(false)
+                                LinearGradient(colors: [.clear, .white.opacity(0.9)], startPoint: .top, endPoint: .bottom)
+                                    .frame(height: 64).allowsHitTesting(false)
                             }
-                        VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 12) {
                             Text(name).font(.title2.bold()).foregroundStyle(liyaInk)
                                 .fixedSize(horizontal: false, vertical: true)
                             if !introduction.isEmpty {
@@ -47,7 +47,7 @@ struct ProfileDetailLayout<Hero: View, Actions: View, Content: View>: View {
                             content
                         }
                         .frame(maxWidth: 620, alignment: .leading).frame(maxWidth: .infinity)
-                        .padding(.horizontal, 20).padding(.bottom, 36)
+                        .padding(.horizontal, 20).padding(.top, 4).padding(.bottom, 36)
                         .modifier(AdaptiveContainerMargins())
                     }
                 }.ignoresSafeArea(edges: .top)
@@ -77,9 +77,11 @@ struct ProfileDetailLayout<Hero: View, Actions: View, Content: View>: View {
 
 struct ProfileContentTabs: View {
     @Binding var selection: Int
+    var showPost = true
+    var showVideo = true
     var body: some View {
         HStack(spacing: 28) {
-            ForEach(Array(["Post", "Video"].enumerated()), id: \.offset) { index, title in
+            ForEach(Array(["Post", "Video"].enumerated()).filter { $0.offset == 0 ? showPost : showVideo }, id: \.offset) { index, title in
                 Button { selection = index } label: {
                     Text(title).font(.subheadline.weight(selection == index ? .bold : .medium))
                         .foregroundStyle(selection == index ? liyaAccent : .secondary)
@@ -92,12 +94,108 @@ struct ProfileContentTabs: View {
     }
 }
 
+struct ProfileActionLabel: View {
+    let title: String
+    var warm = false
+    var body: some View {
+        Text(title).font(.subheadline.bold()).foregroundStyle(.white)
+            .lineLimit(1).minimumScaleFactor(0.8)
+            .frame(maxWidth: .infinity).frame(minHeight: 46)
+            .background {
+                if warm {
+                    Capsule().fill(LinearGradient(colors: [.orange, .pink], startPoint: .leading, endPoint: .trailing))
+                } else {
+                    Capsule().fill(liyaGradient)
+                }
+            }
+    }
+}
+
+struct ProfileDetailActionLabel: View {
+    enum Style: Equatable { case follow, message, secondary }
+    let title: String
+    let style: Style
+    var body: some View {
+        Text(title).font(.subheadline.weight(.semibold))
+            .foregroundStyle(style == .secondary ? liyaAccent : .white)
+            .lineLimit(1).minimumScaleFactor(0.85)
+            .frame(maxWidth: .infinity, minHeight: 46)
+            .background {
+                switch style {
+                case .follow:
+                    Capsule().fill(LinearGradient(colors: [.orange.opacity(0.88), .pink.opacity(0.85)], startPoint: .leading, endPoint: .trailing))
+                case .message:
+                    Capsule().fill(liyaGradient.opacity(0.88))
+                case .secondary:
+                    Capsule().fill(.white.opacity(0.85))
+                        .overlay(Capsule().stroke(liyaAccent.opacity(0.2), lineWidth: 1))
+                }
+            }
+    }
+}
+
+struct ProfileSingleVideoRow<Thumbnail: View>: View {
+    let thumbnail: Thumbnail
+    init(@ViewBuilder thumbnail: () -> Thumbnail) { self.thumbnail = thumbnail() }
+    var body: some View {
+        HStack(spacing: 16) {
+            thumbnail.frame(width: 96, height: 120).clipped().clipShape(RoundedRectangle(cornerRadius: 12))
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Video").font(.headline).foregroundStyle(liyaInk)
+                Text("Watch video").font(.subheadline.weight(.medium)).foregroundStyle(liyaAccent)
+            }.frame(maxWidth: .infinity, alignment: .leading)
+        }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
+            .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 18))
+    }
+}
+
+// These IDs are fixed independently of catalog order so that a portrait can
+// never also appear as another collection post. Photo 012 is the bundled
+// default profile portrait and therefore belongs to the portrait pool too.
+enum ExamplePhotoAllocation {
+    private static let postIDs = (1...20).filter { $0 != 12 }.map { String(format: "example-photo-%03d", $0) }
+    private static let portraitIDs = ["example-photo-012"] + (21...40).map { String(format: "example-photo-%03d", $0) }
+    private static let authorPortraitIDs = (21...39).map { String(format: "example-photo-%03d", $0) }
+
+    static func isPost(_ index: Int, in photos: [LiyaMedia]) -> Bool {
+        guard photos.indices.contains(index), !portraitIDs.contains(photos[index].id) else { return false }
+        let portraitKeys = Set(photos.filter { portraitIDs.contains($0.id) }.map(\.objectKey))
+        return !portraitKeys.contains(photos[index].objectKey)
+    }
+
+    static func portraitIndex(for index: Int, in photos: [LiyaMedia]) -> Int? {
+        guard photos.indices.contains(index) else { return nil }
+        let portraitID: String
+        if photos[index].id == "example-photo-012" {
+            // An existing comment may still refer to this former post identity.
+            portraitID = "example-photo-040"
+        } else {
+            guard isPost(index, in: photos), let position = postIDs.firstIndex(of: photos[index].id) else { return nil }
+            portraitID = authorPortraitIDs[position]
+        }
+        guard let portraitIndex = photos.firstIndex(where: { $0.id == portraitID }) else { return nil }
+        let postKeys = Set(photos.filter { postIDs.contains($0.id) }.map(\.objectKey))
+        return postKeys.contains(photos[portraitIndex].objectKey) ? nil : portraitIndex
+    }
+}
+
 struct ExampleAvatar: View {
+    @EnvironmentObject private var session: LiyaSession
     let index: Int
     var size: CGFloat = 44
+
+    static func photoIndex(for index: Int, in photos: [LiyaMedia]) -> Int? {
+        ExamplePhotoAllocation.portraitIndex(for: index, in: photos)
+    }
+
     var body: some View {
-        CloudPhoto(index: index, contentMode: .fill)
-            .frame(width: size, height: size).clipShape(Circle()).accessibilityHidden(true)
+        Group {
+            if let photoIndex = Self.photoIndex(for: index, in: session.photos) {
+                CloudPhoto(index: photoIndex, contentMode: .fill)
+            } else {
+                Color.clear
+            }
+        }.frame(width: size, height: size).clipShape(Circle()).accessibilityHidden(true)
     }
 }
 
@@ -108,8 +206,9 @@ struct ExampleProfileView: View {
     let index: Int
     var displayName: String? = nil
     var introduction: String? = nil
-    @State private var section = 0
     @State private var options = false
+    @State private var callUnavailable = false
+    @State private var confirmLocalFollow = false
 
     var body: some View {
         let photoID = session.photos.indices.contains(index) ? session.photos[index].id : nil
@@ -121,39 +220,40 @@ struct ExampleProfileView: View {
             return creator.photoID == photoID
         }
         return ProfileDetailLayout(name: name, introduction: bio, showOptions: { options = true }) {
-            CloudPhoto(index: index, contentMode: .fill)
+            if let avatarIndex = ExampleAvatar.photoIndex(for: index, in: session.photos) {
+                CloudPhoto(index: avatarIndex, contentMode: .fill)
+            } else {
+                Color.clear
+            }
         } actions: {
-                    HStack(spacing: 10) {
-                        Button {
-                            if !store.blockedExamples.contains(index) { store.toggleFollow(index) }
-                        } label: {
-                            Text(store.followedExamples.contains(index) ? "Following" : "Follow")
-                                .font(.subheadline.bold()).foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 46)
-                                .background(LinearGradient(colors: [.orange, .pink], startPoint: .leading, endPoint: .trailing), in: Capsule())
-                        }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
-                        NavigationLink { ExampleChatView(index: index) } label: {
-                            Text("Message").font(.subheadline.bold()).foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 46).background(liyaGradient, in: Capsule())
+                    VStack(spacing: 10) {
+                        HStack(spacing: 10) {
+                            Button {
+                                guard !store.blockedExamples.contains(index) else { return }
+                                if store.followedExamples.contains(index) { store.toggleFollow(index) }
+                                else { confirmLocalFollow = true }
+                            } label: {
+                                ProfileDetailActionLabel(title: store.followedExamples.contains(index) ? "Following" : "Follow", style: store.followedExamples.contains(index) ? .secondary : .follow)
+                            }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
+                            NavigationLink { ExampleChatView(index: index) } label: {
+                                ProfileDetailActionLabel(title: "Message", style: .message)
+                            }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
+                        }
+                        HStack(spacing: 10) {
+                            Button { callUnavailable = true } label: { ProfileDetailActionLabel(title: "Voice call", style: .secondary) }
+                            Button { callUnavailable = true } label: { ProfileDetailActionLabel(title: "Video call", style: .secondary) }
                         }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
                     }
         } content: {
-                    Text("Curated profile · follows and message drafts stay on this device.")
-                        .font(.caption).foregroundStyle(.secondary)
-                    ProfileContentTabs(selection: $section)
                     if store.blockedExamples.contains(index) {
-                        EmptyState(title: "Blocked locally", detail: "Unblock this example in More options to view its content.")
-                    } else if section == 0 {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack(spacing: 10) { ExampleAvatar(index: index); Text(name).font(.subheadline.bold()).foregroundStyle(liyaInk) }
-                            if !bio.isEmpty { Text(bio).font(.subheadline).foregroundStyle(liyaInk) }
-                            NavigationLink { ExamplePhotoDetail(index: index) } label: {
-                                CloudPhoto(index: index, contentMode: .fill).frame(maxWidth: .infinity).frame(height: 260)
-                                    .clipped().clipShape(RoundedRectangle(cornerRadius: 14))
-                            }.buttonStyle(.plain)
-                        }
-                    } else {
-                        if videos.isEmpty {
-                            EmptyState(title: "No videos yet", detail: "Videos will appear here when available.")
-                        } else {
+                        EmptyState(title: "Blocked", detail: "Unblock this example in More options to view its content.")
+                    } else if !videos.isEmpty {
+                            Text("Videos").font(.headline).foregroundStyle(liyaInk).padding(.top, 8)
+                            if videos.count == 1, let videoIndex = videos.first {
+                                Button { store.videoRequest = VideoRequest(index: videoIndex); dismiss() } label: {
+                                    ProfileSingleVideoRow { CuratedVideoThumbnail(index: videoIndex) }
+                                }.buttonStyle(.plain).accessibilityLabel("Play video")
+                            } else {
                             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
                                 ForEach(videos, id: \.self) { videoIndex in
                                     Button { store.videoRequest = VideoRequest(index: videoIndex); dismiss() } label: {
@@ -161,10 +261,21 @@ struct ExampleProfileView: View {
                                     }.buttonStyle(.plain).accessibilityLabel("Play video")
                                 }
                             }
-                        }
+                            }
                     }
         }
             .sheet(isPresented: $options) { ExampleOptionsView(index: index) }
+            .sheet(isPresented: $callUnavailable) {
+                LocalConfirmation(title: "Calling unavailable", message: "This profile isn't connected to a member account, so a call can't be placed.", action: "OK") {
+                    callUnavailable = false
+                } cancel: { callUnavailable = false }.presentationDetents([.medium, .large])
+            }
+            .sheet(isPresented: $confirmLocalFollow) {
+                LocalConfirmation(title: "Follow this profile?", message: "This profile isn't connected to a member account. Your follow won't be synced.", action: "Follow") {
+                    if !store.blockedExamples.contains(index) && !store.followedExamples.contains(index) { store.toggleFollow(index) }
+                    confirmLocalFollow = false
+                } cancel: { confirmLocalFollow = false }.presentationDetents([.medium, .large])
+            }
     }
 }
 
@@ -200,14 +311,14 @@ struct ExampleChatView: View {
                     HStack { ExampleAvatar(index: index); Text("Example profile \(index + 1)").font(.headline); Spacer() }
                         .foregroundStyle(liyaInk).padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                 }.buttonStyle(.plain)
-                OfflineNote(text: store.blockedExamples.contains(index) ? "This example is blocked locally. Unblock it before editing a message draft." : "Messaging is not connected. Your text is a private draft and will not be delivered.")
+                OfflineNote(text: store.blockedExamples.contains(index) ? "This example is blocked. Unblock it before editing a message draft." : "Messaging is not connected. Your text is a private draft and will not be delivered.")
                 EmptyState(title: "No messages", detail: "Messages will appear after the service is connected.")
                 TextField("Write a private draft", text: $draft, axis: .vertical).lineLimit(2...6).padding(14)
                     .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14)).disabled(store.blockedExamples.contains(index))
                 PrimaryButton(title: "Save draft", disabled: store.blockedExamples.contains(index) || draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) {
                     store.saveMessageDraft(draft, index: index)
                 }
-                if store.messageDrafts[String(index)] == draft && !draft.isEmpty { Text("Saved on this device").font(.footnote).foregroundStyle(liyaAccent) }
+                if store.messageDrafts[String(index)] == draft && !draft.isEmpty { Text("Draft saved").font(.footnote).foregroundStyle(liyaAccent) }
             }.padding(.top, 12)
         }.onAppear { draft = store.messageDrafts[String(index)] ?? "" }
             .onDisappear { if !store.blockedExamples.contains(index) { store.saveMessageDraft(draft, index: index) } }
@@ -223,12 +334,11 @@ struct ExampleOptionsView: View {
         NavigationStack {
             PageShell(title: "More options") {
                 VStack(spacing: 14) {
-                    OfflineNote(text: "This is an illustrative profile. You can report its associated example content; blocks remain on this device.")
                     NavigationLink { ReportDraftView(index: index, targetType: reportTarget) } label: { option(reportTarget == "post" ? "Report post" : "Report profile", image: "report") }
                         .buttonStyle(.plain)
                     Button {
                         store.setBlocked(index, blocked: !store.blockedExamples.contains(index)); dismiss()
-                    } label: { option(store.blockedExamples.contains(index) ? "Unblock locally" : "Block locally", image: "setting-privacy") }
+                    } label: { option(store.blockedExamples.contains(index) ? "Unblock" : "Block", image: "setting-privacy") }
                         .buttonStyle(.plain)
                 }.padding(.top, 12)
             }
@@ -254,7 +364,7 @@ struct ReportDraftView: View {
     var body: some View {
         PageShell(title: "Report type") {
             VStack(alignment: .leading, spacing: 12) {
-                OfflineNote(text: "Send a report about this example content, or keep an unsent draft on this device. Reports are stored for review; a review service has not yet been configured.")
+                OfflineNote(text: "Send a report about this example content, or save an unsent draft. A review service has not yet been configured.")
                 ForEach(reasons, id: \.self) { reason in
                     Button { selected = reason; saved = false; reportID = UUID(); reportError = nil } label: {
                         HStack { Text(reason); Spacer(); if selected == reason { Text("Selected").font(.caption.bold()).foregroundStyle(liyaAccent) } }
@@ -275,7 +385,7 @@ struct ReportDraftView: View {
                 if saved { Text("Report received · review is not yet configured").font(.footnote).foregroundStyle(liyaAccent) }
                 PrimaryButton(title: "Save unsent draft", disabled: selected == nil || saved || sending) {
                     guard let selected else { return }
-                    store.saveReportDraft(index: index, reason: selected, targetType: targetType); reportError = "Draft saved on this device; it has not been submitted."
+                    store.saveReportDraft(index: index, reason: selected, targetType: targetType); reportError = "Draft saved. Your report has not been submitted."
                 }
             }.padding(.top, 12)
         }
@@ -289,7 +399,7 @@ struct SegmentedTabs: View {
         HStack(spacing: 4) {
             ForEach(items.indices, id: \.self) { index in
                 Button { selection = index } label: {
-                    Text(items[index]).font(.subheadline.bold()).foregroundStyle(selection == index ? .white : liyaAccent)
+                    Text(LocalizedStringKey(items[index])).font(.subheadline.bold()).foregroundStyle(selection == index ? .white : liyaAccent)
                         .frame(maxWidth: .infinity).frame(minHeight: 42)
                         .background { if selection == index { Capsule().fill(liyaGradient) } }
                 }.buttonStyle(.plain).accessibilityAddTraits(selection == index ? .isSelected : [])

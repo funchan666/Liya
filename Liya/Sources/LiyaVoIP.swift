@@ -39,7 +39,8 @@ final class LiyaVoIP: NSObject, ObservableObject, @preconcurrency PKPushRegistry
         self.session = session; self.calls = calls; self.store = store
     }
     func updateRegistration() async {
-        guard let session, session.userID != nil, let bundle = Bundle.main.bundleIdentifier, !bundle.hasPrefix("example.") else { return }
+        guard let session, session.userID != nil, !session.isSigningOut, !session.isDeletingAccount,
+              let bundle = Bundle.main.bundleIdentifier, !bundle.hasPrefix("example.") else { return }
         do {
             struct Status: Decodable { let configured: Bool; let bundleID: String?; enum CodingKeys: String, CodingKey { case configured; case bundleID = "bundle_id" } }
             let status: Status = try await session.client.functions.invoke("liya-voip-registration", options: FunctionInvokeOptions(body: ["action":"status"]))
@@ -67,6 +68,15 @@ final class LiyaVoIP: NSObject, ObservableObject, @preconcurrency PKPushRegistry
         do {
             let _: Result = try await session.client.functions.invoke("liya-voip-registration", options: FunctionInvokeOptions(body: ["action":"register","token":token,"environment":environment,"bundle_id":bundle]))
         } catch { /* The next account resume retries the current token. */ }
+    }
+    func unregisterForSignOut() async -> Bool {
+        guard let token else { return !UserDefaults.standard.bool(forKey: readyKey) }
+        guard let session, session.userID != nil else { return false }
+        struct Result: Decodable { let ok: Bool }
+        do {
+            let result: Result = try await session.client.functions.invoke("liya-voip-registration", options: FunctionInvokeOptions(body: ["action": "unregister", "token": token]))
+            return result.ok
+        } catch { return false }
     }
     func pushRegistry(_ registry: PKPushRegistry, didUpdate credentials: PKPushCredentials, for type: PKPushType) {
         guard type == .voIP else { return }

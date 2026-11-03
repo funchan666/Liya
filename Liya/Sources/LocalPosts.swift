@@ -3,16 +3,16 @@ import UIKit
 
 struct PostTagSelector: View {
     @Binding var selection: [String]
-    private let choices = ["Game Time", "Catch Moment", "New Player"]
+    private let choices = ["Little Moments", "How I Feel", "Good Vibes"]
     var body: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 8) {
-                ForEach(choices, id: \.self) { tag in
+                ForEach(choices + selection.filter { !choices.contains($0) }, id: \.self) { tag in
                     Button {
                         if selection.contains(tag) { selection.removeAll { $0 == tag } } else { selection.append(tag) }
                     } label: {
                         Text("# \(tag)").font(.caption).foregroundStyle(selection.contains(tag) ? liyaAccent : .secondary)
-                            .padding(.horizontal, 10).frame(minHeight: 36)
+                            .padding(.horizontal, 12).frame(minHeight: 44)
                             .background(selection.contains(tag) ? liyaAccent.opacity(0.13) : .white.opacity(0.75), in: Capsule())
                     }.buttonStyle(.plain).accessibilityAddTraits(selection.contains(tag) ? .isSelected : [])
                 }
@@ -37,8 +37,8 @@ struct LocalPostCard: View {
                         if let avatar = store.avatar { MediaThumbnail(item: avatar).frame(width: 42, height: 42).clipShape(Circle()) }
                         else { Image("app-mark").resizable().scaledToFill().frame(width: 42, height: 42).clipShape(Circle()) }
                         VStack(alignment: .leading, spacing: 3) {
-                            Text(store.nickname.isEmpty ? "Your local profile" : store.nickname).font(.subheadline.bold()).foregroundStyle(liyaInk)
-                            Text("On this device · not shared").font(.caption).foregroundStyle(.secondary)
+                            Text(store.nickname.isEmpty ? "Your profile" : store.nickname).font(.subheadline.bold()).foregroundStyle(liyaInk)
+                            Text("Not shared").font(.caption).foregroundStyle(.secondary)
                         }
                     }
                 }.buttonStyle(.plain)
@@ -74,7 +74,7 @@ struct LocalPostCard: View {
                 if item.isVideo { DraftVideoPreview(item: item) } else { DraftPhotoPreview(item: item) }
             }
             .sheet(isPresented: $confirmingDelete) {
-                LocalConfirmation(title: "Delete local post?", message: "The post will be removed from this device. Its original media remains in Photos.", action: "Delete") {
+                LocalConfirmation(title: "Delete post?", message: "This unshared post will be removed. Its original media remains in Photos.", action: "Delete") {
                     store.deleteDraft(post.id); confirmingDelete = false
                 } cancel: { confirmingDelete = false }
                 .presentationDetents([.medium])

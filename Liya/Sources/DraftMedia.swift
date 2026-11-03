@@ -128,7 +128,8 @@ private struct ImportedMovie: Transferable {
 struct DraftMediaPicker: View {
     @Binding var attachments: [DraftAttachment]
     @Binding var loading: Bool
-    var note = "Up to 9 items. Media stays on this device."
+    var note = "Add up to 9 photos or videos."
+    var compactButtons = false
     @State private var selection: [PhotosPickerItem] = []
     @State private var errorMessage: String?
     @State private var preview: DraftAttachment?
@@ -146,6 +147,7 @@ struct DraftMediaPicker: View {
                                 Text("Add media").font(.caption.bold()).foregroundStyle(liyaAccent)
                             }.frame(width: 100, height: 120).background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
                         }.disabled(loading).accessibilityLabel("Add photos or videos")
+                        if compactButtons { cameraButton }
                     }
                     ForEach(attachments) { item in
                         ZStack(alignment: .topTrailing) {
@@ -159,11 +161,7 @@ struct DraftMediaPicker: View {
                     }
                 }
             }
-            if attachments.count < 9 {
-                CameraPhotoButton { item in
-                    if attachments.count < 9 { attachments.append(item) }
-                } onError: { errorMessage = $0 }.disabled(loading)
-            }
+            if attachments.count < 9 && !compactButtons { cameraButton }
             if loading { Text("Loading selected media…").font(.footnote).foregroundStyle(.secondary) }
             if let errorMessage { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
             Text(note).font(.footnote).foregroundStyle(.secondary)
@@ -191,6 +189,12 @@ struct DraftMediaPicker: View {
                 if failed { errorMessage = "Some media could not be loaded. Please try selecting it again." }
             }
         }
+    }
+
+    private var cameraButton: some View {
+        CameraPhotoButton { item in
+            if attachments.count < 9 { attachments.append(item) }
+        } onError: { errorMessage = $0 }.disabled(loading)
     }
 }
 

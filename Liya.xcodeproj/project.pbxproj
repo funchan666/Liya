@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A44444444444444444444401 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A44444444444444444444402 /* Localizable.xcstrings */; };
 		A33333333333333333333301 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A33333333333333333333302 /* LaunchScreen.storyboard */; };
 		073D8EE7810AFCF9F9B31B86 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C1AA7E627810F1A043DB07 /* RootView.swift */; };
 		262EA9226C0699993B1E645E /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F623C35F01064B5675C139C1 /* WalletView.swift */; };
@@ -37,6 +38,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A44444444444444444444402 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		A33333333333333333333302 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		07B7ED4624CF45B548E99A81 /* CoinCheckout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinCheckout.swift; sourceTree = "<group>"; };
 		0A49B42E539DC4B03BDB34DE /* Liya.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Liya.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -121,6 +123,7 @@
 		6BBA48D2AE2AA016DFA0ECBE /* Liya */ = {
 			isa = PBXGroup;
 			children = (
+				A44444444444444444444402 /* Localizable.xcstrings */,
 				A33333333333333333333302 /* LaunchScreen.storyboard */,
 				C619DBBB0211BA6980C958D2 /* Assets.xcassets */,
 			);
@@ -175,6 +178,10 @@
 			knownRegions = (
 				Base,
 				en,
+				"zh-Hans",
+				es,
+				fr,
+				ja,
 			);
 			mainGroup = 47E1305AB0237536E0BCB3A5;
 			minimizedProjectReferenceProxies = 1;
@@ -195,6 +202,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A44444444444444444444401 /* Localizable.xcstrings in Resources */,
 				A33333333333333333333301 /* LaunchScreen.storyboard in Resources */,
 				D13D7EED4D1BD097D1746957 /* Assets.xcassets in Resources */,
 			);

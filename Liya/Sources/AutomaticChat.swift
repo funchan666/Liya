@@ -19,11 +19,13 @@ final class AutomaticChat: ObservableObject {
     @Published var error: String?
     private var pendingPoll: Task<Void, Never>?
     private var generation = UUID()
+    private var loadedOwner: UUID?
 
     func load(_ session: LiyaSession) async {
         guard let owner = session.userID, !loading else { return }
         let current = UUID(); generation = current
-        loading = true; error = nil; messages = []
+        if loadedOwner != owner { messages = []; loadedOwner = owner }
+        loading = true; error = nil
         defer { loading = false }
         do {
             var all: [AutoChatMessage] = []; var offset = 0
@@ -62,8 +64,8 @@ final class AutomaticChat: ObservableObject {
         guard messages.last?.role == "user" else { waiting = false; return }
         waiting = true
         pendingPoll = Task { [weak self, weak session] in
-            for attempt in 0..<6 {
-                do { try await Task.sleep(nanoseconds: attempt == 0 ? 3_300_000_000 : 1_000_000_000) } catch { return }
+            for _ in 0..<12 {
+                do { try await Task.sleep(nanoseconds: 1_000_000_000) } catch { return }
                 guard let self, let session, !Task.isCancelled else { return }
                 await self.load(session)
                 if self.error != nil { self.waiting = false; return }
@@ -78,56 +80,105 @@ final class AutomaticChat: ObservableObject {
 }
 
 struct AutomaticChatView: View {
+    @Environment(\.liyaTabBarClearance) private var tabBarClearance
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var session: LiyaSession
     @AppStorage("liya.aiDraft") private var draft = ""
     @AppStorage("liya.autoAttempt") private var attempt = ""
     @AppStorage("liya.autoFingerprint") private var fingerprint = ""
     @StateObject private var chat = AutomaticChat()
+    private var canSend: Bool {
+        session.userID != nil && !chat.loading && !chat.sending && !chat.waiting &&
+        !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && draft.count <= 2000
+    }
     var body: some View {
         ZStack {
-            LiyaBackground(name: "color-background")
-            VStack(spacing: 12) {
+            LiyaBackground(name: "ai-chat-background")
+            VStack(spacing: 0) {
                 PageHeader(title: "AI chat", light: true)
                 ScrollViewReader { reader in
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 14) {
-                            Image("ai-heading").resizable().scaledToFit().frame(width: 190, height: 72).accessibilityLabel("AI chat")
-                            Text("Automated, prewritten replies · not a person or professional support.").font(.footnote).foregroundStyle(.white.opacity(0.9))
-                            if chat.loading { Text("Loading conversation…").foregroundStyle(.white) }
+                        VStack(alignment: .leading, spacing: 18) {
+                            if chat.messages.isEmpty {
+                                Image("ai-heading").resizable().scaledToFit().frame(width: 176, height: 60).accessibilityLabel("AI chat")
+                                Text("A little space to talk, at your own pace.")
+                                    .font(.subheadline).foregroundStyle(.white.opacity(0.94))
+                            }
+                            if chat.loading && chat.messages.isEmpty { LiyaLoadingIndicator(size: 28) }
                             if let error = chat.error {
-                                Text(error).font(.footnote).foregroundStyle(.white)
-                                Button("Refresh") { Task { await chat.load(session); chat.schedulePending(session) } }.foregroundStyle(.white).frame(minHeight: 44)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(error).font(.footnote).foregroundStyle(.white)
+                                    Button("Try again") { Task { await chat.load(session); chat.schedulePending(session) } }
+                                        .font(.footnote.bold()).foregroundStyle(.white).frame(minHeight: 44)
+                                }
                             }
                             ForEach(chat.messages) { message in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(message.role == "user" ? "You" : "Liya · automatic reply").font(.caption.bold()).foregroundStyle(liyaAccent)
-                                    Text(message.body).foregroundStyle(liyaInk).frame(maxWidth: .infinity, alignment: .leading)
-                                }.padding(14).background(.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 16)).id(message.id)
+                                HStack(alignment: .top, spacing: 0) {
+                                    if message.role == "user" { Spacer(minLength: 56) }
+                                    VStack(alignment: message.role == "user" ? .trailing : .leading, spacing: 5) {
+                                        Text(message.role == "user" ? "You" : "Liya AI")
+                                            .font(.caption.weight(.semibold))
+                                            .foregroundStyle(.white.opacity(0.86))
+                                            .padding(.horizontal, 4)
+                                        Text(message.body)
+                                            .font(.body).foregroundStyle(message.role == "user" ? .white : liyaInk)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                            .padding(.horizontal, 16).padding(.vertical, 13)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .background(message.role == "user" ? Color.white.opacity(0.22) : Color.white.opacity(0.96), in: RoundedRectangle(cornerRadius: 20))
+                                    }
+                                    .frame(maxWidth: 400, alignment: message.role == "user" ? .trailing : .leading)
+                                    if message.role != "user" { Spacer(minLength: 56) }
+                                }.id(message.id)
                             }
-                            if chat.waiting { Text("Liya is preparing a reply…").font(.footnote).foregroundStyle(.white) }
-                            if chat.messages.isEmpty && !chat.loading {
+                            if chat.waiting {
+                                Text("Liya AI is preparing a reply…").font(.footnote).foregroundStyle(.white.opacity(0.9)).id("waiting")
+                            }
+                            if chat.messages.isEmpty && !chat.loading && chat.error == nil {
                                 ForEach(["Give me some positive energy", "How can I feel calmer?", "Tell me a heartwarming story"], id: \.self) { prompt in
                                     Button { draft = draft.isEmpty ? prompt : draft + "\n" + prompt } label: {
-                                        Text(prompt).font(.subheadline).foregroundStyle(liyaInk).padding(10).background(.white.opacity(0.85), in: Capsule())
+                                        Text(prompt).font(.subheadline.weight(.medium)).foregroundStyle(liyaInk)
+                                            .padding(.horizontal, 16).padding(.vertical, 12)
+                                            .background(.white.opacity(0.94), in: Capsule())
                                     }.buttonStyle(.plain)
                                 }
                             }
-                        }.frame(maxWidth: 620).frame(maxWidth: .infinity).padding(.horizontal, 20).padding(.bottom, 12)
+                        }.frame(maxWidth: 620, alignment: .leading).frame(maxWidth: .infinity).padding(.horizontal, 20).padding(.vertical, 16)
+                            .modifier(AdaptiveContainerMargins())
+                    }.scrollDismissesKeyboard(.interactively)
+                    .onLiyaChange(of: chat.waiting) { waiting in
+                        if waiting { reader.scrollTo("waiting", anchor: .bottom) }
                     }.onLiyaChange(of: chat.messages.count) { _ in
-                        if let last = chat.messages.last { withAnimation { reader.scrollTo(last.id, anchor: .bottom) } }
+                        if let last = chat.messages.last {
+                            if reduceMotion { reader.scrollTo(last.id, anchor: .bottom) }
+                            else { withAnimation(.easeOut(duration: 0.2)) { reader.scrollTo(last.id, anchor: .bottom) } }
+                        }
                     }
                 }
-                VStack(spacing: 10) {
-                    TextField("Write a message", text: $draft, axis: .vertical).lineLimit(1...4).padding(14).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 16)).disabled(chat.sending)
-                    PrimaryButton(title: chat.sending ? "Sending…" : "Send · free", disabled: chat.sending || chat.waiting || draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || draft.count > 2000) {
-                        guard let owner = session.userID else { return }
-                        let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-                        let stamp = SocialAttempt.fingerprint(owner: owner, text: text, files: [])
-                        if stamp != fingerprint || UUID(uuidString: attempt) == nil { fingerprint = stamp; attempt = UUID().uuidString }
-                        guard let id = UUID(uuidString: attempt) else { return }
-                        Task { if await chat.send(session, id: id, text: text) { draft = ""; attempt = ""; fingerprint = "" } }
+                VStack(alignment: .leading, spacing: 6) {
+                    if draft.count > 2000 { Text("Please keep your message under 2,000 characters.").font(.footnote).foregroundStyle(.white) }
+                    HStack(alignment: .bottom, spacing: 10) {
+                        TextField("Write a message…", text: $draft, axis: .vertical)
+                            .lineLimit(1...4).padding(.horizontal, 16).padding(.vertical, 13)
+                            .foregroundStyle(liyaInk).tint(liyaAccent)
+                            .background(.white.opacity(0.96), in: RoundedRectangle(cornerRadius: 20))
+                            .disabled(chat.sending)
+                        Button {
+                            guard let owner = session.userID else { return }
+                            let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+                            let stamp = SocialAttempt.fingerprint(owner: owner, text: text, files: [])
+                            if stamp != fingerprint || UUID(uuidString: attempt) == nil { fingerprint = stamp; attempt = UUID().uuidString }
+                            guard let id = UUID(uuidString: attempt) else { return }
+                            Task { if await chat.send(session, id: id, text: text) { draft = ""; attempt = ""; fingerprint = "" } }
+                        } label: {
+                            Text(chat.sending ? "Sending…" : "Send").font(.subheadline.bold()).foregroundStyle(.white)
+                                .padding(.horizontal, 18).frame(minHeight: 48)
+                                .background(liyaGradient.opacity(canSend ? 1 : 0.45), in: Capsule())
+                        }.buttonStyle(.plain)
+                            .disabled(!canSend)
                     }
-                }.padding(.horizontal, 20).padding(.bottom, 12).frame(maxWidth: 660)
+                }.padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 12 + tabBarClearance).frame(maxWidth: 660)
+                    .modifier(AdaptiveContainerMargins())
             }
         }.navigationBarHidden(true)
             .task { await chat.load(session); chat.schedulePending(session) }

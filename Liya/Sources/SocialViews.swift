@@ -49,13 +49,25 @@ struct CommunityJoinView: View {
     var body: some View {
         PageShell(title: "Community profile") {
             VStack(alignment: .leading, spacing: 15) {
-                OfflineNote(text: "Your name, introduction and any avatar you choose to share are visible to other signed-in members. Posts and comments are shared with the community. Messages are private to their participants.")
+                Text("Your profile and posts are visible to community members. Messages stay private.")
+                    .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Text("Community name").font(.headline).foregroundStyle(liyaInk)
                 TextField("Choose a name", text: $name).padding(14).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
                 Text("Introduction").font(.headline).foregroundStyle(liyaInk)
                 TextField("A little about you", text: $signature, axis: .vertical).lineLimit(2...5).padding(14).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
-                Button(shareAvatar ? "Avatar visible to members · Change" : "Keep avatar private · Change") { shareAvatar.toggle() }
-                    .font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                Button { shareAvatar.toggle() } label: {
+                    HStack(spacing: 12) {
+                        Image("avatar-camera").resizable().scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Share profile photo").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                            Text(LocalizedStringKey(shareAvatar ? "Visible to members" : "Only visible to you"))
+                                .font(.caption).foregroundStyle(.secondary)
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                        Image(shareAvatar ? "consent-on" : "consent-off").resizable().scaledToFit().frame(width: 28, height: 28).accessibilityHidden(true)
+                    }.padding(14).frame(maxWidth: .infinity, minHeight: 64)
+                        .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 16))
+                }.buttonStyle(.plain).accessibilityLabel("Share profile photo")
+                    .accessibilityValue(shareAvatar ? "On" : "Off").accessibilityAddTraits(shareAvatar ? .isSelected : [])
                 if shareAvatar && session.profile?.avatarPath == nil { Text("Add an avatar to your account profile before sharing it.").font(.footnote).foregroundStyle(.secondary) }
                 if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
                 PrimaryButton(title: saving ? "Saving…" : "Save community profile", disabled: saving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || name.count > 80 || signature.count > 500 || (shareAvatar && session.profile?.avatarPath == nil)) {
@@ -73,29 +85,43 @@ struct CommunityJoinView: View {
 }
 
 struct CommunityFeed: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
+        let controls = dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 8)) : AnyLayout(HStackLayout(spacing: 10))
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 10) {
                 Text("Community").font(.title3.bold()).foregroundStyle(liyaInk)
-                HStack {
-                    Button("Refresh") { Task { await social.refresh(session) } }.font(.subheadline.bold()).foregroundStyle(liyaAccent).disabled(social.loading).frame(minHeight: 44)
-                    Spacer()
-                    NavigationLink("Members") { CommunityMembersView() }.font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                }
-            }
-            if !social.isJoined(session) && !social.loading {
-                NavigationLink { CommunityJoinView() } label: {
-                    Text("Create a community profile").font(.subheadline.bold()).foregroundStyle(.white).frame(maxWidth: .infinity, minHeight: 48).background(liyaGradient, in: Capsule())
+                Spacer(minLength: 0)
+                if social.loading { LiyaLoadingIndicator(size: 24).accessibilityLabel("Loading community") }
+            }.frame(minHeight: 44)
+            controls {
+                NavigationLink { CommunityMembersView() } label: {
+                    HStack(spacing: 7) {
+                        Image("nav-soft-profile").resizable().scaledToFit().frame(width: 24, height: 24).accessibilityHidden(true)
+                        Text("Members").font(.subheadline.weight(.semibold))
+                    }.foregroundStyle(liyaInk).frame(maxWidth: .infinity, minHeight: 46)
+                        .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 14))
                 }.buttonStyle(.plain)
+                Button { Task { await social.refresh(session) } } label: {
+                    Text("Refresh").font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent)
+                        .frame(maxWidth: .infinity, minHeight: 46)
+                        .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 14))
+                }.buttonStyle(.plain).disabled(social.loading)
             }
-            if social.loading { Text("Loading community…").font(.footnote).foregroundStyle(.secondary) }
             if let error = social.error {
                 Text(error).font(.footnote).foregroundStyle(.red)
-                Button("Refresh community") { Task { await social.refresh(session) } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
             } else if !social.loading && social.posts.isEmpty {
-                EmptyState(title: "No community posts yet", detail: "Share a thought when you are ready.")
+                HStack(spacing: 14) {
+                    Image("empty-art").resizable().scaledToFit().frame(width: 64, height: 64).accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("A little quiet here").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                        Text("Share a moment to get things started.").font(.footnote).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }.frame(maxWidth: .infinity, alignment: .leading)
+                }.padding(14).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 16))
             }
             LazyVStack(spacing: 14) { ForEach(social.posts) { post in CommunityPostCard(post: post) } }
         }
@@ -127,12 +153,20 @@ struct CommunityMembersView: View {
     }
 }
 
+private struct CommunityPostCounts: Decodable {
+    let likeCount: Int
+    let commentCount: Int
+    enum CodingKeys: String, CodingKey { case likeCount = "like_count", commentCount = "comment_count" }
+}
+
 struct CommunityPostCard: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     let post: SocialPost
     @State private var busy = false
     @State private var deleting = false
+    @State private var counts: CommunityPostCounts?
+    @State private var countsRequest = UUID()
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -154,10 +188,10 @@ struct CommunityPostCard: View {
             if !post.tags.isEmpty { Text(post.tags.map { "# " + $0 }.joined(separator: "   ")).font(.caption).foregroundStyle(liyaAccent) }
             SocialMediaStrip(paths: post.mediaPaths, kinds: post.mediaKinds)
             HStack(spacing: 20) {
-                Button(social.likes.contains(post.id) ? "Liked" : "Like") {
-                    busy = true; Task { await social.toggleLike(session, post: post.id); busy = false }
+                Button("\(social.likes.contains(post.id) ? "Liked" : "Like") · \(counts.map { String($0.likeCount) } ?? "—")") {
+                    busy = true; Task { await social.toggleLike(session, post: post.id); await loadCounts(); busy = false }
                 }.disabled(busy || social.loading).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                NavigationLink("Comments") { CommunityCommentsView(post: post) }.foregroundStyle(liyaAccent).frame(minHeight: 44)
+                NavigationLink("Comments · \(counts.map { String($0.commentCount) } ?? "—")") { CommunityCommentsView(post: post) }.foregroundStyle(liyaAccent).frame(minHeight: 44)
                 Spacer()
             }.font(.subheadline.bold())
         }.padding(14).background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 16))
@@ -166,6 +200,19 @@ struct CommunityPostCard: View {
                     deleting = false; Task { _ = await social.deletePost(session, id: post.id) }
                 } cancel: { deleting = false }.presentationDetents([.medium])
             }
+            .task(id: post.id) { await loadCounts() }
+            .onLiyaChange(of: social.syncGeneration) { _ in Task { await loadCounts() } }
+            .onAppear { Task { await loadCounts() } }
+    }
+
+    private func loadCounts() async {
+        guard let owner = session.userID else { counts = nil; return }
+        let current = UUID(); countsRequest = current
+        do {
+            let rows: [CommunityPostCounts] = try await session.client.rpc("liya_post_counts", params: ["p_post_id": post.id.uuidString]).execute().value
+            guard countsRequest == current, session.userID == owner else { return }
+            counts = rows.first
+        } catch { if countsRequest == current { counts = nil } }
     }
 }
 
@@ -209,11 +256,15 @@ struct CommunityEditPostView: View {
 struct CommunityPersonView: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
+    @EnvironmentObject private var calls: LiyaCalls
+    @Environment(\.openURL) private var openURL
     let personID: UUID
     @State private var busy = false
     @State private var options = false
     @State private var section = 0
     @State private var preview: SocialMediaItem?
+    @State private var callNotice: String?
+    @State private var attemptedCall = false
     private var posts: [SocialPost] { social.posts.filter { $0.ownerID == personID } }
     private var videos: [SocialMediaItem] {
         posts.flatMap { post in
@@ -231,18 +282,28 @@ struct CommunityPersonView: View {
                 } actions: {
                     if personID != session.userID {
                         if !social.isJoined(session) { NavigationLink("Create a community profile to follow or block") { CommunityJoinView() }.font(.footnote.bold()).foregroundStyle(liyaAccent) }
-                        HStack(spacing: 10) {
-                            Button {
-                                busy = true; Task { await social.setRelation(session, target: personID, table: "liya_follows", enabled: !social.follows.contains(personID)); busy = false }
-                            } label: {
-                                Text(social.follows.contains(personID) ? "Following" : "Follow")
-                                    .font(.subheadline.bold()).foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 46)
-                                    .background(LinearGradient(colors: [.orange, .pink], startPoint: .leading, endPoint: .trailing), in: Capsule())
-                            }.buttonStyle(.plain).disabled(busy || !social.isJoined(session))
-                            NavigationLink { CommunityConversationView(personID: personID) } label: {
-                                Text("Message").font(.subheadline.bold()).foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 46)
-                                    .background(liyaGradient, in: Capsule())
-                            }.buttonStyle(.plain)
+                        VStack(spacing: 10) {
+                            HStack(spacing: 10) {
+                                Button {
+                                    busy = true; Task { await social.setRelation(session, target: personID, table: "liya_follows", enabled: !social.follows.contains(personID)); busy = false }
+                                } label: {
+                                    ProfileDetailActionLabel(title: social.follows.contains(personID) ? "Following" : "Follow", style: social.follows.contains(personID) ? .secondary : .follow)
+                                }.buttonStyle(.plain).disabled(busy || !social.isJoined(session) || social.loading)
+                                NavigationLink { CommunityConversationView(personID: personID) } label: {
+                                    ProfileDetailActionLabel(title: "Message", style: .message)
+                                }.buttonStyle(.plain)
+                            }
+                            HStack(spacing: 10) {
+                                Button { startCall(kind: "audio") } label: { ProfileDetailActionLabel(title: "Voice call", style: .secondary) }
+                                Button { startCall(kind: "video") } label: { ProfileDetailActionLabel(title: "Video call", style: .secondary) }
+                            }.buttonStyle(.plain).disabled(calls.busy || calls.call != nil)
+                            if let callNotice { Text(callNotice).font(.footnote).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading) }
+                            if attemptedCall, let error = calls.error { Text(error).font(.footnote).foregroundStyle(.red).frame(maxWidth: .infinity, alignment: .leading) }
+                            if attemptedCall && calls.permissionDenied {
+                                Button("Open Settings") { if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) } }
+                                    .font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
                         }
                     } else {
                         NavigationLink { CommunityJoinView() } label: {
@@ -252,13 +313,15 @@ struct CommunityPersonView: View {
                     }
                 } content: {
                     if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
-                    ProfileContentTabs(selection: $section)
-                    if section == 0 {
-                        if posts.isEmpty { EmptyState(title: "No posts yet", detail: "Posts will appear here when shared.") }
-                        ForEach(posts) { CommunityPostCard(post: $0) }
-                    } else if videos.isEmpty {
-                        EmptyState(title: "No videos yet", detail: "Videos will appear here when shared.")
-                    } else {
+                    if !posts.isEmpty {
+                        ProfileContentTabs(selection: $section, showVideo: !videos.isEmpty)
+                    }
+                    if section == 1 && !videos.isEmpty {
+                        if videos.count == 1, let item = videos.first {
+                            Button { preview = item } label: {
+                                ProfileSingleVideoRow { SocialMediaThumbnail(item: item) }
+                            }.buttonStyle(.plain).accessibilityLabel("Play video")
+                        } else {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
                             ForEach(Array(videos.enumerated()), id: \.offset) { _, item in
                                 Button { preview = item } label: {
@@ -267,6 +330,9 @@ struct CommunityPersonView: View {
                                 }.buttonStyle(.plain).accessibilityLabel("Play video")
                             }
                         }
+                        }
+                    } else {
+                        ForEach(posts) { CommunityPostCard(post: $0) }
                     }
                 }
             } else {
@@ -275,6 +341,20 @@ struct CommunityPersonView: View {
         }
         .sheet(isPresented: $options) { CommunityProfileOptions(personID: personID) }
         .sheet(item: $preview) { item in SocialMediaPreview(item: item) }
+    }
+
+    private func startCall(kind: String) {
+        calls.error = nil
+        calls.permissionDenied = false
+        callNotice = nil
+        attemptedCall = true
+        guard social.isJoined(session) else { callNotice = "Create a community profile before calling."; return }
+        guard !social.loading, social.error == nil else { callNotice = "Your connections are updating. Please try again."; return }
+        guard social.follows.contains(personID), social.followers.contains(personID) else {
+            callNotice = "Follow each other before starting a call."
+            return
+        }
+        Task { await calls.start(session, peer: personID, kind: kind) }
     }
 }
 
@@ -411,7 +491,7 @@ struct CommunityCommentsView: View {
         loadedDraft = true
     }
     private func persistDraft() {
-        guard loadedDraft else { return }
+        guard loadedDraft, session.userID != nil else { return }
         UserDefaults.standard.set(["text": text, "attempt": attempt.uuidString], forKey: draftKey)
     }
 }
@@ -435,13 +515,14 @@ struct SocialMediaStrip: View {
     }
 }
 
-private struct SocialMediaThumbnail: View {
+struct SocialMediaThumbnail: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     let item: SocialMediaItem
     @State private var url: URL?
     @State private var videoCover: UIImage?
     @State private var failed = false
+    init(item: SocialMediaItem) { self.item = item }
     var body: some View {
         ZStack {
             Color.black.opacity(0.08)
@@ -473,7 +554,7 @@ private struct SocialMediaThumbnail: View {
     }
 }
 
-private struct SocialMediaPreview: View {
+struct SocialMediaPreview: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     @Environment(\.dismiss) private var dismiss
@@ -483,6 +564,7 @@ private struct SocialMediaPreview: View {
     @State private var player: AVPlayer?
     @State private var failed = false
     @State private var playing = false
+    init(item: SocialMediaItem) { self.item = item }
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
@@ -527,9 +609,31 @@ private struct MessageDraft: Codable {
     var fingerprint: String
 }
 
+private struct InboxEmptyState: View {
+    let title: String
+    var body: some View {
+        VStack(spacing: 10) {
+            Image("empty-art").resizable().scaledToFit().frame(width: 78, height: 72).accessibilityHidden(true)
+            Text(title).font(.subheadline.weight(.medium)).foregroundStyle(liyaInk)
+        }.frame(maxWidth: .infinity).padding(.vertical, 48)
+    }
+}
+
+private func inboxDate(_ value: String) -> String? {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    let fractional = formatter.date(from: value)
+    formatter.formatOptions = [.withInternetDateTime]
+    guard let date = fractional ?? formatter.date(from: value) else { return nil }
+    return Calendar.current.isDateInToday(date) ? date.formatted(date: .omitted, time: .shortened) : date.formatted(date: .abbreviated, time: .omitted)
+}
+
 struct CommunityMessagesView: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
+    let hasLocalDrafts: Bool
+
+    init(hasLocalDrafts: Bool = false) { self.hasLocalDrafts = hasLocalDrafts }
     private var peers: [UUID] {
         guard let owner = session.userID else { return [] }
         var result: [UUID] = []
@@ -541,44 +645,55 @@ struct CommunityMessagesView: View {
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Conversations").font(.headline).foregroundStyle(liyaInk)
-                Spacer()
-                NavigationLink("Find members") { CommunityMembersView() }.font(.subheadline.bold()).foregroundStyle(liyaAccent)
-            }
-            if !social.isJoined(session) && !social.loading {
-                NavigationLink("Create your community profile") { CommunityJoinView() }.foregroundStyle(liyaAccent).frame(minHeight: 44)
-            }
-            if social.messagesLoading { Text("Loading messages…").font(.footnote).foregroundStyle(.secondary) }
+            if social.messagesLoading { LiyaLoadingIndicator(size: 28).frame(maxWidth: .infinity).padding(.vertical, 32) }
             if let error = social.messageError {
                 Text(error).font(.footnote).foregroundStyle(.red)
                 Button("Refresh messages") { Task { await social.refreshMessages(session) } }.foregroundStyle(liyaAccent)
-            } else if !social.messagesLoading && peers.isEmpty {
-                EmptyState(title: "No conversations yet", detail: "Visit a member's profile to start a free conversation.")
+            } else if !social.messagesLoading && !social.loading && social.error == nil && peers.isEmpty && !hasLocalDrafts {
+                InboxEmptyState(title: "No messages yet")
             }
-            if !social.realtimeConnected { Button("Reconnect live updates") { social.watchMessages(session) }.font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44) }
+            if let error = social.error {
+                Text(error).font(.footnote).foregroundStyle(.red)
+                Button("Try again") { Task { await social.refresh(session) } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
+            }
+            if !social.realtimeConnected && social.isJoined(session) && !social.messagesLoading {
+                Button("Reconnect live updates") { social.watchMessages(session) }.font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+            }
             ForEach(peers, id: \.self) { id in
+                let last = social.messages.last(where: { $0.senderID == id || $0.recipientID == id })
                 HStack(spacing: 12) {
                     NavigationLink { CommunityPersonView(personID: id) } label: {
-                        SocialAvatar(personID: id).frame(width: 44, height: 44).clipShape(Circle())
+                        SocialAvatar(personID: id).frame(width: 48, height: 48).clipShape(Circle())
                     }.buttonStyle(.plain).accessibilityLabel("View member profile")
                     VStack(alignment: .leading, spacing: 4) {
                         NavigationLink { CommunityPersonView(personID: id) } label: {
-                            Text(social.person(id)?.displayName ?? "Liya member").font(.subheadline.bold())
+                            Text(social.person(id)?.displayName ?? "Liya member").font(.subheadline.bold()).foregroundStyle(liyaInk).lineLimit(1)
                         }.buttonStyle(.plain)
                         NavigationLink { CommunityConversationView(personID: id) } label: {
-                            if let last = social.messages.last(where: { $0.senderID == id || $0.recipientID == id }) {
-                                Text(last.body.isEmpty ? "Attachment" : last.body).font(.caption).lineLimit(2).foregroundStyle(.secondary)
-                            } else {
-                                Text("Open conversation").font(.caption).foregroundStyle(liyaAccent)
-                            }
+                            Text(last.map { $0.body.isEmpty ? "Attachment" : $0.body } ?? "Open conversation")
+                                .font(.caption).lineLimit(1).foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 30, alignment: .leading)
+                        }.buttonStyle(.plain)
+                    }.frame(maxWidth: .infinity, alignment: .leading)
+                    if let last, let date = inboxDate(last.createdAt) {
+                        NavigationLink { CommunityConversationView(personID: id) } label: {
+                            Text(date).font(.caption2).foregroundStyle(.secondary).frame(minHeight: 44)
                         }.buttonStyle(.plain)
                     }
-                    Spacer()
-                    NavigationLink("Open") { CommunityConversationView(personID: id) }.font(.caption.bold()).foregroundStyle(liyaAccent)
                 }.foregroundStyle(liyaInk).padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
             }
+            if !social.loading && social.error == nil && social.isJoined(session) {
+                HStack {
+                    Spacer()
+                    NavigationLink { CommunityMembersView() } label: { inboxAction("Find people") }
+                    Spacer()
+                }.buttonStyle(.plain)
+            }
         }.task { await social.refreshMessages(session) }
+    }
+
+    private func inboxAction(_ title: String) -> some View {
+        Text(title).font(.footnote.weight(.semibold)).foregroundStyle(.white)
+            .padding(.horizontal, 24).frame(minHeight: 44).background(liyaGradient, in: Capsule())
     }
 }
 
@@ -682,7 +797,7 @@ struct CommunityConversationView: View {
         loaded = true
     }
     private func persist() {
-        guard loaded else { return }
+        guard loaded, session.userID != nil else { return }
         let draft = MessageDraft(text: text, attachments: attachments, attempt: attempt, fingerprint: fingerprint)
         if let data = try? JSONEncoder().encode(draft) { UserDefaults.standard.set(data, forKey: key) }
     }
@@ -721,25 +836,47 @@ struct CommunityRelationList: View {
 struct CommunityActivityView: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
+    let hasLocalActivity: Bool
+
+    init(hasLocalActivity: Bool = false) { self.hasLocalActivity = hasLocalActivity }
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack { Text("Community activity").font(.headline).foregroundStyle(liyaInk); Spacer(); Button("Refresh") { Task { await social.refreshNotifications(session) } }.foregroundStyle(liyaAccent) }
-            if social.notificationsLoading { Text("Loading activity…").font(.footnote).foregroundStyle(.secondary) }
-            if let error = social.notificationsError { Text(error).font(.footnote).foregroundStyle(.red) }
-            if social.notifications.isEmpty && !social.notificationsLoading && social.notificationsError == nil { Text("No community activity yet.").font(.footnote).foregroundStyle(.secondary) }
+            if social.notificationsLoading { LiyaLoadingIndicator(size: 28).frame(maxWidth: .infinity).padding(.vertical, 32) }
+            if let error = social.notificationsError {
+                Text(error).font(.footnote).foregroundStyle(.red)
+                Button("Try again") { Task { await social.refreshNotifications(session) } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
+            }
+            if social.notifications.isEmpty && !social.notificationsLoading && social.notificationsError == nil && !hasLocalActivity {
+                InboxEmptyState(title: "No activity yet")
+            }
             ForEach(social.notifications) { activity in
-                HStack {
-                    NavigationLink { CommunityPersonView(personID: activity.actorID) } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(social.person(activity.actorID)?.displayName ?? "Liya member").font(.subheadline.bold())
-                            Text(activity.kind == "follow" ? "Started following you" : activity.kind == "like" ? "Liked your post" : "Commented on your post").font(.caption)
-                        }.foregroundStyle(liyaInk)
-                    }.buttonStyle(.plain)
-                    Spacer()
-                    if let postID = activity.postID, let post = social.posts.first(where: { $0.id == postID }) {
-                        NavigationLink("Post") { CommunityCommentsView(post: post) }.font(.caption.bold()).foregroundStyle(liyaAccent)
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) {
+                        NavigationLink { CommunityPersonView(personID: activity.actorID) } label: {
+                            SocialAvatar(personID: activity.actorID).frame(width: 44, height: 44).clipShape(Circle())
+                        }.buttonStyle(.plain).accessibilityLabel("View member profile")
+                        VStack(alignment: .leading, spacing: 3) {
+                            NavigationLink { CommunityPersonView(personID: activity.actorID) } label: {
+                                Text(social.person(activity.actorID)?.displayName ?? "Liya member").font(.subheadline.bold()).foregroundStyle(liyaInk)
+                            }.buttonStyle(.plain)
+                            if let date = inboxDate(activity.createdAt) { Text(date).font(.caption2).foregroundStyle(.secondary) }
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                        if !activity.isRead { Button("Mark read") { Task { await social.markRead(session, id: activity.id) } }.font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44) }
                     }
-                    if !activity.isRead { Button("Mark read") { Task { await social.markRead(session, id: activity.id) } }.font(.caption.bold()).foregroundStyle(liyaAccent) }
+                    Text(activity.kind == "follow" ? "Started following you" : activity.kind == "like" ? "Liked your post" : activity.kind == "comment" ? "Commented on your post" : "Interacted with your post")
+                        .font(.subheadline).foregroundStyle(liyaInk)
+                    if let postID = activity.postID, let post = social.posts.first(where: { $0.id == postID }) {
+                        NavigationLink { CommunityCommentsView(post: post) } label: {
+                            HStack(spacing: 10) {
+                                Text(post.body.isEmpty ? "View post" : post.body).font(.caption).lineLimit(2).foregroundStyle(liyaInk)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                if let path = post.mediaPaths.first {
+                                    SocialMediaThumbnail(item: SocialMediaItem(path: path, kind: post.mediaKinds.first ?? "photo"))
+                                        .frame(width: 48, height: 48).clipped().clipShape(RoundedRectangle(cornerRadius: 8))
+                                }
+                            }.padding(10).frame(maxWidth: .infinity).background(.white.opacity(0.75), in: RoundedRectangle(cornerRadius: 10))
+                        }.buttonStyle(.plain).accessibilityLabel("View post interaction")
+                    }
                 }.padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
             }
         }.task { await social.refreshNotifications(session) }

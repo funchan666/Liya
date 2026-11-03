@@ -73,6 +73,7 @@ final class LocalStore: ObservableObject {
     @Published var signature: String = "" { didSet { defaults.set(signature, forKey: "liya.signature") } }
     @Published var profileTags: [String] = []
     private let defaults = UserDefaults.standard
+    private var detachedOwner: UUID?
 
     init() {
         nickname = defaults.string(forKey: "liya.nickname") ?? ""
@@ -95,7 +96,62 @@ final class LocalStore: ObservableObject {
         if let data = defaults.data(forKey: "liya.avatar"), let saved = try? JSONDecoder().decode(DraftAttachment.self, from: data) { avatar = saved }
     }
 
+    /// Keep unsent material separate from the next account without deleting it.
+    func archiveAccountMaterial(_ owner: UUID) {
+        detachedOwner = owner
+        let keys = ["liya.nickname", "liya.signature", "liya.profileTags", "liya.moods", "liya.pendingMoods",
+                    "liya.composeText", "liya.composeTags", "liya.composeAttachments", "liya.drafts", "liya.comments",
+                    "liya.likedPhotos", "liya.likedVideos", "liya.videoNotes", "liya.followedExamples", "liya.blockedExamples",
+                    "liya.messageDrafts", "liya.reportDrafts", "liya.avatar", "liya.aiDraft", "liya.autoAttempt", "liya.autoFingerprint",
+                    "liya.postAttempt", "liya.postFingerprint", "liya.treeDraft", "liya.treeDraftMood", "liya.treeHiddenSuggestions",
+                    "liya.treePublicAttempt", "liya.treePublicFingerprint", "liya.treeSubmissionID"]
+        let snapshot = keys.reduce(into: [String: Any]()) { result, key in
+            if let value = defaults.object(forKey: key) { result[key] = value }
+        }
+        defaults.set(snapshot, forKey: "liya.archivedAccount.\(owner.uuidString.lowercased())")
+        entries = []; pendingMoods = []; composeText = ""; composeTags = []; composeAttachments = []; composeLoading = false
+        drafts = []; comments = []; likedPhotos = []; likedVideos = []; videoNotes = []; followedExamples = []; blockedExamples = []
+        messageDrafts = [:]; reports = []; avatar = nil; nickname = ""; signature = ""; profileTags = []; videoRequest = nil
+        for key in keys { defaults.removeObject(forKey: key) }
+    }
+
+    func restoreAccountMaterial(_ owner: UUID) {
+        detachedOwner = nil
+        let archiveKey = "liya.archivedAccount.\(owner.uuidString.lowercased())"
+        guard let snapshot = defaults.dictionary(forKey: archiveKey) else { return }
+        for (key, value) in snapshot { defaults.set(value, forKey: key) }
+        nickname = defaults.string(forKey: "liya.nickname") ?? ""
+        signature = defaults.string(forKey: "liya.signature") ?? ""
+        profileTags = defaults.stringArray(forKey: "liya.profileTags") ?? []
+        entries = defaults.data(forKey: "liya.moods").flatMap { try? JSONDecoder().decode([MoodEntry].self, from: $0) } ?? []
+        pendingMoods = defaults.data(forKey: "liya.pendingMoods").flatMap { try? JSONDecoder().decode([MoodEntry].self, from: $0) } ?? []
+        composeText = defaults.string(forKey: "liya.composeText") ?? ""
+        composeTags = defaults.stringArray(forKey: "liya.composeTags") ?? []
+        composeAttachments = defaults.data(forKey: "liya.composeAttachments").flatMap { try? JSONDecoder().decode([DraftAttachment].self, from: $0) } ?? []
+        drafts = defaults.data(forKey: "liya.drafts").flatMap { try? JSONDecoder().decode([LocalDraft].self, from: $0) } ?? []
+        comments = defaults.data(forKey: "liya.comments").flatMap { try? JSONDecoder().decode([LocalComment].self, from: $0) } ?? []
+        likedPhotos = Set(defaults.array(forKey: "liya.likedPhotos") as? [Int] ?? [])
+        likedVideos = Set(defaults.array(forKey: "liya.likedVideos") as? [Int] ?? [])
+        videoNotes = defaults.data(forKey: "liya.videoNotes").flatMap { try? JSONDecoder().decode([LocalVideoNote].self, from: $0) } ?? []
+        followedExamples = Set(defaults.array(forKey: "liya.followedExamples") as? [Int] ?? [])
+        blockedExamples = Set(defaults.array(forKey: "liya.blockedExamples") as? [Int] ?? [])
+        messageDrafts = defaults.dictionary(forKey: "liya.messageDrafts") as? [String: String] ?? [:]
+        reports = defaults.data(forKey: "liya.reportDrafts").flatMap { try? JSONDecoder().decode([LocalReport].self, from: $0) } ?? []
+        avatar = defaults.data(forKey: "liya.avatar").flatMap { try? JSONDecoder().decode(DraftAttachment.self, from: $0) }
+        defaults.removeObject(forKey: archiveKey)
+    }
+
     func savePendingMood(_ mood: String, note: String, date: Date) {
+        if !inPreview, let owner = detachedOwner {
+            let key = "liya.archivedAccount.\(owner.uuidString.lowercased())"
+            var snapshot = defaults.dictionary(forKey: key) ?? [:]
+            var saved = (snapshot["liya.pendingMoods"] as? Data).flatMap { try? JSONDecoder().decode([MoodEntry].self, from: $0) } ?? []
+            saved.removeAll { Calendar.current.isDate($0.date, inSameDayAs: date) }
+            saved.append(MoodEntry(date: date, mood: mood, note: note))
+            snapshot["liya.pendingMoods"] = try? JSONEncoder().encode(saved)
+            defaults.set(snapshot, forKey: key)
+            return
+        }
         pendingMoods.removeAll { Calendar.current.isDate($0.date, inSameDayAs: date) }
         pendingMoods.append(MoodEntry(date: date, mood: mood, note: note))
         if let data = try? JSONEncoder().encode(pendingMoods) { defaults.set(data, forKey: "liya.pendingMoods") }
@@ -155,6 +211,15 @@ final class LocalStore: ObservableObject {
 
     func saveMessageDraft(_ text: String, index: Int) {
         let key = String(index)
+        if !inPreview, let owner = detachedOwner {
+            let archiveKey = "liya.archivedAccount.\(owner.uuidString.lowercased())"
+            var snapshot = defaults.dictionary(forKey: archiveKey) ?? [:]
+            var saved = snapshot["liya.messageDrafts"] as? [String: String] ?? [:]
+            if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { saved.removeValue(forKey: key) }
+            else { saved[key] = text }
+            snapshot["liya.messageDrafts"] = saved; defaults.set(snapshot, forKey: archiveKey)
+            return
+        }
         if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { messageDrafts.removeValue(forKey: key) }
         else { messageDrafts[key] = text }
         defaults.set(messageDrafts, forKey: "liya.messageDrafts")

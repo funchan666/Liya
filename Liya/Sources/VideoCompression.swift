@@ -12,8 +12,8 @@ enum VideoCompression {
         case unreadable, tooLarge
         var errorDescription: String? {
             switch self {
-            case .unreadable: return "This video could not be opened. The original remains on this device."
-            case .tooLarge: return "The full video could not be compressed below the upload limit. Your original remains on this device."
+            case .unreadable: return "This video could not be opened. Please choose another video."
+            case .tooLarge: return "This video is too large to upload, even after compression. Please choose a shorter video."
             }
         }
     }

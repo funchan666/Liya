@@ -46,7 +46,7 @@ struct PrimaryButton: View {
     let action: () -> Void
     var body: some View {
         Button(action: action) {
-            Text(title).font(.system(size: 16, weight: .semibold))
+            Text(LocalizedStringKey(title)).font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 48)
                 .background(liyaGradient.opacity(disabled ? 0.45 : 1), in: Capsule())
         }.buttonStyle(.plain).disabled(disabled)
@@ -64,7 +64,7 @@ struct PageHeader: View {
                     Image("back").renderingMode(light ? .template : .original).resizable().scaledToFit().foregroundStyle(.white).frame(width: 20, height: 20).frame(width: 44, height: 44)
                 }.buttonStyle(.plain).accessibilityLabel("Back")
                 Spacer(minLength: 0)
-                Text(title).font(.headline).lineLimit(1).foregroundStyle(light ? .white : liyaInk)
+                Text(LocalizedStringKey(title)).font(.headline).lineLimit(1).foregroundStyle(light ? .white : liyaInk)
                 Spacer(minLength: 0)
                 Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
             }.modifier(AdaptiveContainerMargins())
@@ -104,6 +104,7 @@ struct OfflineNote: View {
 }
 
 struct PageShell<Content: View>: View {
+    @Environment(\.liyaTabBarClearance) private var tabBarClearance
     let title: String
     @ViewBuilder var content: Content
     var body: some View {
@@ -111,7 +112,7 @@ struct PageShell<Content: View>: View {
             LiyaBackground()
             VStack(spacing: 0) {
                 PageHeader(title: title)
-                ScrollView { content.frame(maxWidth: 620).frame(maxWidth: .infinity).padding(.horizontal, 20).padding(.bottom, 30) }
+                ScrollView { content.frame(maxWidth: 620).frame(maxWidth: .infinity).padding(.horizontal, 20).padding(.bottom, 30 + tabBarClearance) }
             }
         }.navigationBarHidden(true)
     }
@@ -130,8 +131,8 @@ struct LocalConfirmation: View {
             DuoControlRegion { size in
                 ScrollView {
                     VStack(spacing: 18) {
-                        Text(title).font(.title3.bold()).foregroundStyle(liyaInk)
-                        Text(message).multilineTextAlignment(.center).foregroundStyle(.secondary)
+                        Text(LocalizedStringKey(title)).font(.title3.bold()).foregroundStyle(liyaInk)
+                        Text(LocalizedStringKey(message)).multilineTextAlignment(.center).foregroundStyle(.secondary)
                         PrimaryButton(title: action, action: confirm)
                         Button("Cancel", action: cancel).font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
                     }.padding(24).frame(maxWidth: 440).frame(maxWidth: .infinity).frame(minHeight: size.height)

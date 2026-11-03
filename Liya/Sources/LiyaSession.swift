@@ -6,6 +6,9 @@ import Supabase
 final class LiyaSession: ObservableObject {
     @Published private(set) var isSigningIn = false
     @Published private(set) var isDeletingAccount = false
+    @Published private(set) var isSigningOut = false
+    @Published var signOutError: String?
+    @Published var welcomeNotice: String?
     @Published var deletionError: String?
     @Published private(set) var errorMessage: String?
     @Published private(set) var userID: UUID?
@@ -49,7 +52,7 @@ final class LiyaSession: ObservableObject {
             supabaseURL: LiyaSession.projectURL,
             supabaseKey: LiyaSession.publishableKey,
             options: SupabaseClientOptions(
-                auth: .init(),
+                auth: .init(emitLocalSessionAsInitialSession: true),
                 global: .init(session: URLSession(configuration: configuration))
             )
         )
@@ -79,6 +82,7 @@ final class LiyaSession: ObservableObject {
                 throw SessionError.invalidBootstrap
             }
             userID = session.user.id
+            welcomeNotice = nil
             Task { await refreshCatalog() }
             Task { await refreshWallet() }
             Task { await refreshProfile() }
@@ -95,7 +99,7 @@ final class LiyaSession: ObservableObject {
     }
 
     func refreshCatalog() async {
-        guard userID != nil, !catalogLoading else { return }
+        guard let owner = userID, !catalogLoading else { return }
         catalogLoading = true
         catalogError = nil
         photos = []; videos = []; catalogGeneration = UUID(); imageGeneration = UUID()
@@ -111,11 +115,12 @@ final class LiyaSession: ObservableObject {
                 if page.count < 500 { break }
                 offset += 500
             }
+            guard userID == owner else { return }
             photos = rows.filter { $0.kind == "photo" }
             videos = rows.filter { $0.kind == "video" }
             catalogGeneration = UUID(); imageGeneration = UUID()
         } catch {
-            catalogError = "Couldn't load the content. Please try again."
+            if userID == owner { catalogError = "Couldn't load the content. Please try again." }
         }
     }
 
@@ -127,7 +132,7 @@ final class LiyaSession: ObservableObject {
     }
 
     func resumeAccount() async {
-        guard let owner = userID, !isDeletingAccount else { return }
+        guard let owner = userID, !isDeletingAccount, !isSigningOut else { return }
         imageGeneration = UUID()
         startWalletUpdates(for: owner)
         await refreshProfile()
@@ -137,7 +142,7 @@ final class LiyaSession: ObservableObject {
     /// Restore an existing session for an incoming call; never create a new account here.
     func restoreForIncomingCall() async -> Bool {
         if userID != nil { return true }
-        guard !isDeletingAccount, UserDefaults.standard.bool(forKey: "liya.hasSupabaseAccount") else { return false }
+        guard !isDeletingAccount, !isSigningOut, UserDefaults.standard.bool(forKey: "liya.hasSupabaseAccount") else { return false }
         do {
             let saved = try await client.auth.session
             userID = saved.user.id
@@ -175,11 +180,37 @@ final class LiyaSession: ObservableObject {
             try? await client.auth.signOut(scope: .local)
             UserDefaults.standard.removeObject(forKey: key)
             UserDefaults.standard.removeObject(forKey: "liya.hasSupabaseAccount")
+            welcomeNotice = "Your account has been deleted. You can start again whenever you're ready."
             return true
         } catch {
-            deletionError = "Deletion could not be confirmed. Keep this account on this device and retry; some cloud files may already have been removed."
+            deletionError = "Deletion could not be confirmed. Please retry before signing out; some uploaded files may already have been removed."
             return false
         }
+    }
+
+    func signOut() async -> Bool {
+        guard userID != nil, !isSigningOut, !isDeletingAccount else { return false }
+        isSigningOut = true; signOutError = nil
+        defer { isSigningOut = false }
+        var serverConfirmed = client.auth.currentSession != nil
+        do {
+            try await client.auth.signOut(scope: .local)
+        } catch {
+            guard client.auth.currentSession == nil else {
+                signOutError = "Couldn't sign out. Please check your connection and try again."
+                return false
+            }
+            // The SDK can clear its local session before its server request fails.
+            serverConfirmed = false
+        }
+        walletTask?.cancel(); walletTask = nil; walletGeneration = UUID(); walletWatchGeneration = UUID()
+        userID = nil; coinBalance = nil; walletLive = false; welcomeGift = nil
+        profile = nil; profileAvatarURL = nil; moodEntries = []; treeEntries = []; likedMediaIDs = []
+        photos = []; videos = []; catalogGeneration = UUID(); imageGeneration = UUID()
+        likesReady = false; likesError = nil
+        UserDefaults.standard.removeObject(forKey: "liya.hasSupabaseAccount")
+        welcomeNotice = serverConfirmed ? "You are signed out. Continue to begin a new account." : "Signed out on this device. The server could not confirm sign-out."
+        return true
     }
 
     func refreshWallet() async {
@@ -253,7 +284,7 @@ final class LiyaSession: ObservableObject {
             moodError = nil
             return true
         } catch {
-            moodError = "Couldn't save your journal entry. Your draft is still on this device."
+            moodError = "Couldn't save your journal entry. Your draft is still available; please try again."
             return false
         }
     }
@@ -305,7 +336,7 @@ final class LiyaSession: ObservableObject {
             }
             return true
         } catch {
-            profileError = "Couldn't save your profile. Your selected photo remains on this device."
+            profileError = "Couldn't save your profile. Please try again."
             return false
         }
     }
@@ -403,7 +434,7 @@ final class LiyaSession: ObservableObject {
             guard owner == userID, rows.first == row else { throw SessionError.treeUnavailable }
             await refreshTreeEntries()
             return true
-        } catch { treeError = "Couldn't confirm saving. Your words remain on this device."; return false }
+        } catch { treeError = "Couldn't confirm saving. Your words are still here; please try again."; return false }
     }
 
     func deleteTreeEntry(_ id: UUID) async {
