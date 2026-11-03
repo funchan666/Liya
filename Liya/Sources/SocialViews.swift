@@ -211,36 +211,98 @@ struct CommunityPersonView: View {
     @EnvironmentObject private var social: SocialStore
     let personID: UUID
     @State private var busy = false
-    @State private var blocking = false
+    @State private var options = false
+    @State private var section = 0
+    @State private var preview: SocialMediaItem?
+    private var posts: [SocialPost] { social.posts.filter { $0.ownerID == personID } }
+    private var videos: [SocialMediaItem] {
+        posts.flatMap { post in
+            post.mediaPaths.enumerated().compactMap { index, path in
+                guard post.mediaKinds.indices.contains(index), post.mediaKinds[index] == "video" else { return nil }
+                return SocialMediaItem(path: path, kind: "video")
+            }
+        }
+    }
     var body: some View {
-        PageShell(title: "Member") {
-            VStack(alignment: .leading, spacing: 16) {
-                if let person = social.person(personID) {
-                    SocialAvatar(personID: personID).frame(width: 75, height: 75).clipShape(RoundedRectangle(cornerRadius: 18))
-                    Text(person.displayName).font(.title2.bold()).foregroundStyle(liyaInk)
-                    Text(person.signature.isEmpty ? "A Liya member" : person.signature).foregroundStyle(.secondary)
+        Group {
+            if let person = social.person(personID) {
+                ProfileDetailLayout(name: person.displayName, introduction: person.signature, showOptions: { options = true }) {
+                    SocialAvatar(personID: personID)
+                } actions: {
                     if personID != session.userID {
                         if !social.isJoined(session) { NavigationLink("Create a community profile to follow or block") { CommunityJoinView() }.font(.footnote.bold()).foregroundStyle(liyaAccent) }
-                        ScrollView(.horizontal, showsIndicators: false) { HStack(spacing: 20) {
-                            Button(social.follows.contains(personID) ? "Unfollow" : "Follow") {
+                        HStack(spacing: 10) {
+                            Button {
                                 busy = true; Task { await social.setRelation(session, target: personID, table: "liya_follows", enabled: !social.follows.contains(personID)); busy = false }
-                            }.disabled(busy || !social.isJoined(session)).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                            NavigationLink("Message") { CommunityConversationView(personID: personID) }.foregroundStyle(liyaAccent).frame(minHeight: 44)
-                            NavigationLink("Report") { CommunityReportView(target: personID, post: nil) }.foregroundStyle(liyaAccent).frame(minHeight: 44)
-                        }.font(.subheadline.bold()) }
-                        Button("Block member") { blocking = true }.disabled(!social.isJoined(session) || busy).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                            } label: {
+                                Text(social.follows.contains(personID) ? "Following" : "Follow")
+                                    .font(.subheadline.bold()).foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 46)
+                                    .background(LinearGradient(colors: [.orange, .pink], startPoint: .leading, endPoint: .trailing), in: Capsule())
+                            }.buttonStyle(.plain).disabled(busy || !social.isJoined(session))
+                            NavigationLink { CommunityConversationView(personID: personID) } label: {
+                                Text("Message").font(.subheadline.bold()).foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 46)
+                                    .background(liyaGradient, in: Capsule())
+                            }.buttonStyle(.plain)
+                        }
                     } else {
-                        NavigationLink("Edit community profile") { CommunityJoinView() }.foregroundStyle(liyaAccent)
+                        NavigationLink { CommunityJoinView() } label: {
+                            Text("Edit community profile").font(.subheadline.bold()).foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 46)
+                                .background(liyaGradient, in: Capsule())
+                        }.buttonStyle(.plain)
                     }
+                } content: {
                     if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
-                    ForEach(social.posts.filter { $0.ownerID == personID }) { CommunityPostCard(post: $0) }
-                } else {
-                    EmptyState(title: "Member unavailable", detail: "This profile may no longer be visible to you.")
+                    ProfileContentTabs(selection: $section)
+                    if section == 0 {
+                        if posts.isEmpty { EmptyState(title: "No posts yet", detail: "Posts will appear here when shared.") }
+                        ForEach(posts) { CommunityPostCard(post: $0) }
+                    } else if videos.isEmpty {
+                        EmptyState(title: "No videos yet", detail: "Videos will appear here when shared.")
+                    } else {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
+                            ForEach(Array(videos.enumerated()), id: \.offset) { _, item in
+                                Button { preview = item } label: {
+                                    SocialMediaThumbnail(item: item).frame(height: 145).frame(maxWidth: .infinity)
+                                        .clipped().clipShape(RoundedRectangle(cornerRadius: 10))
+                                }.buttonStyle(.plain).accessibilityLabel("Play video")
+                            }
+                        }
+                    }
                 }
-            }.padding(.top, 12)
-        }.sheet(isPresented: $blocking) {
+            } else {
+                PageShell(title: "Member") { EmptyState(title: "Member unavailable", detail: "This profile may no longer be visible to you.") }
+            }
+        }
+        .sheet(isPresented: $options) { CommunityProfileOptions(personID: personID) }
+        .sheet(item: $preview) { item in SocialMediaPreview(item: item) }
+    }
+}
+
+private struct CommunityProfileOptions: View {
+    @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var social: SocialStore
+    @Environment(\.dismiss) private var dismiss
+    let personID: UUID
+    @State private var blocking = false
+    var body: some View {
+        NavigationStack {
+            PageShell(title: "More options") {
+                VStack(alignment: .leading, spacing: 14) {
+                    if personID != session.userID {
+                        NavigationLink("Report member") { CommunityReportView(target: personID, post: nil) }
+                            .foregroundStyle(liyaAccent).frame(minHeight: 44)
+                        Button("Block member") { blocking = true }
+                            .foregroundStyle(liyaAccent).frame(minHeight: 44).disabled(!social.isJoined(session))
+                    } else {
+                        NavigationLink("Edit community profile") { CommunityJoinView() }.foregroundStyle(liyaAccent).frame(minHeight: 44)
+                    }
+                }.frame(maxWidth: .infinity, alignment: .leading).padding(.top, 12)
+            }
+        }
+        .sheet(isPresented: $blocking) {
             LocalConfirmation(title: "Block this member?", message: "You won't see each other's posts or messages until the block is removed.", action: "Block") {
-                blocking = false; Task { await social.setRelation(session, target: personID, table: "liya_blocks", enabled: true) }
+                blocking = false
+                Task { await social.setRelation(session, target: personID, table: "liya_blocks", enabled: true); dismiss() }
             } cancel: { blocking = false }.presentationDetents([.medium])
         }
     }
@@ -378,11 +440,15 @@ private struct SocialMediaThumbnail: View {
     @EnvironmentObject private var social: SocialStore
     let item: SocialMediaItem
     @State private var url: URL?
+    @State private var videoCover: UIImage?
     @State private var failed = false
     var body: some View {
         ZStack {
             Color.black.opacity(0.08)
-            if item.kind == "video" { Image("play").resizable().scaledToFit().frame(width: 44, height: 44) }
+            if item.kind == "video" {
+                if let videoCover { Image(uiImage: videoCover).resizable().scaledToFill() }
+                Image("play").resizable().scaledToFit().frame(width: 44, height: 44)
+            }
             else if let url {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image { image.resizable().scaledToFill() }
@@ -391,8 +457,17 @@ private struct SocialMediaThumbnail: View {
                 }
             } else if failed { Text("Photo unavailable").font(.caption) }
         }.task(id: item.path) {
-            guard item.kind != "video" else { return }
-            do { let value = try await social.mediaURL(session, path: item.path); if !Task.isCancelled { url = value } }
+            videoCover = nil; url = nil; failed = false
+            do {
+                let value = try await social.mediaURL(session, path: item.path)
+                guard !Task.isCancelled else { return }
+                if item.kind == "video" {
+                    let generator = AVAssetImageGenerator(asset: AVURLAsset(url: value))
+                    generator.appliesPreferredTrackTransform = true
+                    generator.maximumSize = CGSize(width: 400, height: 400)
+                    if let frame = try? await generator.image(at: .zero), !Task.isCancelled { videoCover = UIImage(cgImage: frame.image) }
+                } else { url = value }
+            }
             catch { if !Task.isCancelled { failed = true } }
         }
     }

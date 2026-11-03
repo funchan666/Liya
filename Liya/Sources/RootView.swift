@@ -1,5 +1,16 @@
 import SwiftUI
 
+private struct ProfileDetailVisibilityKey: EnvironmentKey {
+    static let defaultValue: Binding<Bool> = .constant(false)
+}
+
+extension EnvironmentValues {
+    var profileDetailVisible: Binding<Bool> {
+        get { self[ProfileDetailVisibilityKey.self] }
+        set { self[ProfileDetailVisibilityKey.self] = newValue }
+    }
+}
+
 enum LiyaTabBarLayout {
     static let height: CGFloat = 68
     static let bottomPadding: CGFloat = 4
@@ -29,6 +40,7 @@ struct RootView: View {
     @EnvironmentObject private var calls: LiyaCalls
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var selection: LiyaTab = .discover
+    @State private var profileDetailVisible = false
 
     var body: some View {
         if !store.inPreview {
@@ -60,6 +72,7 @@ struct RootView: View {
                 WelcomeCoinGift(creditedCoins: gift.coins).interactiveDismissDisabled()
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
+              if !profileDetailVisible {
                 DuoControlRegion { size in
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 0) {
@@ -92,7 +105,9 @@ struct RootView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 8)
                 .padding(.bottom, LiyaTabBarLayout.bottomPadding)
+              }
             }
+            .environment(\.profileDetailVisible, $profileDetailVisible)
         }
     }
 

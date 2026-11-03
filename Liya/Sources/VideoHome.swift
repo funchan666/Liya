@@ -103,7 +103,7 @@ private enum VideoPanel: String, Identifiable {
 
 // The supplied photos and videos have no known author relationship. These
 // stable display-only pairings are examples, not real user accounts.
-private struct ExampleVideoCreator {
+struct ExampleVideoCreator {
     let name: String
     let photoID: String
     let caption: String
@@ -201,41 +201,71 @@ struct VideoHome: View {
                     Button("Try again") { preview.select(preview.requestedIndex, active: active && scenePhase == .active && panel == nil, session: session) }.frame(minHeight: 44)
                 }
                 HStack(alignment: .bottom, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 10) {
                         if session.videos.indices.contains(preview.index) {
                             let creator = ExampleVideoCreator.byVideoID[session.videos[preview.index].id]
-                            NavigationLink {
-                                if let creator, let photoIndex = session.photos.firstIndex(where: { $0.id == creator.photoID }) {
-                                    ExampleProfileView(index: photoIndex, displayName: creator.name, introduction: creator.caption)
-                                } else {
-                                    PageShell(title: "Profile") {
-                                        EmptyState(title: "Profile unavailable", detail: "Please try again when the content has loaded.")
+                            let photoIndex = creator.flatMap { person in session.photos.firstIndex(where: { $0.id == person.photoID }) }
+                            HStack(alignment: .center, spacing: 8) {
+                                NavigationLink {
+                                    if let creator, let photoIndex {
+                                        ExampleProfileView(index: photoIndex, displayName: creator.name, introduction: creator.caption)
+                                    } else {
+                                        PageShell(title: "Profile") {
+                                            EmptyState(title: "Profile unavailable", detail: "Please try again when the content has loaded.")
+                                        }
                                     }
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        ExampleVideoAvatar(photoID: creator?.photoID)
+                                        Text(creator?.name ?? "Liya collection")
+                                            .font(.subheadline.weight(.semibold)).lineLimit(2)
+                                    }
+                                    .foregroundStyle(.white)
                                 }
-                            } label: {
-                                HStack(spacing: 10) {
-                                    ExampleVideoAvatar(photoID: creator?.photoID)
-                                    Text(creator?.name ?? "Liya collection").font(.headline)
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("View \(creator?.name ?? "profile")")
+                                if let photoIndex {
+                                    let following = store.followedExamples.contains(photoIndex)
+                                    Button {
+                                        guard !store.blockedExamples.contains(photoIndex) else { return }
+                                        store.toggleFollow(photoIndex)
+                                    } label: {
+                                        Text(following ? "Following" : "Follow")
+                                            .font(.caption.weight(.semibold)).foregroundStyle(.white)
+                                            .fixedSize(horizontal: true, vertical: false)
+                                            .padding(.horizontal, 12).frame(minHeight: 36)
+                                            .background {
+                                                if following {
+                                                    Capsule().fill(.ultraThinMaterial).environment(\.colorScheme, .dark)
+                                                } else {
+                                                    Capsule().fill(liyaGradient)
+                                                }
+                                            }
+                                            .frame(minHeight: 44)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .disabled(store.blockedExamples.contains(photoIndex))
+                                    .opacity(store.blockedExamples.contains(photoIndex) ? 0.5 : 1)
+                                    .accessibilityLabel(following ? "Unfollow \(creator?.name ?? "profile")" : "Follow \(creator?.name ?? "profile")")
+                                    .accessibilityHint(store.blockedExamples.contains(photoIndex) ? "Unblock this profile before following." : "This curated profile is saved on this device.")
                                 }
-                                .foregroundStyle(.white)
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("View \(creator?.name ?? "profile")")
                             if let caption = creator?.caption {
-                                Text(caption).font(.subheadline).fixedSize(horizontal: false, vertical: true)
+                                Text(caption).font(.subheadline).lineSpacing(3).fixedSize(horizontal: false, vertical: true)
                             }
                         }
-                    }
+                    }.frame(maxWidth: .infinity, alignment: .leading)
                     .shadow(color: .black.opacity(0.85), radius: 4, y: 1)
                     Spacer(minLength: 8)
                     VStack(spacing: 12) {
                         Button { Task { await session.toggleLike(kind: "video", index: preview.index) } } label: {
-                            Image("heart").resizable().scaledToFit().frame(width: 44, height: 44)
+                            Image(session.isLiked(kind: "video", index: preview.index) ? "video-like-on" : "video-like-off")
+                                .resizable().scaledToFit().frame(width: 48, height: 48)
                         }.buttonStyle(.plain).disabled(!session.likesReady || session.likesLoading || session.videos.isEmpty)
                             .accessibilityLabel(session.isLiked(kind: "video", index: preview.index) ? "Remove like" : "Like")
                         Text(session.isLiked(kind: "video", index: preview.index) ? "Liked" : "Like").font(.caption2)
                         Button { panel = .notes } label: { Image("comment").resizable().scaledToFit().frame(width: 44, height: 44) }
-                            .buttonStyle(.plain).accessibilityLabel("Private video notes")
+                            .buttonStyle(.plain).accessibilityLabel("Video comments")
                         Button { panel = .report } label: { Image("report").resizable().scaledToFit().frame(width: 44, height: 44) }
                             .buttonStyle(.plain).accessibilityLabel("Report options")
                     }
@@ -308,9 +338,11 @@ struct VideoHome: View {
         }
         .sheet(item: $panel) { current in
             NavigationStack {
-                if current == .notes { VideoNotesView(index: preview.index) }
-                else { ReportDraftView(index: preview.index, targetType: "video") }
+                if current == .notes { VideoCommentsView(index: preview.index) }
+                else { VideoReportView(index: preview.index) }
             }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in
             if let item = notification.object as? AVPlayerItem, item === preview.player.currentItem { preview.finished() }
@@ -320,29 +352,316 @@ struct VideoHome: View {
     }
 }
 
-private struct VideoNotesView: View {
+private struct VideoCommentTarget: Identifiable {
+    let id: String
+    let mediaID: String
+    let commentID: UUID?
+    let presetKey: String?
+    let ownerID: UUID?
+    let photoIndex: Int?
+    let name: String
+    let body: String
+}
+
+private struct VideoCommentsView: View {
     @EnvironmentObject private var store: LocalStore
+    @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var social: SocialStore
     let index: Int
+    @State private var comments: [VideoComment] = []
     @State private var text = ""
+    @State private var noteText = ""
+    @State private var showNotes = false
+    @State private var loading = false
+    @State private var sending = false
+    @State private var error: String?
+    @State private var loadID = UUID()
+    @State private var attempt = UUID()
+    @State private var loadedDraft = false
+    @State private var target: VideoCommentTarget?
+    private var mediaID: String? { session.videos.indices.contains(index) ? session.videos[index].id : nil }
+    private var draftKey: String { "liya.video.commentDraft.\(session.userID?.uuidString ?? "none").\(mediaID ?? "none")" }
+    private let starters = [
+        ["That view is something else.", "I could listen to the waves all day."],
+        ["The walk looks so worth it.", "What a place to pause for a moment."],
+        ["This feels like a breath of fresh air.", "A little reset for the day."],
+        ["The mountains are incredible.", "The kind of walk you remember."],
+        ["That looks like quite an adventure.", "What a moment to capture."],
+        ["Love the light in this moment.", "A little sunshine makes a difference."],
+        ["Nature really puts on a show.", "I would never forget that view."],
+        ["A ride with a view like that? Yes please.", "Looks like a lovely way to spend the day."],
+        ["That view is so peaceful.", "A quiet moment above the city."],
+        ["The colour of the water is unreal.", "This looks like a lovely escape."]
+    ]
+    private let starterNames = ["Mia Lawson", "Jamie Reed", "Avery Kim", "Alex Morgan", "Sam Ellis", "Leah Brooks", "Jordan Blake", "Nina Hart", "Evan Cole", "Lucy Bell", "Owen Price", "Ivy Moore", "Max Turner", "Ella James", "Ryan Scott", "Zoe Hill", "Finn Carter", "Mila Grant", "Ethan Wells", "Chloe Lane"]
+
     var body: some View {
-        PageShell(title: "Video notes") {
-            VStack(alignment: .leading, spacing: 12) {
-                OfflineNote(text: "These notes stay on this device and are not comments sent to a service.")
-                ForEach(store.videoNotes.filter { $0.videoIndex == index }) { note in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(note.text).foregroundStyle(liyaInk)
-                        HStack {
-                            Text(note.date, style: .date).font(.caption).foregroundStyle(.secondary)
-                            Spacer()
-                            Button("Delete") { store.deleteVideoNote(note.id) }.font(.caption.bold()).foregroundStyle(liyaAccent)
+        ZStack {
+            LiyaBackground()
+            VStack(spacing: 0) {
+                PageHeader(title: "Comments")
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Conversation starters · curated")
+                            .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                        if let mediaID, !session.photos.isEmpty {
+                            ForEach(0..<2, id: \.self) { position in
+                                let photoIndex = (10 + index * 2 + position) % session.photos.count
+                                if !store.blockedExamples.contains(photoIndex) {
+                                    let name = starterNames[(index * 2 + position) % starterNames.count]
+                                    let body = starters[index % starters.count][position]
+                                    let key = "\(mediaID):starter:\(position)"
+                                    commentRow(name: name, body: body, imageIndex: photoIndex, personID: nil,
+                                               target: VideoCommentTarget(id: key, mediaID: mediaID, commentID: nil, presetKey: key, ownerID: nil, photoIndex: photoIndex, name: name, body: body))
+                                }
+                            }
                         }
-                    }.frame(maxWidth: .infinity, alignment: .leading).padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
+                        Text("Community comments").font(.headline).foregroundStyle(liyaInk)
+                        if loading { LiyaLoadingIndicator(size: 28) }
+                        if let error {
+                            Text(error).font(.footnote).foregroundStyle(.red)
+                            Button("Try again") { Task { await load() } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
+                        }
+                        if !loading && error == nil && comments.isEmpty {
+                            Text("Be the first to share a thought.").font(.subheadline).foregroundStyle(.secondary)
+                        }
+                        ForEach(comments) { comment in
+                            let name = comment.ownerID == session.userID ? "You" : (social.person(comment.ownerID)?.displayName ?? "Liya member")
+                            let action = VideoCommentTarget(id: comment.id.uuidString, mediaID: comment.mediaID, commentID: comment.id, presetKey: nil, ownerID: comment.ownerID, photoIndex: nil, name: name, body: comment.body)
+                            commentRow(name: name, body: comment.body, imageIndex: nil, personID: comment.ownerID, target: action)
+                        }
+                        Button(showNotes ? "Hide private notes" : "Private notes") { showNotes.toggle() }
+                            .font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                        if showNotes {
+                            Text("Private notes are only on this device.").font(.caption).foregroundStyle(.secondary)
+                            ForEach(store.videoNotes.filter { $0.videoIndex == index }) { note in
+                                HStack { Text(note.text).foregroundStyle(liyaInk); Spacer(); Button("Delete") { store.deleteVideoNote(note.id) }.foregroundStyle(liyaAccent) }
+                            }
+                            TextField("Write a private note", text: $noteText, axis: .vertical).lineLimit(1...4)
+                                .padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
+                            Button("Save private note") {
+                                let value = noteText.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if !value.isEmpty { store.addVideoNote(value, index: index); noteText = "" }
+                            }.foregroundStyle(liyaAccent).frame(minHeight: 44)
+                        }
+                    }.frame(maxWidth: 620, alignment: .leading).frame(maxWidth: .infinity).padding(20)
                 }
-                TextField("Write a private note", text: $text, axis: .vertical).lineLimit(2...6).padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
-                PrimaryButton(title: "Save note", disabled: text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) {
-                    store.addVideoNote(text.trimmingCharacters(in: .whitespacesAndNewlines), index: index); text = ""
+                if social.isJoined(session) {
+                    HStack(spacing: 10) {
+                        TextField("Share a thought", text: Binding(get: { text }, set: { text = $0; attempt = UUID(); persistDraft() }), axis: .vertical)
+                            .lineLimit(1...4).padding(12).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 16))
+                        Button(sending ? "Sending…" : "Send") { send() }
+                            .font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(minWidth: 54, minHeight: 44)
+                            .disabled(sending || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || text.count > 2000)
+                    }.padding(.horizontal, 20).padding(.bottom, 12)
+                } else {
+                    NavigationLink("Create a community profile to comment") { CommunityJoinView() }
+                        .font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44).padding(.horizontal, 20).padding(.bottom, 8)
                 }
-            }.padding(.top, 12)
+            }
+        }
+        .navigationBarHidden(true)
+        .task(id: "\(session.userID?.uuidString ?? "none")-\(mediaID ?? "none")") { restoreDraft(); await load() }
+        .onDisappear { persistDraft() }
+        .onLiyaChange(of: social.syncGeneration) { _ in Task { await load() } }
+        .sheet(item: $target, onDismiss: { Task { await load() } }) { value in NavigationStack { VideoCommentSafetyView(target: value) } }
+    }
+
+    private func commentRow(name: String, body: String, imageIndex: Int?, personID: UUID?, target action: VideoCommentTarget) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            if let imageIndex {
+                NavigationLink { ExampleProfileView(index: imageIndex, displayName: name) } label: { ExampleAvatar(index: imageIndex, size: 40) }.buttonStyle(.plain)
+            } else if let personID {
+                NavigationLink { CommunityPersonView(personID: personID) } label: { SocialAvatar(personID: personID).frame(width: 40, height: 40).clipShape(Circle()) }.buttonStyle(.plain)
+            }
+            VStack(alignment: .leading, spacing: 5) {
+                if let imageIndex {
+                    NavigationLink(name) { ExampleProfileView(index: imageIndex, displayName: name) }.font(.subheadline.bold()).foregroundStyle(liyaInk)
+                } else if let personID {
+                    NavigationLink(name) { CommunityPersonView(personID: personID) }.font(.subheadline.bold()).foregroundStyle(liyaInk)
+                }
+                Text(body).font(.subheadline).foregroundStyle(liyaInk).fixedSize(horizontal: false, vertical: true)
+            }.frame(maxWidth: .infinity, alignment: .leading)
+            if personID == session.userID, let id = action.commentID {
+                Button("Delete") { Task { if await social.deleteVideoComment(session, id: id) { await load() } else { error = "Couldn't delete this comment. Please try again." } } }
+                    .font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+            } else {
+                Button { target = action } label: { Image("more").resizable().scaledToFit().frame(width: 18, height: 18).frame(width: 44, height: 44) }
+                    .buttonStyle(.plain).accessibilityLabel("Comment options")
+            }
+        }
+    }
+
+    private func load() async {
+        guard let mediaID, let owner = session.userID else { comments = []; loading = false; return }
+        let request = UUID(); loadID = request; loading = true; error = nil
+        do {
+            let rows = try await social.videoComments(session, mediaID: mediaID)
+            guard loadID == request, self.mediaID == mediaID, session.userID == owner else { return }
+            comments = rows; loading = false
+        } catch {
+            guard loadID == request else { return }
+            loading = false; error = "Couldn't load comments. Please try again."
+        }
+    }
+
+    private func send() {
+        guard let mediaID, !sending else { return }
+        let body = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !body.isEmpty, body.count <= 2000 else { return }
+        sending = true; error = nil
+        Task {
+            if await social.sendVideoComment(session, id: attempt, mediaID: mediaID, body: body) {
+                text = ""; attempt = UUID(); persistDraft(); await load()
+            } else { error = "Couldn't send your comment. Your text is still here." }
+            sending = false
+        }
+    }
+
+    private func restoreDraft() {
+        loadedDraft = false
+        let saved = UserDefaults.standard.dictionary(forKey: draftKey)
+        text = saved?["text"] as? String ?? ""
+        attempt = (saved?["attempt"] as? String).flatMap(UUID.init(uuidString:)) ?? UUID()
+        loadedDraft = true
+    }
+
+    private func persistDraft() {
+        guard loadedDraft else { return }
+        UserDefaults.standard.set(["text": text, "attempt": attempt.uuidString], forKey: draftKey)
+    }
+}
+
+private struct VideoCommentSafetyView: View {
+    @EnvironmentObject private var store: LocalStore
+    @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var social: SocialStore
+    @Environment(\.dismiss) private var dismiss
+    let target: VideoCommentTarget
+    @State private var mode = 0
+    @State private var selected: String?
+    @State private var requestID = UUID()
+    @State private var sending = false
+    @State private var sent = false
+    @State private var error: String?
+    private let reasons = ["Sexual content", "Harassment", "Discrimination", "Incorrect content", "Other"]
+
+    var body: some View {
+        PageShell(title: mode == 1 ? "Report comment" : mode == 2 ? "Block profile" : "Comment options") {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 12) {
+                    Image(mode == 2 ? "setting-privacy" : "report").resizable().scaledToFit().frame(width: 48, height: 48).accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(mode == 2 ? "Make your space yours" : "Keep Liya comfortable").font(.headline).foregroundStyle(liyaInk)
+                        Text(target.name).font(.subheadline).foregroundStyle(.secondary)
+                    }
+                }.padding(.top, 14)
+                Text(target.body).font(.subheadline).foregroundStyle(liyaInk).fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
+                if mode == 0 {
+                    PrimaryButton(title: "Report comment") { mode = 1 }
+                    Button("Block this profile") { mode = 2 }.font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(maxWidth: .infinity, minHeight: 44)
+                    if target.presetKey != nil { Text("This is a curated conversation starter.").font(.caption).foregroundStyle(.secondary) }
+                } else if mode == 1 {
+                    Text("Why are you reporting this comment?").font(.subheadline.bold()).foregroundStyle(liyaInk)
+                    ForEach(reasons, id: \.self) { reason in
+                        Button { selected = reason; requestID = UUID(); error = nil } label: {
+                            HStack { Text(reason); Spacer(); if selected == reason { Text("Selected").font(.caption.bold()).foregroundStyle(liyaAccent) } }
+                                .foregroundStyle(liyaInk).frame(minHeight: 44).padding(.horizontal, 14)
+                                .background(.white.opacity(selected == reason ? 1 : 0.75), in: RoundedRectangle(cornerRadius: 12))
+                        }.buttonStyle(.plain).disabled(sending || sent)
+                    }
+                    if let error { Text(error).font(.footnote).foregroundStyle(.red) }
+                    if sent {
+                        Text("Report received.").font(.footnote.bold()).foregroundStyle(liyaAccent)
+                        PrimaryButton(title: "Done") { dismiss() }
+                    } else {
+                        PrimaryButton(title: sending ? "Sending…" : "Send report", disabled: selected == nil || sending) { report() }
+                    }
+                } else {
+                    Text(target.presetKey == nil ? "Their comments and other community content will no longer be visible to you." : "This curated profile and its comments will be hidden on this device.")
+                        .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    if target.ownerID != nil && !social.isJoined(session) {
+                        NavigationLink("Create a community profile to block") { CommunityJoinView() }.foregroundStyle(liyaAccent).frame(minHeight: 44)
+                    }
+                    if let error { Text(error).font(.footnote).foregroundStyle(.red) }
+                    PrimaryButton(title: sending ? "Blocking…" : "Block profile", disabled: sending || (target.ownerID != nil && !social.isJoined(session))) { block() }
+                    Button("Cancel") { dismiss() }.font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(maxWidth: .infinity, minHeight: 44)
+                }
+            }
+        }
+    }
+
+    private func report() {
+        guard let reason = selected, !sending else { return }
+        sending = true; error = nil
+        Task {
+            sent = await social.reportVideoComment(session, id: requestID, mediaID: target.mediaID, commentID: target.commentID, presetKey: target.presetKey, body: target.body, reason: reason)
+            if !sent { error = "Couldn't confirm the report. Please try again." }
+            sending = false
+        }
+    }
+
+    private func block() {
+        guard !sending else { return }
+        if let photoIndex = target.photoIndex {
+            store.setBlocked(photoIndex, blocked: true); dismiss(); return
+        }
+        guard let ownerID = target.ownerID else { error = "This profile is unavailable."; return }
+        sending = true; error = nil
+        Task {
+            await social.setRelation(session, target: ownerID, table: "liya_blocks", enabled: true)
+            sending = false
+            if social.blocked.contains(ownerID) { dismiss() }
+            else { error = social.error ?? "Couldn't block this profile. Please try again." }
+        }
+    }
+}
+
+private struct VideoReportView: View {
+    @EnvironmentObject private var session: LiyaSession
+    @Environment(\.dismiss) private var dismiss
+    let index: Int
+    @State private var selected: String?
+    @State private var requestID = UUID()
+    @State private var sending = false
+    @State private var sent = false
+    @State private var error: String?
+    private let reasons = ["Sexual content", "Harassment", "Discrimination", "Incorrect content", "Other"]
+
+    var body: some View {
+        PageShell(title: "Report video") {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 12) {
+                    Image("report").resizable().scaledToFit().frame(width: 48, height: 48).accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Help keep Liya comfortable").font(.headline).foregroundStyle(liyaInk)
+                        Text("Choose the reason that best fits.").font(.subheadline).foregroundStyle(.secondary)
+                    }
+                }.padding(.top, 14)
+                ForEach(reasons, id: \.self) { reason in
+                    Button { selected = reason; requestID = UUID(); error = nil } label: {
+                        HStack { Text(reason); Spacer(); if selected == reason { Text("Selected").font(.caption.bold()).foregroundStyle(liyaAccent) } }
+                            .foregroundStyle(liyaInk).frame(minHeight: 44).padding(.horizontal, 14)
+                            .background(.white.opacity(selected == reason ? 1 : 0.75), in: RoundedRectangle(cornerRadius: 12))
+                    }.buttonStyle(.plain).disabled(sending || sent)
+                }
+                if let error { Text(error).font(.footnote).foregroundStyle(.red) }
+                if sent {
+                    Text("Report received.").font(.footnote.bold()).foregroundStyle(liyaAccent)
+                    PrimaryButton(title: "Done") { dismiss() }
+                } else {
+                    PrimaryButton(title: sending ? "Sending…" : "Send report", disabled: selected == nil || sending) {
+                        guard let selected else { return }
+                        sending = true; error = nil
+                        Task {
+                            sent = await session.submitReport(id: requestID, index: index, targetType: "video", reason: selected)
+                            if !sent { error = "Couldn't confirm the report. Please try again." }
+                            sending = false
+                        }
+                    }
+                }
+            }
         }
     }
 }

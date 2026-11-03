@@ -37,6 +37,31 @@ struct SocialComment: Codable, Identifiable, Equatable {
     enum CodingKeys: String, CodingKey { case id, body; case ownerID = "owner_id", postID = "post_id" }
 }
 
+struct VideoComment: Decodable, Identifiable {
+    let id: UUID
+    let mediaID: String
+    let ownerID: UUID
+    let body: String
+    let createdAt: String
+    enum CodingKeys: String, CodingKey {
+        case id, body
+        case mediaID = "media_id", ownerID = "owner_id", createdAt = "created_at"
+    }
+}
+
+private struct VideoCommentInsert: Encodable {
+    let id: UUID; let mediaID: String; let ownerID: UUID; let body: String
+    enum CodingKeys: String, CodingKey { case id, body; case mediaID = "media_id", ownerID = "owner_id" }
+}
+
+private struct VideoCommentReport: Codable, Equatable {
+    let id: UUID; let reporterID: UUID; let mediaID: String; let commentID: UUID?; let presetKey: String?
+    let bodySnapshot: String; let reason: String
+    enum CodingKeys: String, CodingKey {
+        case id, reason; case reporterID = "reporter_id", mediaID = "media_id", commentID = "comment_id", presetKey = "preset_key", bodySnapshot = "body_snapshot"
+    }
+}
+
 struct SocialMessage: Decodable, Identifiable {
     let id: UUID
     let senderID: UUID
@@ -262,6 +287,46 @@ final class SocialStore: ObservableObject {
         try await pages { offset in
             try await session.client.from("liya_post_comments").select("id,owner_id,post_id,body").eq("post_id", value: post.uuidString).order("created_at").order("id").range(from: offset, to: offset + 499).execute().value
         }
+    }
+
+    func videoComments(_ session: LiyaSession, mediaID: String) async throws -> [VideoComment] {
+        try await pages { offset in
+            try await session.client.from("liya_video_comments")
+                .select("id,media_id,owner_id,body,created_at").eq("media_id", value: mediaID)
+                .order("created_at").order("id").range(from: offset, to: offset + 499).execute().value
+        }
+    }
+
+    func sendVideoComment(_ session: LiyaSession, id: UUID, mediaID: String, body: String) async -> Bool {
+        guard let owner = session.userID, isJoined(session) else { return false }
+        let value = VideoCommentInsert(id: id, mediaID: mediaID, ownerID: owner, body: body)
+        do { try await session.client.from("liya_video_comments").insert(value).execute() } catch { }
+        do {
+            let rows: [VideoComment] = try await session.client.from("liya_video_comments")
+                .select("id,media_id,owner_id,body,created_at").eq("id", value: id.uuidString).execute().value
+            return session.userID == owner && rows.contains { $0.id == id && $0.mediaID == mediaID && $0.ownerID == owner && $0.body == body }
+        } catch { return false }
+    }
+
+    func deleteVideoComment(_ session: LiyaSession, id: UUID) async -> Bool {
+        guard let owner = session.userID else { return false }
+        do {
+            try await session.client.from("liya_video_comments").delete().eq("id", value: id.uuidString).eq("owner_id", value: owner.uuidString).execute()
+            let rows: [VideoComment] = try await session.client.from("liya_video_comments")
+                .select("id,media_id,owner_id,body,created_at").eq("id", value: id.uuidString).execute().value
+            return session.userID == owner && rows.isEmpty
+        } catch { return false }
+    }
+
+    func reportVideoComment(_ session: LiyaSession, id: UUID, mediaID: String, commentID: UUID?, presetKey: String?, body: String, reason: String) async -> Bool {
+        guard let owner = session.userID else { return false }
+        let value = VideoCommentReport(id: id, reporterID: owner, mediaID: mediaID, commentID: commentID, presetKey: presetKey, bodySnapshot: body, reason: reason)
+        do { try await session.client.from("liya_video_comment_reports").insert(value).execute() } catch { }
+        do {
+            let rows: [VideoCommentReport] = try await session.client.from("liya_video_comment_reports")
+                .select("id,reporter_id,media_id,comment_id,preset_key,body_snapshot,reason").eq("id", value: id.uuidString).execute().value
+            return session.userID == owner && rows.first == value
+        } catch { return false }
     }
 
     func sendComment(_ session: LiyaSession, id: UUID, post: UUID, body: String) async -> Bool {

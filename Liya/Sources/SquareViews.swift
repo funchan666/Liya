@@ -319,7 +319,7 @@ private struct ExamplePhotoRow: View {
                 }.buttonStyle(.plain)
                 Spacer()
                 Button { store.toggleFollow(index) } label: {
-                    Text(store.followedExamples.contains(index) ? "Saved example" : "Save example")
+                    Text(store.followedExamples.contains(index) ? "Following" : "Follow")
                         .font(.caption.bold()).foregroundStyle(.white).padding(.horizontal, 14).padding(.vertical, 8).background(liyaGradient, in: Capsule())
                 }.buttonStyle(.plain).accessibilityLabel(store.followedExamples.contains(index) ? "Unfollow example locally" : "Follow example locally")
                 Button { options = true } label: { Image("more").resizable().scaledToFit().frame(width: 20, height: 20).frame(width: 44, height: 44) }

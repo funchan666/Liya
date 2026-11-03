@@ -1,4 +1,96 @@
 import SwiftUI
+import AVFoundation
+import UIKit
+
+struct ProfileDetailLayout<Hero: View, Actions: View, Content: View>: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.profileDetailVisible) private var detailVisible
+    let name: String
+    let introduction: String
+    let showOptions: () -> Void
+    let hero: Hero
+    let actions: Actions
+    let content: Content
+
+    init(name: String, introduction: String, showOptions: @escaping () -> Void,
+         @ViewBuilder hero: () -> Hero, @ViewBuilder actions: () -> Actions,
+         @ViewBuilder content: () -> Content) {
+        self.name = name
+        self.introduction = introduction
+        self.showOptions = showOptions
+        self.hero = hero()
+        self.actions = actions()
+        self.content = content()
+    }
+
+    var body: some View {
+        GeometryReader { geometry in
+            let heroHeight = min(max(geometry.size.width * 0.95, 300), 440)
+            ZStack(alignment: .top) {
+                LiyaBackground()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        hero.frame(width: geometry.size.width, height: heroHeight, alignment: .top)
+                            .clipped()
+                            .overlay(alignment: .bottom) {
+                                LinearGradient(colors: [.clear, .white.opacity(0.94)], startPoint: .top, endPoint: .bottom)
+                                    .frame(height: 110).allowsHitTesting(false)
+                            }
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text(name).font(.title2.bold()).foregroundStyle(liyaInk)
+                                .fixedSize(horizontal: false, vertical: true)
+                            if !introduction.isEmpty {
+                                Text(introduction).font(.subheadline).foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            actions
+                            content
+                        }
+                        .frame(maxWidth: 620, alignment: .leading).frame(maxWidth: .infinity)
+                        .padding(.horizontal, 20).padding(.bottom, 36)
+                        .modifier(AdaptiveContainerMargins())
+                    }
+                }.ignoresSafeArea(edges: .top)
+                DuoControlRegion { _ in
+                    HStack {
+                        Button { dismiss() } label: {
+                            Image("back").renderingMode(.template).resizable().scaledToFit().foregroundStyle(.white)
+                                .frame(width: 20, height: 20).frame(width: 44, height: 44)
+                        }.buttonStyle(.plain).accessibilityLabel("Back")
+                        Spacer(minLength: 0)
+                        Text(name).font(.headline).foregroundStyle(.white).lineLimit(1)
+                            .shadow(color: .black.opacity(0.7), radius: 4)
+                        Spacer(minLength: 0)
+                        Button(action: showOptions) {
+                            Image("more").renderingMode(.template).resizable().scaledToFit().foregroundStyle(.white)
+                                .frame(width: 20, height: 20).frame(width: 44, height: 44)
+                        }.buttonStyle(.plain).accessibilityLabel("More options")
+                    }.padding(.horizontal, 12).modifier(AdaptiveContainerMargins())
+                }.frame(height: 44)
+            }
+        }
+        .navigationBarHidden(true)
+        .onAppear { detailVisible.wrappedValue = true }
+        .onDisappear { detailVisible.wrappedValue = false }
+    }
+}
+
+struct ProfileContentTabs: View {
+    @Binding var selection: Int
+    var body: some View {
+        HStack(spacing: 28) {
+            ForEach(Array(["Post", "Video"].enumerated()), id: \.offset) { index, title in
+                Button { selection = index } label: {
+                    Text(title).font(.subheadline.weight(selection == index ? .bold : .medium))
+                        .foregroundStyle(selection == index ? liyaAccent : .secondary)
+                        .underline(selection == index, color: liyaAccent)
+                        .frame(minWidth: 44, minHeight: 44)
+                }.buttonStyle(.plain).accessibilityAddTraits(selection == index ? .isSelected : [])
+            }
+            Spacer()
+        }
+    }
+}
 
 struct ExampleAvatar: View {
     let index: Int
@@ -11,6 +103,8 @@ struct ExampleAvatar: View {
 
 struct ExampleProfileView: View {
     @EnvironmentObject private var store: LocalStore
+    @EnvironmentObject private var session: LiyaSession
+    @Environment(\.dismiss) private var dismiss
     let index: Int
     var displayName: String? = nil
     var introduction: String? = nil
@@ -18,49 +112,80 @@ struct ExampleProfileView: View {
     @State private var options = false
 
     var body: some View {
-        ZStack {
-            LiyaBackground()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    HStack {
-                        PageHeader(title: "Example profile")
-                        Button { options = true } label: { Image("more").resizable().scaledToFit().frame(width: 22, height: 22).frame(width: 44, height: 44) }
-                            .buttonStyle(.plain).accessibilityLabel("More options")
-                    }
-                    CloudPhoto(index: index, contentMode: .fill).frame(maxWidth: .infinity).frame(height: 240)
-                        .clipped().clipShape(RoundedRectangle(cornerRadius: 18))
-                    Text(displayName ?? "Example profile \(index + 1)").font(.title2.bold()).foregroundStyle(liyaInk)
-                    if let introduction { Text(introduction).font(.subheadline).foregroundStyle(.secondary) }
-                    OfflineNote(text: "Illustrative profile from supplied media. Follows, notes and blocks here are local to this device.")
-                    HStack {
+        let photoID = session.photos.indices.contains(index) ? session.photos[index].id : nil
+        let pairedCreator = ExampleVideoCreator.byVideoID.values.first { $0.photoID == photoID }
+        let name = displayName ?? pairedCreator?.name ?? "Example profile \(index + 1)"
+        let bio = introduction ?? pairedCreator?.caption ?? ""
+        let videos = session.videos.indices.filter { videoIndex in
+            guard let photoID, let creator = ExampleVideoCreator.byVideoID[session.videos[videoIndex].id] else { return false }
+            return creator.photoID == photoID
+        }
+        return ProfileDetailLayout(name: name, introduction: bio, showOptions: { options = true }) {
+            CloudPhoto(index: index, contentMode: .fill)
+        } actions: {
+                    HStack(spacing: 10) {
                         Button {
                             if !store.blockedExamples.contains(index) { store.toggleFollow(index) }
                         } label: {
-                            Text(store.followedExamples.contains(index) ? "Saved example" : "Save example")
+                            Text(store.followedExamples.contains(index) ? "Following" : "Follow")
                                 .font(.subheadline.bold()).foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 46)
-                                .background(liyaGradient, in: Capsule())
+                                .background(LinearGradient(colors: [.orange, .pink], startPoint: .leading, endPoint: .trailing), in: Capsule())
                         }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
                         NavigationLink { ExampleChatView(index: index) } label: {
                             Text("Message").font(.subheadline.bold()).foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 46).background(liyaGradient, in: Capsule())
                         }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
                     }
-                    SegmentedTabs(items: ["Post", "Video"], selection: $section)
+        } content: {
+                    Text("Curated profile · follows and message drafts stay on this device.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    ProfileContentTabs(selection: $section)
                     if store.blockedExamples.contains(index) {
                         EmptyState(title: "Blocked locally", detail: "Unblock this example in More options to view its content.")
                     } else if section == 0 {
-                        NavigationLink { ExamplePhotoDetail(index: index) } label: {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Example photo \(index + 1)").font(.headline).foregroundStyle(liyaInk)
-                                CloudPhoto(index: index).frame(maxWidth: .infinity).frame(height: 240).clipShape(RoundedRectangle(cornerRadius: 14))
-                            }.padding(12).background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 15))
-                        }.buttonStyle(.plain)
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 10) { ExampleAvatar(index: index); Text(name).font(.subheadline.bold()).foregroundStyle(liyaInk) }
+                            if !bio.isEmpty { Text(bio).font(.subheadline).foregroundStyle(liyaInk) }
+                            NavigationLink { ExamplePhotoDetail(index: index) } label: {
+                                CloudPhoto(index: index, contentMode: .fill).frame(maxWidth: .infinity).frame(height: 260)
+                                    .clipped().clipShape(RoundedRectangle(cornerRadius: 14))
+                            }.buttonStyle(.plain)
+                        }
                     } else {
-                        EmptyState(title: "No linked videos", detail: "The supplied videos do not have profile associations.")
+                        if videos.isEmpty {
+                            EmptyState(title: "No videos yet", detail: "Videos will appear here when available.")
+                        } else {
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
+                                ForEach(videos, id: \.self) { videoIndex in
+                                    Button { store.videoRequest = VideoRequest(index: videoIndex); dismiss() } label: {
+                                        CuratedVideoThumbnail(index: videoIndex).frame(height: 145).clipped().clipShape(RoundedRectangle(cornerRadius: 10))
+                                    }.buttonStyle(.plain).accessibilityLabel("Play video")
+                                }
+                            }
+                        }
                     }
-                }.frame(maxWidth: 620).frame(maxWidth: .infinity).padding(.horizontal, 20).padding(.bottom, 24)
-            }
-        }.navigationBarHidden(true)
+        }
             .sheet(isPresented: $options) { ExampleOptionsView(index: index) }
+    }
+}
+
+private struct CuratedVideoThumbnail: View {
+    @EnvironmentObject private var session: LiyaSession
+    let index: Int
+    @State private var image: UIImage?
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.12)
+            if let image { Image(uiImage: image).resizable().scaledToFill() }
+            Image("play").resizable().scaledToFit().frame(width: 36, height: 36).accessibilityHidden(true)
+        }.frame(maxWidth: .infinity, maxHeight: .infinity).clipped()
+            .task(id: "\(session.catalogGeneration)-\(index)") {
+                image = nil
+                guard let url = try? await session.mediaURL(kind: "video", index: index), !Task.isCancelled else { return }
+                let generator = AVAssetImageGenerator(asset: AVURLAsset(url: url))
+                generator.appliesPreferredTrackTransform = true
+                generator.maximumSize = CGSize(width: 400, height: 400)
+                if let frame = try? await generator.image(at: .zero), !Task.isCancelled { image = UIImage(cgImage: frame.image) }
+            }
     }
 }
 
