@@ -35,15 +35,7 @@ struct ProfileHome: View {
                     profileHero(width: geometry.size.width, height: heroHeight, topInset: geometry.safeAreaInsets.top)
                     VStack(alignment: .leading, spacing: 12) {
                     Text(session.profile.flatMap { $0.displayName.isEmpty ? nil : $0.displayName } ?? "Your profile").font(.title2.bold()).foregroundStyle(liyaInk)
-                    HStack(spacing: 10) {
-                        NavigationLink { CommunityRelationList(title: "Followers", relation: "followers") } label: {
-                            ProfileHomeRelationLabel(title: "Followers", count: social.loading || social.error != nil ? "—" : String(social.followers.count))
-                        }
-                        NavigationLink { CommunityRelationList(title: "Following", relation: "following") } label: {
-                            ProfileHomeRelationLabel(title: "Following", count: social.loading || social.error != nil ? "—" : String(social.follows.count))
-                        }
-                        Spacer(minLength: 0)
-                    }.buttonStyle(.plain)
+                    profileRelations
                     Text(session.profile.flatMap { $0.signature.isEmpty ? nil : $0.signature } ?? "Add a little about yourself.")
                         .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     if let tags = session.profile?.tags, !tags.isEmpty { Text(tags.map { "# " + $0 }.joined(separator: "   ")).font(.caption).foregroundStyle(liyaAccent) }
@@ -91,6 +83,25 @@ struct ProfileHome: View {
         }.navigationBarHidden(true)
             .sheet(item: $previewVideo) { item in DraftVideoPreview(item: item) }
             .sheet(item: $previewCommunityVideo) { item in SocialMediaPreview(item: item) }
+    }
+
+    private var profileRelations: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) { followersLink; followingLink }.fixedSize(horizontal: true, vertical: false)
+            VStack(alignment: .leading, spacing: 6) { followersLink; followingLink }
+        }.frame(maxWidth: .infinity, alignment: .leading).buttonStyle(.plain)
+    }
+
+    private var followersLink: some View {
+        NavigationLink { CommunityRelationList(title: "Followers", relation: "followers") } label: {
+            ProfileHomeRelationLabel(title: "Followers", count: social.loading || social.error != nil ? "—" : String(social.followers.count))
+        }
+    }
+
+    private var followingLink: some View {
+        NavigationLink { CommunityRelationList(title: "Following", relation: "following") } label: {
+            ProfileHomeRelationLabel(title: "Following", count: social.loading || social.error != nil ? "—" : String(social.follows.count))
+        }
     }
 
     private func profileHero(width: CGFloat, height: CGFloat, topInset: CGFloat) -> some View {

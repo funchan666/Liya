@@ -129,6 +129,7 @@ final class SocialStore: ObservableObject {
     @Published var messageError: String?
     private var messageTask: Task<Void, Never>?
     private var watchID = UUID()
+    private var accountGeneration = UUID()
     private var refreshMessagesAgain = false
     private var refreshNotificationsAgain = false
     private var refreshAgain = false
@@ -137,6 +138,8 @@ final class SocialStore: ObservableObject {
     func isJoined(_ session: LiyaSession) -> Bool { session.userID.map { person($0) != nil } ?? false }
 
     func clearAccount() {
+        accountGeneration = UUID(); loading = false; messagesLoading = false
+        refreshAgain = false; refreshMessagesAgain = false
         watchID = UUID(); messageTask?.cancel(); messageTask = nil; realtimeConnected = false
         people = []; posts = []; likes = []; follows = []; followers = []; blocked = []
         messages = []; notifications = []; error = nil; messageError = nil; notificationsError = nil
@@ -154,10 +157,13 @@ final class SocialStore: ObservableObject {
     func refresh(_ session: LiyaSession) async {
         guard let owner = session.userID else { return }
         if loading { refreshAgain = true; return }
-        loading = true; error = nil; people = []; posts = []; likes = []; follows = []; followers = []; blocked = []
+        let generation = accountGeneration
+        loading = true; error = nil
         defer {
-            loading = false
-            if refreshAgain { refreshAgain = false; Task { await refresh(session) } }
+            if accountGeneration == generation {
+                loading = false
+                if refreshAgain { refreshAgain = false; Task { await refresh(session) } }
+            }
         }
         do {
             let newPeople: [SocialPerson] = try await pages { offset in
@@ -175,12 +181,17 @@ final class SocialStore: ObservableObject {
             let liked: [PostLike] = try await pages { offset in
                 try await session.client.from("liya_post_likes").select("owner_id,post_id").eq("owner_id", value: owner.uuidString).order("post_id").range(from: offset, to: offset + 499).execute().value
             }
-            guard session.userID == owner else { return }
+            guard session.userID == owner, accountGeneration == generation else { return }
             people = newPeople; posts = newPosts
             follows = relations.filter { $0.ownerID == owner }.map(\.targetID)
             followers = relations.filter { $0.targetID == owner }.map(\.ownerID)
             blocked = blocks.map(\.targetID); likes = Set(liked.map(\.postID))
-        } catch { if owner == session.userID { self.error = "Couldn't load the community. Please try again." } }
+        } catch {
+            if owner == session.userID && accountGeneration == generation {
+                people = []; posts = []; likes = []; follows = []; followers = []; blocked = []
+                self.error = "Couldn't load the community. Please try again."
+            }
+        }
     }
 
     func join(_ session: LiyaSession, name: String, signature: String, shareAvatar: Bool) async -> Bool {
@@ -360,17 +371,24 @@ final class SocialStore: ObservableObject {
     func refreshMessages(_ session: LiyaSession) async {
         guard let owner = session.userID else { return }
         if messagesLoading { refreshMessagesAgain = true; return }
-        messagesLoading = true; messageError = nil; messages = []
+        let generation = accountGeneration
+        messagesLoading = true; messageError = nil
         defer {
-            messagesLoading = false
-            if refreshMessagesAgain { refreshMessagesAgain = false; Task { await refreshMessages(session) } }
+            if accountGeneration == generation {
+                messagesLoading = false
+                if refreshMessagesAgain { refreshMessagesAgain = false; Task { await refreshMessages(session) } }
+            }
         }
         do {
             let rows: [SocialMessage] = try await pages { offset in
                 try await session.client.from("liya_messages").select("id,sender_id,recipient_id,body,media_paths,media_kinds,created_at").order("created_at").order("id").range(from: offset, to: offset + 499).execute().value
             }
-            guard session.userID == owner else { return }; messages = rows
-        } catch { if session.userID == owner { messageError = "Couldn't load your messages. Please try again." } }
+            guard session.userID == owner, accountGeneration == generation else { return }; messages = rows
+        } catch {
+            if session.userID == owner && accountGeneration == generation {
+                messages = []; messageError = "Couldn't load your messages. Please try again."
+            }
+        }
     }
 
     func sendMessage(_ session: LiyaSession, id: UUID, target: UUID, body: String, attachments: [DraftAttachment]) async -> Bool {
