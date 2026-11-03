@@ -84,9 +84,10 @@ struct AutomaticChatView: View {
     @State private var fingerprint = ""
     @State private var draftOwner: UUID?
     @State private var sendTask: Task<Void, Never>?
+    @State private var pendingRequest: UUID?
     @StateObject private var chat = AutomaticChat()
     private var canSend: Bool {
-        session.userID != nil && !chat.loading && !chat.sending && !chat.waiting &&
+        session.userID != nil && pendingRequest == nil && !chat.loading && !chat.sending && !chat.waiting &&
         !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && draft.count <= 2000
     }
     var body: some View {
@@ -161,7 +162,7 @@ struct AutomaticChatView: View {
                             .lineLimit(1...4).padding(.horizontal, 16).padding(.vertical, 13)
                             .foregroundStyle(liyaInk).tint(liyaAccent)
                             .background(.white.opacity(0.96), in: RoundedRectangle(cornerRadius: 20))
-                            .disabled(chat.sending)
+                            .disabled(chat.sending || pendingRequest != nil)
                         Button {
                             submit()
                         } label: {
@@ -176,11 +177,11 @@ struct AutomaticChatView: View {
             }
         }.navigationBarHidden(true)
             .task(id: session.userID) {
-                sendTask?.cancel(); chat.stop(); restoreDraft()
+                sendTask?.cancel(); pendingRequest = nil; chat.stop(); restoreDraft()
                 await chat.load(session)
             }
             .onLiyaChange(of: draft) { _ in persistDraft() }
-            .onDisappear { persistDraft(); sendTask?.cancel(); chat.stop() }
+            .onDisappear { persistDraft(); sendTask?.cancel(); pendingRequest = nil; chat.stop() }
     }
 
     private func submit() {
@@ -190,7 +191,9 @@ struct AutomaticChatView: View {
         if stamp != fingerprint || UUID(uuidString: attempt) == nil { fingerprint = stamp; attempt = UUID().uuidString }
         guard let id = UUID(uuidString: attempt) else { return }
         persistDraft()
+        let operation = UUID(); pendingRequest = operation
         sendTask = Task {
+            defer { if pendingRequest == operation { pendingRequest = nil; sendTask = nil } }
             if await chat.send(session, id: id, text: text), !Task.isCancelled, session.userID == owner, draftOwner == owner {
                 draft = ""; attempt = ""; fingerprint = ""; persistDraft()
             }
