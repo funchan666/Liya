@@ -106,7 +106,7 @@ struct AutomaticChatView: View {
                             if chat.loading && chat.messages.isEmpty { LiyaLoadingIndicator(size: 28) }
                             if let error = chat.error {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(error).font(.footnote).foregroundStyle(.white)
+                                    Text(LocalizedStringKey(error)).font(.footnote).foregroundStyle(.white)
                                     Button("Try again") { if canSend { submit() } else { Task { await chat.load(session) } } }
                                         .font(.footnote.bold()).foregroundStyle(.white).frame(minHeight: 44)
                                         .disabled(chat.sending)

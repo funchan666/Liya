@@ -1,6 +1,146 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+      "Couldn't get a reply right now. Please try again.": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "暂时无法获取回复，请重试。"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "No se pudo obtener una respuesta. Inténtalo de nuevo."
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Impossible d’obtenir une réponse. Réessayez."
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "返信を取得できませんでした。もう一度お試しください。"
+            }
+          }
+        }
+      },
+      "Your reply is still being prepared. Please try again shortly.": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "回复正在生成，请稍后重试。"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Tu respuesta se está preparando. Inténtalo de nuevo en un momento."
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Votre réponse est en cours de préparation. Réessayez dans un instant."
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "返信を準備しています。少し待ってからもう一度お試しください。"
+            }
+          }
+        }
+      },
+      "A little busy right now. Please wait and try again.": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "现在有点忙，请稍等再试。"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Estamos un poco ocupados. Espera e inténtalo de nuevo."
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Le service est momentanément occupé. Patientez puis réessayez."
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "ただいま混み合っています。少し待ってからお試しください。"
+            }
+          }
+        }
+      },
+      "Your session has expired. Please sign in again.": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "登录已过期，请重新登录。"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Tu sesión ha caducado. Vuelve a iniciar sesión."
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Votre session a expiré. Reconnectez-vous."
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "セッションの有効期限が切れました。もう一度サインインしてください。"
+            }
+          }
+        }
+      },
+      "Couldn't load this conversation. Please try again.": {
+        "localizations": {
+          "zh-Hans": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "暂时无法加载对话，请重试。"
+            }
+          },
+          "es": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "No se pudo cargar esta conversación. Inténtalo de nuevo."
+            }
+          },
+          "fr": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "Impossible de charger cette conversation. Réessayez."
+            }
+          },
+          "ja": {
+            "stringUnit": {
+              "state": "translated",
+              "value": "会話を読み込めませんでした。もう一度お試しください。"
+            }
+          }
+        }
+      },
       "Photos & videos": {
         "localizations": {
           "zh-Hans": {
