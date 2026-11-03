@@ -14,6 +14,7 @@ alter table public.liya_ai_messages enable row level security;
 revoke all on public.liya_ai_messages from public, anon, authenticated;
 grant select on public.liya_ai_messages to authenticated;
 grant all on public.liya_ai_messages to service_role;
+drop policy if exists liya_ai_messages_owner_read on public.liya_ai_messages;
 create policy liya_ai_messages_owner_read on public.liya_ai_messages for select to authenticated
   using (owner_id = (select auth.uid()));
 
