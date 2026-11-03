@@ -227,8 +227,7 @@ struct ExampleProfileView: View {
     var displayName: String? = nil
     var introduction: String? = nil
     @State private var options = false
-    @State private var callUnavailable = false
-    @State private var confirmLocalFollow = false
+    @State private var connectionNotice: ConnectionNotice?
 
     var body: some View {
         let photoID = session.photos.indices.contains(index) ? session.photos[index].id : nil
@@ -250,8 +249,7 @@ struct ExampleProfileView: View {
                         HStack(spacing: 10) {
                             Button {
                                 guard !store.blockedExamples.contains(index) else { return }
-                                if store.followedExamples.contains(index) { store.toggleFollow(index) }
-                                else { confirmLocalFollow = true }
+                                store.toggleFollow(index)
                             } label: {
                                 ProfileDetailActionLabel(title: store.followedExamples.contains(index) ? "Following" : "Follow", style: store.followedExamples.contains(index) ? .following : .follow)
                             }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
@@ -260,8 +258,8 @@ struct ExampleProfileView: View {
                             }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
                         }
                         HStack(spacing: 10) {
-                            Button { callUnavailable = true } label: { ProfileDetailActionLabel(title: "Voice call", style: .voice) }
-                            Button { callUnavailable = true } label: { ProfileDetailActionLabel(title: "Video call", style: .video) }
+                            Button { connectionNotice = .unavailable } label: { ProfileDetailActionLabel(title: "Voice call", style: .voice) }
+                            Button { connectionNotice = .unavailable } label: { ProfileDetailActionLabel(title: "Video call", style: .video) }
                         }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
                     }
         } content: {
@@ -285,16 +283,8 @@ struct ExampleProfileView: View {
                     }
         }
             .sheet(isPresented: $options) { ExampleOptionsView(index: index) }
-            .sheet(isPresented: $callUnavailable) {
-                LocalConfirmation(title: "Calling unavailable", message: "This profile isn't connected to a member account, so a call can't be placed.", action: "OK") {
-                    callUnavailable = false
-                } cancel: { callUnavailable = false }.presentationDetents([.medium, .large])
-            }
-            .sheet(isPresented: $confirmLocalFollow) {
-                LocalConfirmation(title: "Follow this profile?", message: "This profile isn't connected to a member account. Your follow won't be synced.", action: "Follow") {
-                    if !store.blockedExamples.contains(index) && !store.followedExamples.contains(index) { store.toggleFollow(index) }
-                    confirmLocalFollow = false
-                } cancel: { confirmLocalFollow = false }.presentationDetents([.medium, .large])
+            .sheet(item: $connectionNotice) { notice in
+                ConnectionNoticeSheet(notice: notice) { connectionNotice = nil }.presentationDetents([.medium, .large])
             }
     }
 }
@@ -324,6 +314,9 @@ struct ExampleChatView: View {
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     let index: Int
+    @State private var text = ""
+    @State private var loaded = false
+    @State private var connectionNotice: ConnectionNotice?
     private var name: String {
         guard session.photos.indices.contains(index) else { return "Collection" }
         let id = session.photos[index].id
@@ -335,33 +328,30 @@ struct ExampleChatView: View {
                 NavigationLink { ExampleProfileView(index: index) } label: {
                     HStack(spacing: 12) {
                         ExampleAvatar(index: index, size: 48)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(name).font(.headline).foregroundStyle(liyaInk)
-                            Text("Collection").font(.caption).foregroundStyle(.secondary)
-                        }
+                        Text(name).font(.headline).foregroundStyle(liyaInk)
                         Spacer(minLength: 0)
                     }.padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 18))
                 }.buttonStyle(.plain)
                 VStack(spacing: 12) {
                     Image("profile-action-message").resizable().scaledToFit().frame(width: 76, height: 76).accessibilityHidden(true)
-                    Text("This profile can't receive messages").font(.headline).foregroundStyle(liyaInk)
-                    Text("Explore the community to start a conversation with a member.")
-                        .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                    NavigationLink { CommunityMembersView() } label: {
-                        Text("Find people").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
-                            .padding(.horizontal, 26).frame(minHeight: 46).background(liyaGradient, in: Capsule())
-                    }.buttonStyle(.plain)
-                }.frame(maxWidth: .infinity).padding(.vertical, 28).padding(.horizontal, 16)
-                    .background(.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 20))
-                if let draft = store.messageDrafts[String(index)], !draft.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Unsent message").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                        Text(draft).font(.subheadline).foregroundStyle(liyaInk).textSelection(.enabled)
-                    }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
-                        .background(.white.opacity(0.82), in: RoundedRectangle(cornerRadius: 16))
+                    Text("Say hello").font(.headline).foregroundStyle(liyaInk)
+                    Text("Start a conversation when you're ready.").font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                }.frame(maxWidth: .infinity).padding(.vertical, 28)
+                HStack(alignment: .bottom, spacing: 8) {
+                    TextField("Write a message…", text: $text, axis: .vertical).lineLimit(1...5)
+                        .padding(12).background(.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 18))
+                    Button { connectionNotice = .unavailable } label: {
+                        Text("Send").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                            .padding(.horizontal, 18).frame(minHeight: 44).background(liyaGradient, in: Capsule())
+                    }.buttonStyle(.plain).disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }.padding(.top, 12)
+        }
+        .onAppear { if !loaded { text = store.messageDrafts[String(index)] ?? ""; loaded = true } }
+        .onLiyaChange(of: text) { value in if loaded { store.saveMessageDraft(value, index: index) } }
+        .onDisappear { if loaded { store.saveMessageDraft(text, index: index) } }
+        .sheet(item: $connectionNotice) { notice in
+            ConnectionNoticeSheet(notice: notice) { connectionNotice = nil }.presentationDetents([.medium, .large])
         }
     }
 }

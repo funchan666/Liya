@@ -306,7 +306,12 @@ private struct MoodReflectionsView: View {
                     OfflineNote(text: error)
                     Button("Reload journal") { Task { await session.refreshMoods() } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
                 } else if recentEntries.isEmpty {
-                    EmptyState(title: "No moods recorded in this period", detail: "Your reflections will appear after you record a mood.")
+                    VStack(spacing: 12) {
+                        Image("empty-art").resizable().scaledToFit().frame(width: 78, height: 72).accessibilityHidden(true)
+                        Text("No moods recorded in this period").font(.headline).foregroundStyle(liyaInk).multilineTextAlignment(.center)
+                        Text("Your reflections will appear after you record a mood.")
+                            .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    }.frame(maxWidth: .infinity).padding(24)
                     NavigationLink { MoodDiaryView() } label: {
                         Text("Record a mood").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
                             .frame(maxWidth: .infinity).frame(minHeight: 48).background(liyaGradient, in: Capsule())

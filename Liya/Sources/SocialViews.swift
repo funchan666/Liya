@@ -273,6 +273,8 @@ struct CommunityPersonView: View {
     @State private var preview: SocialMediaItem?
     @State private var callNotice: String?
     @State private var attemptedCall = false
+    @State private var connectionNotice: ConnectionNotice?
+    @State private var checkingConnection = false
     private var posts: [SocialPost] { social.posts.filter { $0.ownerID == personID } }
     private var videos: [SocialMediaItem] {
         posts.flatMap { post in
@@ -304,7 +306,7 @@ struct CommunityPersonView: View {
                             HStack(spacing: 10) {
                                 Button { startCall(kind: "audio") } label: { ProfileDetailActionLabel(title: "Voice call", style: .voice) }
                                 Button { startCall(kind: "video") } label: { ProfileDetailActionLabel(title: "Video call", style: .video) }
-                            }.buttonStyle(.plain).disabled(calls.busy || calls.call != nil)
+                            }.buttonStyle(.plain).disabled(calls.busy || calls.call != nil || checkingConnection)
                             if let callNotice { Text(callNotice).font(.footnote).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading) }
                             if attemptedCall, let error = calls.error { Text(error).font(.footnote).foregroundStyle(.red).frame(maxWidth: .infinity, alignment: .leading) }
                             if attemptedCall && calls.permissionDenied {
@@ -349,6 +351,9 @@ struct CommunityPersonView: View {
         }
         .sheet(isPresented: $options) { CommunityProfileOptions(personID: personID) }
         .sheet(item: $preview) { item in SocialMediaPreview(item: item) }
+        .sheet(item: $connectionNotice) { notice in
+            ConnectionNoticeSheet(notice: notice) { connectionNotice = nil }.presentationDetents([.medium, .large])
+        }
     }
 
     private func startCall(kind: String) {
@@ -357,12 +362,15 @@ struct CommunityPersonView: View {
         callNotice = nil
         attemptedCall = true
         guard social.isJoined(session) else { callNotice = "Create a community profile before calling."; return }
-        guard !social.loading, social.error == nil else { callNotice = "Your connections are updating. Please try again."; return }
-        guard social.follows.contains(personID), social.followers.contains(personID) else {
-            callNotice = "Follow each other before starting a call."
-            return
+        guard !checkingConnection else { return }
+        checkingConnection = true
+        Task {
+            defer { checkingConnection = false }
+            do {
+                guard try await social.isMutualFollow(session, target: personID) else { connectionNotice = .mutual; return }
+                await calls.start(session, peer: personID, kind: kind)
+            } catch { connectionNotice = .unavailable }
         }
-        Task { await calls.start(session, peer: personID, kind: kind) }
     }
 }
 
@@ -734,6 +742,8 @@ struct CommunityConversationView: View {
     @State private var showMediaPicker = false
     @State private var draftOwner: UUID?
     @State private var positionedHistory = false
+    @State private var connectionNotice: ConnectionNotice?
+    @State private var checkingConnection = false
     private var key: String { "liya.social.messageDraft.\(draftOwner?.uuidString ?? "none").\(personID.uuidString)" }
     private var conversation: [SocialMessage] {
         guard let owner = session.userID else { return [] }
@@ -819,6 +829,9 @@ struct CommunityConversationView: View {
                     deleting = nil; Task { _ = await social.deleteMessage(session, message: message) }
                 } cancel: { deleting = nil }.presentationDetents([.medium])
             }
+            .sheet(item: $connectionNotice) { notice in
+                ConnectionNoticeSheet(notice: notice) { connectionNotice = nil }.presentationDetents([.medium, .large])
+            }
     }
 
     private var conversationHeader: some View {
@@ -834,14 +847,14 @@ struct CommunityConversationView: View {
                             .font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk).lineLimit(1)
                     }.frame(maxWidth: .infinity, alignment: .leading).frame(minHeight: 44)
                 }.buttonStyle(.plain)
-                Button { Task { await calls.start(session, peer: personID, kind: "audio") } } label: {
+                Button { startCall(kind: "audio") } label: {
                     Image("profile-action-voice").resizable().scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44)
                 }.buttonStyle(.plain).accessibilityLabel("Voice call")
-                    .disabled(!social.isJoined(session) || social.person(personID) == nil || calls.busy || calls.call != nil)
-                Button { Task { await calls.start(session, peer: personID, kind: "video") } } label: {
+                    .disabled(!social.isJoined(session) || social.person(personID) == nil || calls.busy || calls.call != nil || checkingConnection || sending)
+                Button { startCall(kind: "video") } label: {
                     Image("profile-action-video").resizable().scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44)
                 }.buttonStyle(.plain).accessibilityLabel("Video call")
-                    .disabled(!social.isJoined(session) || social.person(personID) == nil || calls.busy || calls.call != nil)
+                    .disabled(!social.isJoined(session) || social.person(personID) == nil || calls.busy || calls.call != nil || checkingConnection || sending)
             }.padding(.horizontal, 8).modifier(AdaptiveContainerMargins())
         }.frame(height: 54).background(.white.opacity(0.75))
     }
@@ -909,7 +922,19 @@ struct CommunityConversationView: View {
     }
 
     private var canSend: Bool {
-        !sending && !mediaLoading && text.count <= 4000 && (!text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty)
+        !sending && !checkingConnection && !mediaLoading && text.count <= 4000 && (!text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty)
+    }
+
+    private func startCall(kind: String) {
+        guard !checkingConnection, !sending else { return }
+        checkingConnection = true
+        Task {
+            defer { checkingConnection = false }
+            do {
+                guard try await social.isMutualFollow(session, target: personID) else { connectionNotice = .mutual; return }
+                await calls.start(session, peer: personID, kind: kind)
+            } catch { connectionNotice = .unavailable }
+        }
     }
 
     private func sendMessage() {
@@ -920,9 +945,16 @@ struct CommunityConversationView: View {
         guard let id = UUID(uuidString: attempt) else { return }
         persist(); sending = true
         Task {
+            do {
+                guard try await social.isMutualFollow(session, target: personID) else {
+                    connectionNotice = .mutual; sending = false; return
+                }
+            } catch { connectionNotice = .unavailable; sending = false; return }
             if await social.sendMessage(session, id: id, target: personID, body: body, attachments: attachments) {
                 guard session.userID == owner, draftOwner == owner else { sending = false; return }
                 text = ""; attachments = []; attempt = ""; fingerprint = ""; persist()
+            } else if let mutual = try? await social.isMutualFollow(session, target: personID), !mutual {
+                connectionNotice = .mutual
             }
             sending = false
         }

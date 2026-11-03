@@ -391,6 +391,17 @@ final class SocialStore: ObservableObject {
         }
     }
 
+    func isMutualFollow(_ session: LiyaSession, target: UUID) async throws -> Bool {
+        guard let owner = session.userID, owner != target else { throw SocialError.conflict }
+        let generation = accountGeneration
+        let outgoing: [SocialRelation] = try await session.client.from("liya_follows").select("owner_id,target_id")
+            .eq("owner_id", value: owner.uuidString).eq("target_id", value: target.uuidString).execute().value
+        let incoming: [SocialRelation] = try await session.client.from("liya_follows").select("owner_id,target_id")
+            .eq("owner_id", value: target.uuidString).eq("target_id", value: owner.uuidString).execute().value
+        guard session.userID == owner, generation == accountGeneration else { throw SocialError.conflict }
+        return !outgoing.isEmpty && !incoming.isEmpty
+    }
+
     func sendMessage(_ session: LiyaSession, id: UUID, target: UUID, body: String, attachments: [DraftAttachment]) async -> Bool {
         guard let owner = session.userID, isJoined(session) else { messageError = "Create your community profile first."; return false }
         let generation = accountGeneration
@@ -401,6 +412,7 @@ final class SocialStore: ObservableObject {
                 await refreshMessages(session); return session.userID == owner && accountGeneration == generation
             }
             guard session.userID == owner, accountGeneration == generation else { return false }
+            guard try await isMutualFollow(session, target: target) else { throw SocialError.mutualRequired }
             let (paths, kinds) = try await upload(session, owner: owner, id: id, attachments: attachments)
             guard session.userID == owner, accountGeneration == generation else { return false }
             let input = SocialMessageInput(id: id, senderID: owner, recipientID: target, body: body, mediaPaths: paths, mediaKinds: kinds)
@@ -410,7 +422,7 @@ final class SocialStore: ObservableObject {
             await refreshMessages(session); return session.userID == owner && accountGeneration == generation
         } catch {
             if session.userID == owner && accountGeneration == generation {
-                messageError = (error as? VideoCompression.Failure)?.errorDescription ?? "Couldn't confirm the message. Your draft is still here; please try again."
+                messageError = (error as? SocialError) == .mutualRequired ? "Follow each other before sending a message." : ((error as? VideoCompression.Failure)?.errorDescription ?? "Couldn't confirm the message. Your draft is still here; please try again.")
             }
             return false
         }
@@ -518,4 +530,4 @@ final class SocialStore: ObservableObject {
         try await session.client.storage.from("liya-user-media").createSignedURL(path: path, expiresIn: 300)
     }
 }
-private enum SocialError: Error { case conflict }
+private enum SocialError: Error { case conflict, mutualRequired }

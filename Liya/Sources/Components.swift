@@ -168,3 +168,32 @@ struct LocalConfirmation: View {
         }
     }
 }
+
+enum ConnectionNotice: String, Identifiable {
+    case mutual, unavailable
+    var id: String { rawValue }
+}
+
+struct ConnectionNoticeSheet: View {
+    let notice: ConnectionNotice
+    let dismiss: () -> Void
+    var body: some View {
+        ZStack {
+            LiyaBackground()
+            DuoControlRegion { size in
+                ScrollView {
+                    VStack(spacing: 15) {
+                        Image(notice == .mutual ? "profile-action-follow" : "profile-action-message")
+                            .resizable().scaledToFit().frame(width: 76, height: 76).accessibilityHidden(true)
+                        Text(LocalizedStringKey(notice == .mutual ? "A connection starts with both of you" : "Please try again"))
+                            .font(.title3.weight(.bold)).foregroundStyle(liyaInk).multilineTextAlignment(.center)
+                        Text(LocalizedStringKey(notice == .mutual ? "Follow each other to send messages and enjoy voice or video calls." : "This action isn't available right now. Please try again later."))
+                            .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                        PrimaryButton(title: "Got it", action: dismiss)
+                    }.padding(24).frame(maxWidth: 420).frame(maxWidth: .infinity).frame(minHeight: size.height)
+                }
+            }
+        }
+    }
+}
