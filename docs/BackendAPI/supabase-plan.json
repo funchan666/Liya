@@ -224,9 +224,11 @@
       "public": true,
       "objects": [
         "terms.pdf",
-        "privacy.pdf"
+        "privacy.pdf",
+        "terms-20261103.pdf",
+        "privacy-20261103.pdf"
       ],
-      "public_access": "not tested"
+      "public_access": "2026-11-03: versioned PDFs downloaded without credentials; MIME application/pdf and SHA-256 match local files"
     },
     "social": {
       "status": "schema deployed and client wired; not built or tested",
@@ -241,7 +243,7 @@
         "private messages and attachments",
         "in-app activity notifications",
         "owner-filtered social revision notifications and reconnect refresh",
-        "prewritten automated chat with server-enforced reply delay",
+        "Groq AI chat with server-side consent and rate limiting; runtime unverified",
         "account deletion request and owner media cleanup",
         "large user-video compression before upload"
       ],
@@ -285,8 +287,15 @@
   "legal": {
     "terms": "legal/terms.pdf",
     "privacy": "legal/privacy.pdf",
-    "status": "calling_and_push_privacy_uploaded_public_access_not_tested",
+    "status": "AI-disclosure version published and public PDF verified; further changes only on explicit user request",
     "proposed_support_email": "support@liya.com",
-    "proposed_support_email_status": "not confirmed or enabled"
+    "proposed_support_email_status": "not confirmed or enabled",
+    "version": "2026-11-03",
+    "terms_url": "https://hymfjhuglaqoftrcxfjx.supabase.co/storage/v1/object/public/liya-legal/terms-20261103.pdf",
+    "privacy_url": "https://hymfjhuglaqoftrcxfjx.supabase.co/storage/v1/object/public/liya-legal/privacy-20261103.pdf",
+    "terms_md_sha256": "e204a405e0706b4363a2927b2e1ca8bcad98810e2f02ff9e2311a8a86d01cef1",
+    "terms_pdf_sha256": "0541fb154cff37b641ba1f9035b8860496626eae833383d3b72b97df3510bd20",
+    "privacy_md_sha256": "4b5fc2e5cc8e53b389ea00f5c9cbeb13ea1ec37f7df13cc164addb9cc7891bed",
+    "privacy_pdf_sha256": "d9b25521223ff503fafd5527f1df135a1fe5b91818b4114041457a38c4fd36de"
   }
 }
