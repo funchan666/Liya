@@ -15,6 +15,33 @@ let liyaInk = Color(red: 0.13, green: 0.13, blue: 0.23)
 let liyaAccent = Color(red: 0.44, green: 0.22, blue: 0.95)
 let liyaGradient = LinearGradient(colors: [Color(red: 0.05, green: 0.52, blue: 0.99), Color(red: 0.64, green: 0.14, blue: 0.96)], startPoint: .leading, endPoint: .trailing)
 
+struct LiyaFeedActionLabel: View {
+    let title: String
+    let count: String
+    let icon: String
+    var active = false
+
+    var body: some View {
+        HStack(spacing: 7) {
+            Image(icon).resizable().scaledToFit().frame(width: 25, height: 25).accessibilityHidden(true)
+            Text(title).font(.caption.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+            Text(count).font(.caption.weight(.medium)).monospacedDigit().foregroundStyle(.secondary)
+        }
+        .foregroundStyle(active ? liyaAccent : liyaInk)
+        .padding(.horizontal, 12).frame(minHeight: 44)
+        .background(Color(red: 0.96, green: 0.95, blue: 0.99), in: Capsule())
+        .accessibilityElement(children: .combine)
+    }
+}
+
+struct LiyaFeedCardSurface: ViewModifier {
+    func body(content: Content) -> some View {
+        content.padding(14)
+            .background(.white.opacity(0.90), in: RoundedRectangle(cornerRadius: 22))
+            .overlay(RoundedRectangle(cornerRadius: 22).stroke(liyaAccent.opacity(0.08), lineWidth: 1))
+    }
+}
+
 struct LiyaLoadingIndicator: View {
     var size: CGFloat = 34
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

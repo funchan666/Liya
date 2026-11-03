@@ -186,15 +186,23 @@ struct CommunityPostCard: View {
             }
             if !post.body.isEmpty { Text(post.body).foregroundStyle(liyaInk).frame(maxWidth: .infinity, alignment: .leading) }
             if !post.tags.isEmpty { Text(post.tags.map { "# " + $0 }.joined(separator: "   ")).font(.caption).foregroundStyle(liyaAccent) }
-            SocialMediaStrip(paths: post.mediaPaths, kinds: post.mediaKinds)
-            HStack(spacing: 20) {
-                Button("\(social.likes.contains(post.id) ? "Liked" : "Like") · \(counts.map { String($0.likeCount) } ?? "—")") {
+            SocialMediaStrip(paths: post.mediaPaths, kinds: post.mediaKinds, largeSingle: true)
+            HStack(spacing: 8) {
+                Button {
                     busy = true; Task { await social.toggleLike(session, post: post.id); await loadCounts(); busy = false }
-                }.disabled(busy || social.loading).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                NavigationLink("Comments · \(counts.map { String($0.commentCount) } ?? "—")") { CommunityCommentsView(post: post) }.foregroundStyle(liyaAccent).frame(minHeight: 44)
-                Spacer()
-            }.font(.subheadline.bold())
-        }.padding(14).background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 16))
+                } label: {
+                    LiyaFeedActionLabel(title: social.likes.contains(post.id) ? "Liked" : "Like",
+                                        count: counts.map { String($0.likeCount) } ?? "—",
+                                        icon: social.likes.contains(post.id) ? "video-like-on" : "video-like-off",
+                                        active: social.likes.contains(post.id))
+                }.buttonStyle(.plain).disabled(busy || social.loading)
+                    .accessibilityAddTraits(social.likes.contains(post.id) ? .isSelected : [])
+                NavigationLink { CommunityCommentsView(post: post) } label: {
+                    LiyaFeedActionLabel(title: "Comments", count: counts.map { String($0.commentCount) } ?? "—", icon: "profile-action-message")
+                }.buttonStyle(.plain)
+                Spacer(minLength: 0)
+            }
+        }.modifier(LiyaFeedCardSurface())
             .sheet(isPresented: $deleting) {
                 LocalConfirmation(title: "Delete this post?", message: "The post and its comments will no longer be visible to the community.", action: "Delete") {
                     deleting = false; Task { _ = await social.deletePost(session, id: post.id) }
@@ -499,9 +507,20 @@ struct CommunityCommentsView: View {
 struct SocialMediaItem: Identifiable { let path: String; let kind: String; var id: String { path } }
 struct SocialMediaStrip: View {
     let paths: [String]; let kinds: [String]
+    var largeSingle = false
     @State private var preview: SocialMediaItem?
     var body: some View {
-        if !paths.isEmpty {
+        if largeSingle, paths.count == 1, let path = paths.first {
+            let item = SocialMediaItem(path: path, kind: kinds.first ?? "photo")
+            Button { preview = item } label: {
+                GeometryReader { geometry in
+                    SocialMediaThumbnail(item: item).frame(width: geometry.size.width, height: geometry.size.height).clipped()
+                }
+                .aspectRatio(4 / 5, contentMode: .fit).frame(maxWidth: 430)
+                .clipShape(RoundedRectangle(cornerRadius: 17)).frame(maxWidth: .infinity)
+            }.buttonStyle(.plain).accessibilityLabel(item.kind == "video" ? "Open video" : "Open photo")
+                .sheet(item: $preview) { item in SocialMediaPreview(item: item) }
+        } else if !paths.isEmpty {
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     ForEach(Array(paths.enumerated()), id: \.element) { index, path in

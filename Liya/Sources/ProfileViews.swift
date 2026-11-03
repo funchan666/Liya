@@ -35,13 +35,14 @@ struct ProfileHome: View {
                     profileHero(width: geometry.size.width, height: heroHeight, topInset: geometry.safeAreaInsets.top)
                     VStack(alignment: .leading, spacing: 12) {
                     Text(session.profile.flatMap { $0.displayName.isEmpty ? nil : $0.displayName } ?? "Your profile").font(.title2.bold()).foregroundStyle(liyaInk)
-                    HStack(spacing: 20) {
+                    HStack(spacing: 10) {
                         NavigationLink { CommunityRelationList(title: "Followers", relation: "followers") } label: {
-                            Text("\(social.loading || social.error != nil ? "—" : String(social.followers.count)) Followers").font(.caption.weight(.medium)).foregroundStyle(liyaInk)
+                            ProfileHomeRelationLabel(title: "Followers", count: social.loading || social.error != nil ? "—" : String(social.followers.count))
                         }
                         NavigationLink { CommunityRelationList(title: "Following", relation: "following") } label: {
-                            Text("\(social.loading || social.error != nil ? "—" : String(social.follows.count)) Following").font(.caption.weight(.medium)).foregroundStyle(liyaInk)
+                            ProfileHomeRelationLabel(title: "Following", count: social.loading || social.error != nil ? "—" : String(social.follows.count))
                         }
+                        Spacer(minLength: 0)
                     }.buttonStyle(.plain)
                     Text(session.profile.flatMap { $0.signature.isEmpty ? nil : $0.signature } ?? "Add a little about yourself.")
                         .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -51,10 +52,10 @@ struct ProfileHome: View {
                         Button("Retry profile") { Task { await session.refreshProfile() } }.foregroundStyle(liyaAccent)
                     }
                     HStack(spacing: 10) {
-                        NavigationLink { SettingsView() } label: { ProfileActionLabel(title: "Settings", warm: true) }
-                        NavigationLink { EditProfileView() } label: { ProfileActionLabel(title: "Edit") }
+                        NavigationLink { SettingsView() } label: { ProfileHomeActionLabel(title: "Settings", icon: "profile-home-settings") }
+                        NavigationLink { EditProfileView() } label: { ProfileHomeActionLabel(title: "Edit profile", icon: "profile-home-edit") }
                     }.buttonStyle(.plain)
-                    ProfileContentTabs(selection: $section)
+                    ProfileHomeTabs(selection: $section)
                     if section == 0 {
                         if social.loading { Text("Loading posts…").font(.footnote).foregroundStyle(.secondary) }
                         if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
@@ -120,15 +121,70 @@ struct ProfileHome: View {
                         Image("profile-title").resizable().scaledToFit().frame(width: 145, height: 44).accessibilityLabel("Profile")
                         Spacer(minLength: 0)
                         NavigationLink { WalletView() } label: {
-                            HStack(spacing: 4) {
-                                Image("wallet-coin").resizable().scaledToFit().frame(width: 28, height: 28).accessibilityHidden(true)
+                            HStack(spacing: 6) {
+                                Image("wallet-coin").resizable().scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
                                 Text(session.coinBalance.map { $0.formatted() } ?? "—")
-                                    .font(.subheadline.bold()).foregroundStyle(.white).lineLimit(1)
-                            }.padding(.leading, 4).padding(.trailing, 12).frame(minHeight: 44).background(liyaGradient, in: Capsule())
+                                    .font(.subheadline.weight(.bold)).monospacedDigit().foregroundStyle(.white).lineLimit(1)
+                            }.padding(.leading, 7).padding(.trailing, 14).frame(minHeight: 46)
+                                .background(Color.black.opacity(0.48), in: Capsule())
+                                .overlay(Capsule().stroke(.white.opacity(0.35), lineWidth: 1))
                         }.buttonStyle(.plain).accessibilityLabel("Wallet, \(session.coinBalance.map { $0.formatted() } ?? "balance unavailable") coins")
                     }.padding(.horizontal, 20).modifier(AdaptiveContainerMargins())
                 }.frame(height: 48).padding(.top, topInset + 4)
             }
+    }
+}
+
+private struct ProfileHomeRelationLabel: View {
+    let title: String
+    let count: String
+    var body: some View {
+        HStack(spacing: 6) {
+            Image("profile-home-people").resizable().scaledToFit().frame(width: 25, height: 25).accessibilityHidden(true)
+            Text(count).font(.caption.weight(.bold)).monospacedDigit().foregroundStyle(liyaInk)
+            Text(title).font(.caption.weight(.medium)).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+        }
+        .padding(.horizontal, 10).frame(minHeight: 44)
+        .background(.white.opacity(0.74), in: Capsule())
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct ProfileHomeActionLabel: View {
+    let title: String
+    let icon: String
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(icon).resizable().scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
+            Text(title).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+        }
+        .foregroundStyle(liyaInk).frame(maxWidth: .infinity, minHeight: 54).padding(.horizontal, 8)
+        .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 17))
+        .overlay(RoundedRectangle(cornerRadius: 17).stroke(liyaAccent.opacity(0.12), lineWidth: 1))
+    }
+}
+
+private struct ProfileHomeTabs: View {
+    @Binding var selection: Int
+    var body: some View {
+        HStack(spacing: 10) {
+            tab("Posts", icon: "profile-home-posts", index: 0)
+            tab("Videos", icon: "profile-action-video", index: 1)
+            Spacer(minLength: 0)
+        }.padding(.top, 4)
+    }
+
+    private func tab(_ title: String, icon: String, index: Int) -> some View {
+        Button { selection = index } label: {
+            HStack(spacing: 6) {
+                Image(icon).resizable().scaledToFit().frame(width: 25, height: 25).accessibilityHidden(true)
+                Text(title).font(.subheadline.weight(selection == index ? .semibold : .medium))
+                    .lineLimit(1).minimumScaleFactor(0.8)
+            }
+            .foregroundStyle(selection == index ? liyaAccent : liyaInk.opacity(0.65))
+            .padding(.horizontal, 12).frame(minHeight: 44)
+            .background(selection == index ? liyaAccent.opacity(0.11) : .clear, in: Capsule())
+        }.buttonStyle(.plain).accessibilityAddTraits(selection == index ? .isSelected : [])
     }
 }
 

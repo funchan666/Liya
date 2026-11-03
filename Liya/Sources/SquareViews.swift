@@ -751,42 +751,44 @@ private struct ExamplePhotoRow: View {
         return ExampleVideoCreator.byVideoID.values.first { $0.photoID == photoID }?.name ?? "Liya collection"
     }
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
                 NavigationLink { ExampleProfileView(index: index, displayName: displayName) } label: {
-                    HStack(spacing: 8) { ExampleAvatar(index: index); VStack(alignment: .leading) {
-                        Text(displayName).font(.subheadline.bold())
-                        Text("Collection").font(.caption).foregroundStyle(.secondary)
+                    HStack(spacing: 10) { ExampleAvatar(index: index, size: 42); VStack(alignment: .leading, spacing: 3) {
+                        Text(displayName).font(.subheadline.weight(.semibold)).lineLimit(1)
+                        Text("Collection").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     } }.foregroundStyle(liyaInk)
                 }.buttonStyle(.plain)
-                Spacer()
+                Spacer(minLength: 0)
                 Button { store.toggleFollow(index) } label: {
                     Text(store.followedExamples.contains(index) ? "Following" : "Follow")
-                        .font(.caption.bold()).foregroundStyle(.white).padding(.horizontal, 14).padding(.vertical, 8).background(liyaGradient, in: Capsule())
+                        .font(.caption.weight(.semibold)).foregroundStyle(liyaAccent)
+                        .lineLimit(1).minimumScaleFactor(0.8).padding(.horizontal, 12).frame(minHeight: 44)
+                        .background(liyaAccent.opacity(store.followedExamples.contains(index) ? 0.15 : 0.08), in: Capsule())
                 }.buttonStyle(.plain).accessibilityLabel(store.followedExamples.contains(index) ? "Unfollow example" : "Follow example")
+                    .accessibilityAddTraits(store.followedExamples.contains(index) ? .isSelected : [])
                 Button { options = true } label: { Image("more").resizable().scaledToFit().frame(width: 20, height: 20).frame(width: 44, height: 44) }
                     .buttonStyle(.plain).accessibilityLabel("More options")
             }
             NavigationLink { ExamplePhotoDetail(index: index) } label: {
-                CloudPhoto(index: index).frame(maxWidth: .infinity).frame(height: 280)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                GeometryReader { geometry in
+                    CloudPhoto(index: index, contentMode: .fill)
+                        .frame(width: geometry.size.width, height: geometry.size.height).clipped()
+                }
+                .aspectRatio(4 / 5, contentMode: .fit).frame(maxWidth: 430)
+                .clipShape(RoundedRectangle(cornerRadius: 17))
+                .frame(maxWidth: .infinity)
             }.buttonStyle(.plain).accessibilityLabel("Open post")
-            HStack(spacing: 18) {
+            HStack(spacing: 8) {
                 Button { Task { await session.toggleLike(kind: "photo", index: index); await engagement.refresh(session, index: index) } } label: {
-                    HStack(spacing: 6) {
-                        Image(session.isLiked(kind: "photo", index: index) ? "video-like-on" : "video-like-off")
-                            .resizable().scaledToFit().frame(width: 24, height: 24).accessibilityHidden(true)
-                        Text("\(session.isLiked(kind: "photo", index: index) ? "Liked" : "Like") · \(engagement.counts.map { String($0.likeCount) } ?? "—")")
-                    }.font(.caption.weight(.medium))
-                        .foregroundStyle(session.isLiked(kind: "photo", index: index) ? liyaAccent : liyaInk)
-                        .frame(minHeight: 44)
+                    LiyaFeedActionLabel(title: session.isLiked(kind: "photo", index: index) ? "Liked" : "Like",
+                                        count: engagement.counts.map { String($0.likeCount) } ?? "—",
+                                        icon: session.isLiked(kind: "photo", index: index) ? "video-like-on" : "video-like-off",
+                                        active: session.isLiked(kind: "photo", index: index))
                 }.buttonStyle(.plain).disabled(!session.likesReady || session.likesLoading)
                     .accessibilityAddTraits(session.isLiked(kind: "photo", index: index) ? .isSelected : [])
                 NavigationLink { ExamplePhotoDetail(index: index) } label: {
-                    HStack(spacing: 6) {
-                        Image("comment").resizable().scaledToFit().frame(width: 24, height: 24).accessibilityHidden(true)
-                        Text("Comments · \(engagement.counts.map { String($0.commentCount) } ?? "—")")
-                    }.font(.caption.weight(.medium)).foregroundStyle(liyaInk).frame(minHeight: 44)
+                    LiyaFeedActionLabel(title: "Comments", count: engagement.counts.map { String($0.commentCount) } ?? "—", icon: "profile-action-message")
                 }.buttonStyle(.plain)
                 Spacer(minLength: 0)
             }
@@ -795,7 +797,7 @@ private struct ExamplePhotoRow: View {
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-        }.padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 16))
+        }.modifier(LiyaFeedCardSurface())
             .sheet(isPresented: $options) { ExampleOptionsView(index: index, reportTarget: "post") }
             .onLiyaChange(of: session.catalogGeneration) { _ in Task { await engagement.refresh(session, index: index) } }
             .onLiyaChange(of: social.syncGeneration) { _ in Task { await engagement.refresh(session, index: index) } }
