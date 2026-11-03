@@ -17,10 +17,42 @@ final class AutomaticChat: ObservableObject {
     @Published private(set) var loading = false
     @Published private(set) var sending = false
     @Published private(set) var waiting = false
+    @Published private(set) var consentLoaded = false
+    @Published private(set) var consentGranted = false
+    @Published private(set) var updatingConsent = false
     @Published var error: String?
     private var generation = UUID()
     private var sendGeneration = UUID()
     private var loadedOwner: UUID?
+
+    func loadConsent(_ session: LiyaSession) async {
+        guard let owner = session.userID else { return }
+        do {
+            struct Consent: Decodable { let granted: Bool; let consent_version: String }
+            let rows: [Consent] = try await session.client.from("liya_ai_consents")
+                .select("granted,consent_version").eq("owner_id", value: owner.uuidString).limit(1).execute().value
+            guard session.userID == owner, !Task.isCancelled else { return }
+            consentGranted = rows.first.map { $0.granted && $0.consent_version == "groq-v1" } ?? false
+            consentLoaded = true
+        } catch {
+            guard session.userID == owner, !Task.isCancelled else { return }
+            consentLoaded = false; self.error = "Couldn't check your AI privacy choice. Please try again."
+        }
+    }
+
+    func setConsent(_ session: LiyaSession, granted: Bool) async -> Bool {
+        guard let owner = session.userID, !updatingConsent else { return false }
+        updatingConsent = true; defer { updatingConsent = false }
+        do {
+            let result: Bool = try await session.client.rpc("liya_ai_set_consent", params: ["p_granted": granted]).execute().value
+            guard session.userID == owner, !Task.isCancelled, result == granted else { return false }
+            consentGranted = granted; consentLoaded = true; error = nil
+            return true
+        } catch {
+            if session.userID == owner && !Task.isCancelled { self.error = "Couldn't update your AI privacy choice. Please try again." }
+            return false
+        }
+    }
 
     func load(_ session: LiyaSession) async {
         guard let owner = session.userID, !loading else { return }
@@ -71,7 +103,7 @@ final class AutomaticChat: ObservableObject {
         }
     }
 
-    func stop() { generation = UUID(); sendGeneration = UUID(); loading = false; sending = false; waiting = false }
+    func stop() { generation = UUID(); sendGeneration = UUID(); loading = false; sending = false; waiting = false; consentLoaded = false; consentGranted = false }
     private enum ChatError: Error { case unconfirmed }
 }
 
@@ -85,6 +117,7 @@ struct AutomaticChatView: View {
     @State private var draftOwner: UUID?
     @State private var sendTask: Task<Void, Never>?
     @State private var pendingRequest: UUID?
+    @State private var showingConsent = false
     @StateObject private var chat = AutomaticChat()
     private var canSend: Bool {
         session.userID != nil && pendingRequest == nil && !chat.loading && !chat.sending && !chat.waiting &&
@@ -95,6 +128,16 @@ struct AutomaticChatView: View {
             LiyaBackground(name: "ai-chat-background")
             VStack(spacing: 0) {
                 PageHeader(title: "AI chat", light: true)
+                HStack {
+                    Spacer()
+                    Button { showingConsent = true } label: {
+                        HStack(spacing: 4) {
+                            Image("setting-privacy").resizable().scaledToFit().frame(width: 22, height: 22).accessibilityHidden(true)
+                            Text("AI privacy").font(.caption.weight(.semibold))
+                        }.foregroundStyle(.white).padding(.horizontal, 10).frame(minHeight: 44)
+                            .background(.white.opacity(0.14), in: Capsule())
+                    }.buttonStyle(.plain)
+                }.padding(.horizontal, 20).modifier(AdaptiveContainerMargins())
                 ScrollViewReader { reader in
                     ScrollView {
                         VStack(alignment: .leading, spacing: 18) {
@@ -178,14 +221,22 @@ struct AutomaticChatView: View {
         }.navigationBarHidden(true)
             .task(id: session.userID) {
                 sendTask?.cancel(); pendingRequest = nil; chat.stop(); restoreDraft()
+                await chat.loadConsent(session)
                 await chat.load(session)
             }
             .onLiyaChange(of: draft) { _ in persistDraft() }
             .onDisappear { persistDraft(); sendTask?.cancel(); pendingRequest = nil; chat.stop() }
+            .sheet(isPresented: $showingConsent) {
+                AIPrivacySheet(chat: chat) {
+                    sendTask?.cancel(); pendingRequest = nil
+                }.presentationDetents([.fraction(0.65), .large]).presentationDragIndicator(.visible)
+            }
     }
 
     private func submit() {
         guard canSend, let owner = session.userID, draftOwner == owner else { return }
+        guard chat.consentLoaded else { Task { await chat.loadConsent(session); if chat.consentLoaded && !chat.consentGranted { showingConsent = true } }; return }
+        guard chat.consentGranted else { showingConsent = true; return }
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         let stamp = SocialAttempt.fingerprint(owner: owner, text: text, files: [])
         if stamp != fingerprint || UUID(uuidString: attempt) == nil { fingerprint = stamp; attempt = UUID().uuidString }
@@ -215,5 +266,46 @@ struct AutomaticChatView: View {
         UserDefaults.standard.set(draft, forKey: prefix + "draft")
         UserDefaults.standard.set(attempt, forKey: prefix + "attempt")
         UserDefaults.standard.set(fingerprint, forKey: prefix + "fingerprint")
+    }
+}
+
+private struct AIPrivacySheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var session: LiyaSession
+    @ObservedObject var chat: AutomaticChat
+    let onWithdraw: () -> Void
+    @State private var showPolicy = false
+
+    var body: some View {
+        ZStack {
+            LiyaBackground()
+            DuoControlRegion { _ in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Image("ai-heading").resizable().scaledToFit().frame(width: 145, height: 52).accessibilityHidden(true)
+                        Text("Your AI privacy").font(.title2.bold()).foregroundStyle(liyaInk)
+                        Text("To reply, Liya sends your message and recent AI conversation to Groq through Supabase. Your conversation is saved to your account. You can change this choice here at any time.")
+                            .font(.subheadline).foregroundStyle(liyaInk.opacity(0.82)).fixedSize(horizontal: false, vertical: true)
+                        Text("Liya AI is an automated companion, not a person or professional support.")
+                            .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        Button("Read Privacy Policy") { showPolicy = true }
+                            .font(.footnote.weight(.semibold)).underline().foregroundStyle(liyaAccent).frame(minHeight: 44)
+                        if let error = chat.error { Text(LocalizedStringKey(error)).font(.footnote).foregroundStyle(liyaInk) }
+                        if chat.consentGranted {
+                            PrimaryButton(title: chat.updatingConsent ? "Updating…" : "Withdraw AI consent", disabled: chat.updatingConsent) {
+                                onWithdraw()
+                                Task { if await chat.setConsent(session, granted: false) { dismiss() } }
+                            }
+                        } else {
+                            PrimaryButton(title: chat.updatingConsent ? "Updating…" : "Agree and continue", disabled: chat.updatingConsent) {
+                                Task { if await chat.setConsent(session, granted: true) { dismiss() } }
+                            }
+                        }
+                        Button("Not now") { dismiss() }.font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }.padding(24).frame(maxWidth: 460).frame(maxWidth: .infinity, alignment: .center)
+                }
+            }
+        }.sheet(isPresented: $showPolicy) { NavigationStack { LegalDocumentView(page: .privacy) } }
     }
 }
