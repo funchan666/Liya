@@ -176,12 +176,19 @@ final class LiyaSession: ObservableObject {
         }
     }
 
-    func cancelPasswordRecovery() async {
-        guard passwordRecovery, !isSigningIn else { return }
+    func cancelPasswordRecovery() async -> Bool {
+        guard passwordRecovery, !isSigningIn else { return false }
+        isSigningIn = true
+        defer { isSigningIn = false }
         try? await client.auth.signOut(scope: .local)
+        guard client.auth.currentSession == nil else {
+            errorMessage = "Couldn't close password recovery. Please try again."
+            return false
+        }
         UserDefaults.standard.removeObject(forKey: "liya.pendingPasswordRecovery")
         passwordRecovery = false
         clearAuthFeedback()
+        return true
     }
 
     private func activateSignedInAccount() async -> Bool {
@@ -308,6 +315,7 @@ final class LiyaSession: ObservableObject {
     /// Restore an existing session for an incoming call; never create a new account here.
     func restoreForIncomingCall() async -> Bool {
         if userID != nil { return true }
+        guard !passwordRecovery, !UserDefaults.standard.bool(forKey: "liya.pendingPasswordRecovery") else { return false }
         guard !isDeletingAccount, !isSigningOut, UserDefaults.standard.bool(forKey: "liya.hasSupabaseAccount") else { return false }
         do {
             let saved = try await client.auth.session

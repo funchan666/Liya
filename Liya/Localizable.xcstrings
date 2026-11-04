@@ -1,887 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "AI privacy": {"localizations": {"zh-Hans": {"stringUnit": {"state": "translated", "value": "AI 隐私"}}, "es": {"stringUnit": {"state": "translated", "value": "Privacidad de IA"}}, "fr": {"stringUnit": {"state": "translated", "value": "Confidentialité IA"}}, "ja": {"stringUnit": {"state": "translated", "value": "AI のプライバシー"}}}},
-    "Your AI privacy": {"localizations": {"zh-Hans": {"stringUnit": {"state": "translated", "value": "你的 AI 隐私"}}, "es": {"stringUnit": {"state": "translated", "value": "Tu privacidad de IA"}}, "fr": {"stringUnit": {"state": "translated", "value": "Votre confidentialité IA"}}, "ja": {"stringUnit": {"state": "translated", "value": "AI のプライバシー"}}}},
-    "To reply, Liya sends your message and recent AI conversation to Groq through Supabase. Your conversation is saved to your account. You can change this choice here at any time.": {"localizations": {"zh-Hans": {"stringUnit": {"state": "translated", "value": "为了生成回复，Liya 会通过 Supabase 将你的消息和最近的 AI 对话发送给 Groq。对话会保存到你的账号。你可以随时在此更改选择。"}}, "es": {"stringUnit": {"state": "translated", "value": "Para responder, Liya envía tu mensaje y la conversación reciente con la IA a Groq mediante Supabase. La conversación se guarda en tu cuenta. Puedes cambiar esta opción aquí en cualquier momento."}}, "fr": {"stringUnit": {"state": "translated", "value": "Pour répondre, Liya transmet votre message et les échanges récents avec l’IA à Groq via Supabase. Votre conversation est enregistrée dans votre compte. Vous pouvez modifier ce choix ici à tout moment."}}, "ja": {"stringUnit": {"state": "translated", "value": "返信のため、Liya はあなたのメッセージと最近の AI との会話を Supabase 経由で Groq に送信します。会話はアカウントに保存されます。この選択はいつでもここで変更できます。"}}}},
-    "Liya AI is an automated companion, not a person or professional support.": {"localizations": {"zh-Hans": {"stringUnit": {"state": "translated", "value": "Liya AI 是自动化陪伴助手，不是真人或专业支持。"}}, "es": {"stringUnit": {"state": "translated", "value": "Liya AI es un asistente automatizado, no una persona ni asistencia profesional."}}, "fr": {"stringUnit": {"state": "translated", "value": "Liya AI est un compagnon automatisé, et non une personne ou une aide professionnelle."}}, "ja": {"stringUnit": {"state": "translated", "value": "Liya AI は自動の対話アシスタントであり、人間や専門的な支援ではありません。"}}}},
-    "Read Privacy Policy": {"localizations": {"zh-Hans": {"stringUnit": {"state": "translated", "value": "阅读隐私政策"}}, "es": {"stringUnit": {"state": "translated", "value": "Leer la política de privacidad"}}, "fr": {"stringUnit": {"state": "translated", "value": "Lire la politique de confidentialité"}}, "ja": {"stringUnit": {"state": "translated", "value": "プライバシーポリシーを読む"}}}},
-    "Withdraw AI consent": {"localizations": {"zh-Hans": {"stringUnit": {"state": "translated", "value": "撤回 AI 授权"}}, "es": {"stringUnit": {"state": "translated", "value": "Retirar consentimiento para IA"}}, "fr": {"stringUnit": {"state": "translated", "value": "Retirer le consentement à l’IA"}}, "ja": {"stringUnit": {"state": "translated", "value": "AI への同意を撤回"}}}},
-    "Updating…": {"localizations": {"zh-Hans": {"stringUnit": {"state": "translated", "value": "正在更新…"}}, "es": {"stringUnit": {"state": "translated", "value": "Actualizando…"}}, "fr": {"stringUnit": {"state": "translated", "value": "Mise à jour…"}}, "ja": {"stringUnit": {"state": "translated", "value": "更新中…"}}}},
-    "Agree and continue": {"localizations": {"zh-Hans": {"stringUnit": {"state": "translated", "value": "同意并继续"}}, "es": {"stringUnit": {"state": "translated", "value": "Aceptar y continuar"}}, "fr": {"stringUnit": {"state": "translated", "value": "Accepter et continuer"}}, "ja": {"stringUnit": {"state": "translated", "value": "同意して続ける"}}}},
-    "Not now": {"localizations": {"zh-Hans": {"stringUnit": {"state": "translated", "value": "暂不"}}, "es": {"stringUnit": {"state": "translated", "value": "Ahora no"}}, "fr": {"stringUnit": {"state": "translated", "value": "Pas maintenant"}}, "ja": {"stringUnit": {"state": "translated", "value": "今はしない"}}}},
-    "Couldn't check your AI privacy choice. Please try again.": {"localizations": {"zh-Hans": {"stringUnit": {"state": "translated", "value": "无法确认你的 AI 隐私选择，请重试。"}}, "es": {"stringUnit": {"state": "translated", "value": "No se pudo comprobar tu elección de privacidad de IA. Inténtalo de nuevo."}}, "fr": {"stringUnit": {"state": "translated", "value": "Impossible de vérifier votre choix de confidentialité IA. Réessayez."}}, "ja": {"stringUnit": {"state": "translated", "value": "AI のプライバシー設定を確認できませんでした。もう一度お試しください。"}}}},
-    "Couldn't update your AI privacy choice. Please try again.": {"localizations": {"zh-Hans": {"stringUnit": {"state": "translated", "value": "无法更新你的 AI 隐私选择，请重试。"}}, "es": {"stringUnit": {"state": "translated", "value": "No se pudo actualizar tu elección de privacidad de IA. Inténtalo de nuevo."}}, "fr": {"stringUnit": {"state": "translated", "value": "Impossible de modifier votre choix de confidentialité IA. Réessayez."}}, "ja": {"stringUnit": {"state": "translated", "value": "AI のプライバシー設定を更新できませんでした。もう一度お試しください。"}}}},
-    "Please review your AI privacy choice to continue.": {"localizations": {"zh-Hans": {"stringUnit": {"state": "translated", "value": "请先确认 AI 隐私选择。"}}, "es": {"stringUnit": {"state": "translated", "value": "Revisa tu elección de privacidad de IA para continuar."}}, "fr": {"stringUnit": {"state": "translated", "value": "Vérifiez votre choix de confidentialité IA pour continuer."}}, "ja": {"stringUnit": {"state": "translated", "value": "続けるには AI のプライバシー設定を確認してください。"}}}},
-    "AI chat is being prepared. Please try again later.": {"localizations": {"zh-Hans": {"stringUnit": {"state": "translated", "value": "AI 聊天正在准备中，请稍后再试。"}}, "es": {"stringUnit": {"state": "translated", "value": "El chat de IA se está preparando. Inténtalo más tarde."}}, "fr": {"stringUnit": {"state": "translated", "value": "Le chat IA est en cours de préparation. Réessayez plus tard."}}, "ja": {"stringUnit": {"state": "translated", "value": "AI チャットを準備しています。後でもう一度お試しください。"}}}},
-      "Couldn't get a reply right now. Please try again.": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "暂时无法获取回复，请重试。"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "No se pudo obtener una respuesta. Inténtalo de nuevo."
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Impossible d’obtenir une réponse. Réessayez."
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "返信を取得できませんでした。もう一度お試しください。"
-            }
-          }
-        }
-      },
-      "Your reply is still being prepared. Please try again shortly.": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "回复正在生成，请稍后重试。"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Tu respuesta se está preparando. Inténtalo de nuevo en un momento."
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Votre réponse est en cours de préparation. Réessayez dans un instant."
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "返信を準備しています。少し待ってからもう一度お試しください。"
-            }
-          }
-        }
-      },
-      "A little busy right now. Please wait and try again.": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "现在有点忙，请稍等再试。"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Estamos un poco ocupados. Espera e inténtalo de nuevo."
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Le service est momentanément occupé. Patientez puis réessayez."
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "ただいま混み合っています。少し待ってからお試しください。"
-            }
-          }
-        }
-      },
-      "Your session has expired. Please sign in again.": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "登录已过期，请重新登录。"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Tu sesión ha caducado. Vuelve a iniciar sesión."
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Votre session a expiré. Reconnectez-vous."
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "セッションの有効期限が切れました。もう一度サインインしてください。"
-            }
-          }
-        }
-      },
-      "Couldn't load this conversation. Please try again.": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "暂时无法加载对话，请重试。"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "No se pudo cargar esta conversación. Inténtalo de nuevo."
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Impossible de charger cette conversation. Réessayez."
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "会話を読み込めませんでした。もう一度お試しください。"
-            }
-          }
-        }
-      },
-      "Photos & videos": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "照片和视频"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Fotos y videos"
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Photos et vidéos"
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "写真と動画"
-            }
-          }
-        }
-      },
-      "Camera": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "相机"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Cámara"
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Appareil photo"
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "カメラ"
-            }
-          }
-        }
-      },
-      "Opening…": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "正在打开…"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Abriendo…"
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Ouverture…"
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "開いています…"
-            }
-          }
-        }
-      },
-      "Sharing…": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "正在发布…"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Compartiendo…"
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Publication…"
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "投稿中…"
-            }
-          }
-        }
-      },
-      "Your coin pack": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "你的金币包"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Tu paquete de monedas"
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Votre pack de pièces"
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "コインパック"
-            }
-          }
-        }
-      },
-      "Ready for a little more?": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "为美好时刻添点光亮"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Un poco más para tus momentos"
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Un petit éclat en plus"
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "毎日に、もう少し輝きを"
-            }
-          }
-        }
-      },
-      "App Store price": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "App Store 价格"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Precio de App Store"
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Prix App Store"
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "App Store の価格"
-            }
-          }
-        }
-      },
-      "This pack is taking a moment": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "暂时无法获取商品"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Este paquete está tardando"
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Ce pack prend un peu de temps"
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "パックを取得できませんでした"
-            }
-          }
-        }
-      },
-      "This pack isn't ready": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "该商品暂不可用"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Este paquete aún no está listo"
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Ce pack n’est pas encore disponible"
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "このパックはまだ利用できません"
-            }
-          }
-        }
-      },
-      "Purchases are unavailable": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "暂时无法购买"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Compras no disponibles"
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Achats indisponibles"
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "購入できません"
-            }
-          }
-        }
-      },
-      "Please reconnect your account before purchasing.": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "请重新连接账号后再购买。"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Vuelve a conectar tu cuenta antes de comprar."
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Reconnectez votre compte avant de poursuivre."
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "購入前にアカウントを再接続してください。"
-            }
-          }
-        }
-      },
-      "This pack is not available from the App Store right now.": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "App Store 暂时无法提供该商品。"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Este paquete no está disponible en App Store ahora mismo."
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Ce pack n’est pas disponible sur l’App Store pour le moment."
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "このパックは現在 App Store で利用できません。"
-            }
-          }
-        }
-      },
-      "Could not load the App Store price. Please try again.": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "暂时无法获取 App Store 价格，请重试。"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "No se pudo cargar el precio de App Store. Inténtalo de nuevo."
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Impossible de charger le prix App Store. Réessayez."
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "App Store の価格を取得できませんでした。もう一度お試しください。"
-            }
-          }
-        }
-      },
-      "Continue with Apple": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "通过 Apple 继续"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Continuar con Apple"
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Continuer avec Apple"
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Apple で続ける"
-            }
-          }
-        }
-      },
-      "Couldn't refresh your connections.": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "暂时无法更新关注信息。"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "No se pudieron actualizar tus conexiones."
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Impossible d’actualiser vos relations."
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "つながりを更新できませんでした。"
-            }
-          }
-        }
-      },
-      "Couldn't refresh your posts.": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "暂时无法更新你的动态。"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "No se pudieron actualizar tus publicaciones."
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Impossible d’actualiser vos publications."
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "投稿を更新できませんでした。"
-            }
-          }
-        }
-      },
-      "Your posts will appear here.": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "你发布的动态会显示在这里。"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Tus publicaciones aparecerán aquí."
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Vos publications apparaîtront ici."
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "投稿がここに表示されます。"
-            }
-          }
-        }
-      },
-      "No videos yet": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "还没有视频"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Aún no hay videos"
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Pas encore de vidéos"
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "動画はまだありません"
-            }
-          }
-        }
-      },
-      "Videos you share will appear here.": {
-        "localizations": {
-          "zh-Hans": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "你分享的视频会显示在这里。"
-            }
-          },
-          "es": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Los videos que compartas aparecerán aquí."
-            }
-          },
-          "fr": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "Les vidéos que vous partagez apparaîtront ici."
-            }
-          },
-          "ja": {
-            "stringUnit": {
-              "state": "translated",
-              "value": "共有した動画がここに表示されます。"
-            }
-          }
-        }
-      },
-    "Your conversations will appear here." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你的对话会显示在这里。"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tus conversaciones aparecerán aquí."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vos conversations apparaîtront ici."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "会話がここに表示されます。"
-          }
-        }
-      }
-    },
-    "Messages are taking a moment" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "消息暂时无法加载"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Los mensajes tardan un momento"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les messages tardent à charger"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "メッセージを読み込めませんでした"
-          }
-        }
-      }
-    },
-    "Please check your connection and try again." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请检查网络后重试。"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Comprueba tu conexión e inténtalo de nuevo."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vérifiez votre connexion et réessayez."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "接続を確認してもう一度お試しください。"
-          }
-        }
-      }
-    },
-    "Some profile details are unavailable" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "部分资料暂时无法显示"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Algunos perfiles no están disponibles"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Certains profils sont indisponibles"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "一部のプロフィールを表示できません"
-          }
-        }
-      }
-    },
-    "Updates are paused" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "消息更新已暂停"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Las actualizaciones están en pausa"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les mises à jour sont en pause"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "更新が一時停止中です"
-          }
-        }
-      }
-    },
-    "Reconnect to see new messages as they arrive." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "重新连接后即可及时接收新消息。"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vuelve a conectarte para recibir mensajes nuevos."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reconnectez-vous pour recevoir les nouveaux messages."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "再接続すると新しいメッセージを受け取れます。"
-          }
-        }
-      }
-    },
-    "Try again" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "重试"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reintentar"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réessayer"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "もう一度試す"
-          }
-        }
-      }
-    },
     "# %@" : {
 
     },
@@ -995,6 +114,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "介绍一下自己"
+          }
+        }
+      }
+    },
+    "A little busy right now. Please wait and try again." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estamos un poco ocupados. Espera e inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le service est momentanément occupé. Patientez puis réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ただいま混み合っています。少し待ってからお試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "现在有点忙，请稍等再试。"
           }
         }
       }
@@ -1355,6 +503,35 @@
         }
       }
     },
+    "Agree and continue" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar y continuar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accepter et continuer"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同意して続ける"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同意并继续"
+          }
+        }
+      }
+    },
     "AI chat" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1380,6 +557,63 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 聊天"
+          }
+        }
+      }
+    },
+    "AI chat is being prepared. Please try again later." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El chat de IA se está preparando. Inténtalo más tarde."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le chat IA est en cours de préparation. Réessayez plus tard."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI チャットを準備しています。後でもう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 聊天正在准备中，请稍后再试。"
+          }
+        }
+      }
+    },
+    "AI privacy" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacidad de IA"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confidentialité IA"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI のプライバシー"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 隐私"
           }
         }
       }
@@ -1466,6 +700,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "匿名账号"
+          }
+        }
+      }
+    },
+    "App Store price" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Precio de App Store"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prix App Store"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store の価格"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store 价格"
           }
         }
       }
@@ -1793,6 +1055,35 @@
         }
       }
     },
+    "Camera" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cámara"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareil photo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カメラ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "相机"
+          }
+        }
+      }
+    },
     "Camera is off" : {
 
     },
@@ -1915,29 +1206,29 @@
       }
     },
     "Checking the App Store…" : {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在连接 App Store…"
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consultando App Store…"
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Consultando App Store…"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connexion à l’App Store…"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Connexion à l’App Store…"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store を確認中…"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "App Store を確認中…"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在连接 App Store…"
           }
         }
       }
@@ -2356,8 +1647,95 @@
         }
       }
     },
+    "Continue with Apple" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuar con Apple"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer avec Apple"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple で続ける"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过 Apple 继续"
+          }
+        }
+      }
+    },
     "Could not confirm your report. Please try again." : {
 
+    },
+    "Could not load the App Store price. Please try again." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cargar el precio de App Store. Inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de charger le prix App Store. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store の価格を取得できませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法获取 App Store 价格，请重试。"
+          }
+        }
+      }
+    },
+    "Couldn't check your AI privacy choice. Please try again." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo comprobar tu elección de privacidad de IA. Inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de vérifier votre choix de confidentialité IA. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI のプライバシー設定を確認できませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法确认你的 AI 隐私选择，请重试。"
+          }
+        }
+      }
     },
     "Couldn't disconnect call notifications. Please try again." : {
       "extractionState" : "stale",
@@ -2388,8 +1766,124 @@
         }
       }
     },
+    "Couldn't get a reply right now. Please try again." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo obtener una respuesta. Inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’obtenir une réponse. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返信を取得できませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法获取回复，请重试。"
+          }
+        }
+      }
+    },
     "Couldn't load or save comments." : {
 
+    },
+    "Couldn't load this conversation. Please try again." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cargar esta conversación. Inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de charger cette conversation. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会話を読み込めませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法加载对话，请重试。"
+          }
+        }
+      }
+    },
+    "Couldn't refresh your connections." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudieron actualizar tus conexiones."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’actualiser vos relations."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "つながりを更新できませんでした。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法更新关注信息。"
+          }
+        }
+      }
+    },
+    "Couldn't refresh your posts." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudieron actualizar tus publicaciones."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’actualiser vos publications."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "投稿を更新できませんでした。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法更新你的动态。"
+          }
+        }
+      }
     },
     "Couldn't sign out. Please check your connection and try again." : {
       "extractionState" : "stale",
@@ -2445,6 +1939,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法更新通知权限，请重试。"
+          }
+        }
+      }
+    },
+    "Couldn't update your AI privacy choice. Please try again." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo actualizar tu elección de privacidad de IA. Inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de modifier votre choix de confidentialité IA. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI のプライバシー設定を更新できませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法更新你的 AI 隐私选择，请重试。"
           }
         }
       }
@@ -3036,6 +2559,7 @@
       }
     },
     "Guest account" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -3536,6 +3060,34 @@
         }
       }
     },
+    "Liya AI is an automated companion, not a person or professional support." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liya AI es un asistente automatizado, no una persona ni asistencia profesional."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liya AI est un compagnon automatisé, et non une personne ou une aide professionnelle."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liya AI は自動の対話アシスタントであり、人間や専門的な支援ではありません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liya AI 是自动化陪伴助手，不是真人或专业支持。"
+          }
+        }
+      }
+    },
     "Liya AI is preparing a reply…" : {
 
     },
@@ -3580,13 +3132,7 @@
     "Loading photos…" : {
 
     },
-    "Loading posts…" : {
-
-    },
     "Loading selected media…" : {
-
-    },
-    "Loading videos…" : {
 
     },
     "Loading…" : {
@@ -3762,6 +3308,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "消息"
+          }
+        }
+      }
+    },
+    "Messages are taking a moment" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los mensajes tardan un momento"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les messages tardent à charger"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メッセージを読み込めませんでした"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "消息暂时无法加载"
           }
         }
       }
@@ -4124,6 +3699,7 @@
       }
     },
     "No recovery method is linked." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -4151,8 +3727,66 @@
         }
       }
     },
+    "No videos yet" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay videos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore de vidéos"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動画はまだありません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有视频"
+          }
+        }
+      }
+    },
     "No videos yet." : {
 
+    },
+    "Not now" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahora no"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas maintenant"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今はしない"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂不"
+          }
+        }
+      }
     },
     "Not requested" : {
       "extractionState" : "stale",
@@ -4424,6 +4058,35 @@
     "Opening Liya…" : {
 
     },
+    "Opening…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abriendo…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouverture…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開いています…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在打开…"
+          }
+        }
+      }
+    },
     "Pause" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4484,6 +4147,35 @@
     "Photo unavailable" : {
 
     },
+    "Photos & videos" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotos y videos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photos et vidéos"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写真と動画"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "照片和视频"
+          }
+        }
+      }
+    },
     "Photos and videos" : {
       "localizations" : {
         "es" : {
@@ -4508,6 +4200,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "照片和视频"
+          }
+        }
+      }
+    },
+    "Please check your connection and try again." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprueba tu conexión e inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifiez votre connexion et réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続を確認してもう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请检查网络后重试。"
           }
         }
       }
@@ -4545,6 +4266,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请阅读并同意服务条款和隐私政策后继续。"
+          }
+        }
+      }
+    },
+    "Please reconnect your account before purchasing." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vuelve a conectar tu cuenta antes de comprar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconnectez votre compte avant de poursuivre."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購入前にアカウントを再接続してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请重新连接账号后再购买。"
+          }
+        }
+      }
+    },
+    "Please review your AI privacy choice to continue." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisa tu elección de privacidad de IA para continuar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifiez votre choix de confidentialité IA pour continuer."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "続けるには AI のプライバシー設定を確認してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先确认 AI 隐私选择。"
           }
         }
       }
@@ -4783,9 +4562,6 @@
         }
       }
     },
-    "Private notes are not synced." : {
-
-    },
     "Profile" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4876,8 +4652,34 @@
         }
       }
     },
-    "Purchasing is unavailable until account and secure coin delivery are connected." : {
-
+    "Purchases are unavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compras no disponibles"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Achats indisponibles"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購入できません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法购买"
+          }
+        }
+      }
     },
     "Push delivery for messages and activity is not available yet. Call notifications have separate settings." : {
       "localizations" : {
@@ -4907,6 +4709,63 @@
         }
       }
     },
+    "Read Privacy Policy" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leer la política de privacidad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire la politique de confidentialité"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プライバシーポリシーを読む"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "阅读隐私政策"
+          }
+        }
+      }
+    },
+    "Ready for a little more?" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un poco más para tus momentos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un petit éclat en plus"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "毎日に、もう少し輝きを"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为美好时刻添点光亮"
+          }
+        }
+      }
+    },
     "Recent entries" : {
       "localizations" : {
         "es" : {
@@ -4931,6 +4790,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最近的记录"
+          }
+        }
+      }
+    },
+    "Reconnect to see new messages as they arrive." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vuelve a conectarte para recibir mensajes nuevos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconnectez-vous pour recevoir les nouveaux messages."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再接続すると新しいメッセージを受け取れます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新连接后即可及时接收新消息。"
           }
         }
       }
@@ -5143,19 +5031,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安全"
-          }
-        }
-      }
-    },
-    "Sample comments" : {
-
-    },
-    "Sample: %@ likes · %@ comments" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Sample: %1$@ likes · %2$@ comments"
           }
         }
       }
@@ -5569,6 +5444,35 @@
         }
       }
     },
+    "Sharing…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartiendo…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publication…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "投稿中…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在发布…"
+          }
+        }
+      }
+    },
     "Sign out" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5681,6 +5585,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在退出…"
+          }
+        }
+      }
+    },
+    "Some profile details are unavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algunos perfiles no están disponibles"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certains profils sont indisponibles"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一部のプロフィールを表示できません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "部分资料暂时无法显示"
           }
         }
       }
@@ -5924,9 +5857,6 @@
         }
       }
     },
-    "The price shown is supplied by the App Store." : {
-
-    },
     "Their posts and messages will no longer be visible to you." : {
 
     },
@@ -6020,33 +5950,121 @@
     "This member is no longer available." : {
 
     },
+    "This pack is not available from the App Store right now." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este paquete no está disponible en App Store ahora mismo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce pack n’est pas disponible sur l’App Store pour le moment."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このパックは現在 App Store で利用できません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store 暂时无法提供该商品。"
+          }
+        }
+      }
+    },
+    "This pack is taking a moment" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este paquete está tardando"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce pack prend un peu de temps"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パックを取得できませんでした"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法获取商品"
+          }
+        }
+      }
+    },
+    "This pack isn't ready" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este paquete aún no está listo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce pack n’est pas encore disponible"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このパックはまだ利用できません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该商品暂不可用"
+          }
+        }
+      }
+    },
     "This post is no longer available." : {
 
     },
     "This product is not configured as a coin pack." : {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "该商品尚未配置为金币包。"
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este producto no está configurado como paquete de monedas."
           }
         },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Este producto no está configurado como paquete de monedas."
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce produit n’est pas configuré comme pack de pièces."
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ce produit n’est pas configuré comme pack de pièces."
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この商品はコインパックとして設定されていません。"
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "この商品はコインパックとして設定されていません。"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该商品尚未配置为金币包。"
           }
         }
       }
@@ -6118,12 +6136,88 @@
         }
       }
     },
+    "To reply, Liya sends your message and recent AI conversation to Groq through Supabase. Your conversation is saved to your account. You can change this choice here at any time." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para responder, Liya envía tu mensaje y la conversación reciente con la IA a Groq mediante Supabase. La conversación se guarda en tu cuenta. Puedes cambiar esta opción aquí en cualquier momento."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour répondre, Liya transmet votre message et les échanges récents avec l’IA à Groq via Supabase. Votre conversation est enregistrée dans votre compte. Vous pouvez modifier ce choix ici à tout moment."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返信のため、Liya はあなたのメッセージと最近の AI との会話を Supabase 経由で Groq に送信します。会話はアカウントに保存されます。この選択はいつでもここで変更できます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为了生成回复，Liya 会通过 Supabase 将你的消息和最近的 AI 对话发送给 Groq。对话会保存到你的账号。你可以随时在此更改选择。"
+          }
+        }
+      }
+    },
+    "Try again" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reintentar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réessayer"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "もう一度試す"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重试"
+          }
+        }
+      }
+    },
     "Unavailable" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂不可用" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "No disponible" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Indisponible" } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "利用できません" } }
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No disponible"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indisponible"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "利用できません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂不可用"
+          }
+        }
       }
     },
     "Unsent reports" : {
@@ -6157,6 +6251,64 @@
     },
     "Unshared posts" : {
 
+    },
+    "Updates are paused" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las actualizaciones están en pausa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les mises à jour sont en pause"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新が一時停止中です"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "消息更新已暂停"
+          }
+        }
+      }
+    },
+    "Updating…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizando…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à jour…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新中…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在更新…"
+          }
+        }
+      }
     },
     "Upset" : {
       "extractionState" : "stale",
@@ -6255,6 +6407,35 @@
     },
     "Videos" : {
 
+    },
+    "Videos you share will appear here." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los videos que compartas aparecerán aquí."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les vidéos que vous partagez apparaîtront ici."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "共有した動画がここに表示されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你分享的视频会显示在这里。"
+          }
+        }
+      }
     },
     "Visible to members" : {
       "extractionState" : "stale",
@@ -6360,6 +6541,35 @@
     },
     "Why are you reporting this thought?" : {
 
+    },
+    "Withdraw AI consent" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirar consentimiento para IA"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer le consentement à l’IA"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI への同意を撤回"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "撤回 AI 授权"
+          }
+        }
+      }
     },
     "Write a comment…" : {
       "extractionState" : "stale",
@@ -6478,6 +6688,7 @@
       }
     },
     "You can't return to this account after signing out or deleting it." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -6623,6 +6834,34 @@
         }
       }
     },
+    "Your AI privacy" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu privacidad de IA"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre confidentialité IA"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI のプライバシー"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的 AI 隐私"
+          }
+        }
+      }
+    },
     "Your balance" : {
       "localizations" : {
         "es" : {
@@ -6647,6 +6886,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "当前余额"
+          }
+        }
+      }
+    },
+    "Your coin pack" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu paquete de monedas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre pack de pièces"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コインパック"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的金币包"
           }
         }
       }
@@ -6676,6 +6943,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的内容"
+          }
+        }
+      }
+    },
+    "Your conversations will appear here." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tus conversaciones aparecerán aquí."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos conversations apparaîtront ici."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会話がここに表示されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的对话会显示在这里。"
           }
         }
       }
@@ -6732,6 +7028,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我的草稿"
+          }
+        }
+      }
+    },
+    "Your posts will appear here." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tus publicaciones aparecerán aquí."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos publications apparaîtront ici."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "投稿がここに表示されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你发布的动态会显示在这里。"
           }
         }
       }
@@ -6850,6 +7175,35 @@
         }
       }
     },
+    "Your reply is still being prepared. Please try again shortly." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu respuesta se está preparando. Inténtalo de nuevo en un momento."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre réponse est en cours de préparation. Réessayez dans un instant."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返信を準備しています。少し待ってからもう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回复正在生成，请稍后重试。"
+          }
+        }
+      }
+    },
     "Your selection applies to supported screens. Some content may remain in English." : {
       "localizations" : {
         "es" : {
@@ -6874,6 +7228,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "所选语言适用于已支持的页面，部分内容可能仍以英文显示。"
+          }
+        }
+      }
+    },
+    "Your session has expired. Please sign in again." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu sesión ha caducado. Vuelve a iniciar sesión."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre session a expiré. Reconnectez-vous."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セッションの有効期限が切れました。もう一度サインインしてください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录已过期，请重新登录。"
           }
         }
       }

@@ -44,14 +44,6 @@ struct LiyaApp: App {
                         }
                     }
                 }
-                .sheet(isPresented: $session.passwordRecovery) {
-                    EmailAccountView(recovery: true) {
-                        if let owner = session.userID {
-                            store.restoreAccountMaterial(owner)
-                            store.inPreview = true
-                        }
-                    }.environmentObject(session)
-                }
                 .sheet(isPresented: Binding(get: { voip.permissionReminder != nil && scenePhase == .active }, set: { if !$0 { voip.dismissPermissionReminder() } })) {
                     LocalConfirmation(title: "Enable call access", message: voip.permissionReminder == "video" ? "The incoming video call couldn't be answered without microphone and camera access. Allow access, then ask the member to call again." : "The incoming call couldn't be answered without microphone access. Allow access, then ask the member to call again.", action: "Allow access") {
                         Task { await voip.resolvePermissionReminder() }

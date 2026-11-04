@@ -248,11 +248,15 @@ private struct WelcomeView: View {
             }
         }.onLiyaChange(of: session.passwordRecovery) { recovering in
             if recovering { showEmail = false }
-        }.sheet(isPresented: $showEmail) {
-            EmailAccountView {
+        }.sheet(isPresented: Binding(
+            get: { showEmail || session.passwordRecovery },
+            set: { if !$0 { showEmail = false } }
+        )) {
+            EmailAccountView(recovery: session.passwordRecovery) {
                 showEmail = false
                 finishSignIn()
             }
+            .id(session.passwordRecovery)
             .environmentObject(session)
         }.sheet(item: $policy) { page in
             NavigationStack {
@@ -399,7 +403,7 @@ struct EmailAccountView: View {
                         HStack {
                             Spacer()
                             Button("Close") {
-                                if mode == .newPassword { Task { await session.cancelPasswordRecovery(); dismiss() } }
+                                if mode == .newPassword { Task { if await session.cancelPasswordRecovery() { dismiss() } } }
                                 else { dismiss() }
                             }
                             .font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent)
