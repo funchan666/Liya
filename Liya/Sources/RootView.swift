@@ -62,14 +62,7 @@ struct RootView: View {
 
     var body: some View {
         if !store.inPreview {
-            WelcomeView {
-                Task {
-                    if await session.signIn() {
-                        if let owner = session.userID { store.restoreAccountMaterial(owner) }
-                        store.inPreview = true
-                    }
-                }
-            }
+            WelcomeView()
             .onAppear { selection = .discover; profileDetailVisible = false }
         } else {
             ZStack {
@@ -146,7 +139,6 @@ struct RootView: View {
 }
 
 private struct WelcomeView: View {
-    let enter: () -> Void
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var store: LocalStore
     @State private var policy: PolicyPage?
@@ -173,47 +165,58 @@ private struct WelcomeView: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityElement(children: .combine)
                         Spacer(minLength: 22)
-                        WelcomeAction(title: session.isSigningIn ? "Connecting…" : "Continue to Liya", image: "welcome-button-v2", foreground: liyaInk, isLoading: session.isSigningIn, fullArtwork: true) {
-                            if agreed { enter() } else { showAgreementReminder = true }
-                        }
-                        .disabled(session.isSigningIn)
-                        WelcomeAction(title: "Continue with email", image: "consent-button", foreground: .white) {
-                            if agreed { session.clearAuthFeedback(); showEmail = true }
-                            else { showAgreementReminder = true }
-                        }
-                        .disabled(session.isSigningIn)
-                        .padding(.top, 8)
-                        SignInWithAppleButton(.continue) { request in
-                            let nonce = UUID().uuidString + UUID().uuidString
-                            appleNonce = nonce
-                            request.requestedScopes = [.email, .fullName]
-                            request.nonce = SHA256.hash(data: Data(nonce.utf8)).map { String(format: "%02x", $0) }.joined()
-                        } onCompletion: { result in
-                            let nonce = appleNonce
-                            appleNonce = nil
-                            switch result {
-                            case .success(let authorization):
-                                guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
-                                      let data = credential.identityToken,
-                                      let token = String(data: data, encoding: .utf8), let nonce else {
-                                    session.appleAuthorizationFailed(); return
+                        VStack(spacing: 12) {
+                            WelcomeAction(title: "Continue with email", image: "consent-button", foreground: .white) {
+                                if agreed { session.clearAuthFeedback(); showEmail = true }
+                                else { showAgreementReminder = true }
+                            }
+                            .disabled(session.isSigningIn)
+                            .clipShape(Capsule())
+                            SignInWithAppleButton(.continue) { request in
+                                let nonce = UUID().uuidString + UUID().uuidString
+                                appleNonce = nonce
+                                request.requestedScopes = [.email, .fullName]
+                                request.nonce = SHA256.hash(data: Data(nonce.utf8)).map { String(format: "%02x", $0) }.joined()
+                            } onCompletion: { result in
+                                let nonce = appleNonce
+                                appleNonce = nil
+                                switch result {
+                                case .success(let authorization):
+                                    guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                                          let data = credential.identityToken,
+                                          let token = String(data: data, encoding: .utf8), let nonce else {
+                                        session.appleAuthorizationFailed(); return
+                                    }
+                                    Task { if await session.appleSignIn(token: token, nonce: nonce) { finishSignIn() } }
+                                case .failure(let error):
+                                    if (error as? ASAuthorizationError)?.code != .canceled { session.appleAuthorizationFailed() }
                                 }
-                                Task { if await session.appleSignIn(token: token, nonce: nonce) { finishSignIn() } }
-                            case .failure(let error):
-                                if (error as? ASAuthorizationError)?.code != .canceled { session.appleAuthorizationFailed() }
+                            }
+                            .signInWithAppleButtonStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .overlay {
+                                // Apple-provided English button artwork; the native button handles authorization.
+                                Color.white
+                                    .overlay {
+                                        Image("apple-continue-english")
+                                            .resizable().scaledToFit()
+                                            .frame(maxWidth: 300, maxHeight: 54)
+                                    }
+                                    .allowsHitTesting(false)
+                                    .accessibilityHidden(true)
+                            }
+                            .accessibilityLabel(Text(verbatim: "Continue with Apple"))
+                            .clipShape(Capsule())
+                            .allowsHitTesting(agreed && !session.isSigningIn)
+                            .overlay {
+                                if !agreed {
+                                    Button { showAgreementReminder = true } label: { Color.clear.contentShape(Rectangle()) }
+                                        .accessibilityLabel("Continue with Apple")
+                                }
                             }
                         }
-                        .signInWithAppleButtonStyle(.white)
-                        .frame(height: 54)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .allowsHitTesting(agreed && !session.isSigningIn)
-                        .overlay {
-                            if !agreed {
-                                Button { showAgreementReminder = true } label: { Color.clear.contentShape(Rectangle()) }
-                                    .accessibilityLabel("Continue with Apple")
-                            }
-                        }
-                        .padding(.top, 8)
+                        .frame(maxWidth: 350)
                         if let errorMessage = session.errorMessage {
                             Text(errorMessage).font(.footnote).foregroundStyle(.white)
                                 .multilineTextAlignment(.center).padding(.top, 8)

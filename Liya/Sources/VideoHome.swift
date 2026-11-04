@@ -276,8 +276,15 @@ struct VideoHome: View {
             if !session.catalogLoading && !preview.loading && !preview.unavailable && !session.videos.isEmpty {
                 DuoControlRegion { _ in
                     Button { preview.toggle() } label: {
-                        Image(preview.playing ? "pause" : "play")
-                            .resizable().scaledToFit().frame(width: 56, height: 56)
+                        ZStack {
+                            Color.clear.contentShape(Rectangle())
+                            if !preview.playing {
+                                Image("play")
+                                    .resizable().scaledToFit()
+                                    .accessibilityHidden(true)
+                            }
+                        }
+                        .frame(width: 56, height: 56)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(preview.playing ? "Pause video" : "Play video")

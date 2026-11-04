@@ -62,10 +62,6 @@ final class LiyaSession: ObservableObject {
         )
     }()
 
-    func signIn() async -> Bool {
-        await connectAccount(restoring: false)
-    }
-
     var isGuest: Bool { client.auth.currentUser?.isAnonymous ?? true }
     private static let confirmationURL = URL(string: "com.liyalumora.auroramuse://auth/confirm")!
     private static let recoveryURL = URL(string: "com.liyalumora.auroramuse://auth/recovery")!
@@ -223,26 +219,19 @@ final class LiyaSession: ObservableObject {
             return false
         }
         guard client.auth.currentSession != nil || UserDefaults.standard.bool(forKey: "liya.hasSupabaseAccount") else { return false }
-        return await connectAccount(restoring: true)
+        return await connectAccount()
     }
 
-    private func connectAccount(restoring: Bool) async -> Bool {
+    private func connectAccount() async -> Bool {
         guard !isSigningIn else { return false }
         isSigningIn = true
         let generation = accountGeneration
         errorMessage = nil
         defer { isSigningIn = false }
         do {
-            // Never replace an existing anonymous account merely because refresh failed.
-            let session: Session
-            if client.auth.currentSession != nil {
-                session = try await client.auth.session
-            } else {
-                guard !restoring, !UserDefaults.standard.bool(forKey: "liya.hasSupabaseAccount") else {
-                    throw SessionError.savedSessionUnavailable
-                }
-                session = try await client.auth.signInAnonymously()
-            }
+            // Restore an existing account without creating a new anonymous session.
+            guard client.auth.currentSession != nil else { throw SessionError.savedSessionUnavailable }
+            let session = try await client.auth.session
             guard generation == accountGeneration else { return false }
             UserDefaults.standard.set(true, forKey: "liya.hasSupabaseAccount")
             let response: BootstrapResponse = try await client.functions.invoke(

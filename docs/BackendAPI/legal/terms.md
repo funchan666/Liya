@@ -8,7 +8,7 @@ Liya provides a space to explore emotional content, keep personal thoughts, and 
 
 ## Accounts and your content
 
-You may use Liya with a guest account, an email and password, or Sign in with Apple. A guest account may be lost if its session is removed, the device is lost, or the app is removed. An email or Apple sign-in creates or accesses its own account and does not automatically combine it with a guest account. Keep your sign-in details secure. You are responsible for the content you choose to create and for using only material you have the right to use.
+You can create or access a Liya account using an email address and password or Sign in with Apple. If you register with email, you may need to confirm your address before signing in. Keep your sign-in details secure. Earlier versions supported anonymous accounts; an existing anonymous session may be lost if the session or app is removed or the device is lost. Email and Apple accounts do not automatically combine with an earlier anonymous account. You are responsible for the content you choose to create and for using only material you have the right to use.
 
 ## Conduct and availability
 
