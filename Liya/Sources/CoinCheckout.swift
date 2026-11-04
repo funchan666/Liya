@@ -1,12 +1,14 @@
 import Foundation
 import Combine
 import StoreKit
+import Supabase
 
 /// Implementations must verify Apple's signed transaction on the server and
 /// return only after an idempotent credit for this account has committed.
 @MainActor
 protocol CoinSettlement: AnyObject {
     var accountID: UUID { get }
+    var environment: AppStore.Environment { get }
     func deliver(signedTransaction: String, productID: String) async throws
 }
 
@@ -14,11 +16,13 @@ protocol CoinSettlement: AnyObject {
 final class CoinCheckout: ObservableObject {
     @Published private(set) var busy = false
     @Published private(set) var message: String?
+    @Published private var checkingConnection = false
     @Published private var settlement: (any CoinSettlement)? = nil
     private var processing = Set<UInt64>()
     private var updatesTask: Task<Void, Never>?
+    private var configurationGeneration = UUID()
 
-    var canPurchase: Bool { settlement != nil && !busy }
+    var canPurchase: Bool { settlement != nil && !busy && !checkingConnection }
     var isConnected: Bool { settlement != nil }
 
     init() {
@@ -37,8 +41,43 @@ final class CoinCheckout: ObservableObject {
         if settlement != nil { Task { await recover() } }
     }
 
+    func clearConnection() {
+        configurationGeneration = UUID()
+        checkingConnection = false
+        setSettlement(nil)
+    }
+
+    func refreshConnection(_ session: LiyaSession) async {
+        let generation = UUID(); configurationGeneration = generation
+        checkingConnection = true
+        defer { if configurationGeneration == generation { checkingConnection = false } }
+        guard let owner = session.userID else { setSettlement(nil); return }
+        do {
+            struct Status: Decodable { let code: String }
+            let status: Status = try await session.client.functions.invoke(
+                "liya-apple-coins", options: FunctionInvokeOptions(body: ["action": "status"])
+            )
+            guard status.code == "ready", case let .verified(appTransaction) = try await AppTransaction.shared,
+                  appTransaction.bundleID == Bundle.main.bundleIdentifier,
+                  appTransaction.environment == .production || appTransaction.environment == .sandbox,
+                  session.userID == owner, configurationGeneration == generation else {
+                if configurationGeneration == generation { setSettlement(nil) }
+                return
+            }
+            let sandbox = appTransaction.environment == .sandbox
+            guard await session.configurePurchaseWallet(sandbox: sandbox, owner: owner),
+                  session.userID == owner, configurationGeneration == generation else {
+                if configurationGeneration == generation { setSettlement(nil) }
+                return
+            }
+            setSettlement(CloudCoinSettlement(session: session, owner: owner, environment: appTransaction.environment))
+        } catch {
+            if session.userID == owner && configurationGeneration == generation { setSettlement(nil) }
+        }
+    }
+
     func purchase(_ product: Product, pack: CoinPackage) async {
-        guard let account = settlement?.accountID, !busy,
+        guard let account = settlement?.accountID, !busy, !checkingConnection,
               product.id == pack.id, product.type == .consumable else {
             message = "Purchase is unavailable. Please try again when your account is connected."
             return
@@ -87,7 +126,8 @@ final class CoinCheckout: ObservableObject {
         }
         guard transaction.productType == .consumable, transaction.revocationDate == nil,
               CoinPackage.all.contains(where: { $0.id == transaction.productID }) else { return }
-        guard let settlement, transaction.appAccountToken == settlement.accountID else {
+        guard let settlement, transaction.appAccountToken == settlement.accountID,
+              transaction.environment == settlement.environment else {
             message = "A purchase is waiting for its original account to reconnect."
             return
         }
@@ -102,4 +142,26 @@ final class CoinCheckout: ObservableObject {
             message = "Payment is awaiting confirmation. Please return to the same account to retry."
         }
     }
+}
+
+@MainActor
+private final class CloudCoinSettlement: CoinSettlement {
+    private let session: LiyaSession
+    let accountID: UUID
+    let environment: AppStore.Environment
+
+    init(session: LiyaSession, owner: UUID, environment: AppStore.Environment) {
+        self.session = session; self.accountID = owner; self.environment = environment
+    }
+
+    func deliver(signedTransaction: String, productID: String) async throws {
+        struct Response: Decodable { let code: String }
+        guard session.userID == accountID else { throw SettlementError.accountChanged }
+        let result: Response = try await session.client.functions.invoke("liya-apple-coins", options: FunctionInvokeOptions(body: [
+            "signed_transaction": signedTransaction, "product_id": productID
+        ]))
+        guard result.code == "delivered", session.userID == accountID else { throw SettlementError.deliveryPending }
+        await session.refreshWallet()
+    }
+    private enum SettlementError: Error { case accountChanged, deliveryPending }
 }

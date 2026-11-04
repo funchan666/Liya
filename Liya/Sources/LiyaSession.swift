@@ -21,6 +21,7 @@ final class LiyaSession: ObservableObject {
     @Published private(set) var coinBalance: Int64?
     @Published private(set) var walletError: String?
     @Published private(set) var walletLive = false
+    private var walletUsesSandbox = false
     @Published var welcomeGift: WelcomeGift?
     @Published private(set) var moodEntries: [CloudMood] = []
     @Published private(set) var moodError: String?
@@ -191,7 +192,7 @@ final class LiyaSession: ObservableObject {
             let result = try JSONDecoder().decode(DeletionResponse.self, from: data)
             guard let http = reply as? HTTPURLResponse, (200..<300).contains(http.statusCode), result.code == 0, result.data.status == "deleted" else { throw SessionError.deletionUnconfirmed }
             walletTask?.cancel(); walletTask = nil; walletGeneration = UUID(); walletWatchGeneration = UUID()
-            userID = nil; coinBalance = nil; walletLive = false; welcomeGift = nil
+            userID = nil; coinBalance = nil; walletLive = false; walletUsesSandbox = false; welcomeGift = nil
             profile = nil; profileAvatarURL = nil; moodEntries = []; treeEntries = []; likedMediaIDs = []
             photos = []; videos = []; catalogGeneration = UUID(); imageGeneration = UUID()
             try? await client.auth.signOut(scope: .local)
@@ -222,7 +223,7 @@ final class LiyaSession: ObservableObject {
             serverConfirmed = false
         }
         walletTask?.cancel(); walletTask = nil; walletGeneration = UUID(); walletWatchGeneration = UUID()
-        userID = nil; coinBalance = nil; walletLive = false; welcomeGift = nil
+        userID = nil; coinBalance = nil; walletLive = false; walletUsesSandbox = false; welcomeGift = nil
         profile = nil; profileAvatarURL = nil; moodEntries = []; treeEntries = []; likedMediaIDs = []
         photos = []; videos = []; catalogGeneration = UUID(); imageGeneration = UUID()
         likesReady = false; likesError = nil
@@ -236,7 +237,8 @@ final class LiyaSession: ObservableObject {
         let generation = UUID()
         walletGeneration = generation
         do {
-            let rows: [WalletState] = try await client.rpc("liya_claim_welcome").execute().value
+            let function = walletUsesSandbox ? "liya_claim_sandbox_welcome" : "liya_claim_welcome"
+            let rows: [WalletState] = try await client.rpc(function).execute().value
             guard generation == walletGeneration, owner == userID else { return }
             guard let row = rows.first else { throw SessionError.walletUnavailable }
             coinBalance = row.balance
@@ -249,9 +251,25 @@ final class LiyaSession: ObservableObject {
         }
     }
 
+    func configurePurchaseWallet(sandbox: Bool, owner: UUID) async -> Bool {
+        guard userID == owner else { return false }
+        if walletUsesSandbox != sandbox {
+            walletUsesSandbox = sandbox
+            coinBalance = nil
+            welcomeGift = nil
+            walletTask?.cancel(); walletTask = nil
+            walletWatchGeneration = UUID()
+        }
+        await refreshWallet()
+        guard userID == owner, walletUsesSandbox == sandbox, coinBalance != nil else { return false }
+        startWalletUpdates(for: owner)
+        return true
+    }
+
     func acknowledgeWelcome() async -> Bool {
         do {
-            try await client.rpc("liya_acknowledge_welcome").execute()
+            let function = walletUsesSandbox ? "liya_acknowledge_sandbox_welcome" : "liya_acknowledge_welcome"
+            try await client.rpc(function).execute()
             walletGeneration = UUID()
             welcomeGift = nil
             return true
@@ -473,7 +491,7 @@ final class LiyaSession: ObservableObject {
         let client = client
         let channel = client.channel("liya-wallet-\(owner.uuidString.lowercased())-\(watchGeneration.uuidString.lowercased())")
         let changes = channel.postgresChange(
-            AnyAction.self, schema: "public", table: "liya_wallets",
+            AnyAction.self, schema: "public", table: walletUsesSandbox ? "liya_sandbox_wallets" : "liya_wallets",
             filter: .eq("owner_id", value: owner.uuidString.lowercased())
         )
         walletTask = Task { [weak self] in

@@ -41,14 +41,17 @@ struct LiyaApp: App {
                     LiyaVoIP.shared.bind(session: session, calls: calls, store: store)
                     await LiyaVoIP.shared.updateRegistration()
                 }
-                .onLiyaChange(of: session.userID) { _ in Task { await LiyaVoIP.shared.updateRegistration() } }
+                .onLiyaChange(of: session.userID) { _ in
+                    checkout.clearConnection()
+                    Task { await checkout.refreshConnection(session); await LiyaVoIP.shared.updateRegistration() }
+                }
                 .onLiyaChange(of: calls.call?.id) { id in
                     if id != nil { showingLaunch = false }
                     LiyaVoIP.shared.observeCall(id)
                 }
                 .onLiyaChange(of: scenePhase) { phase in
                     if phase == .active {
-                        Task { await checkout.recover(); await session.resumeAccount(); await social.refresh(session); social.watchMessages(session); await LiyaVoIP.shared.updateRegistration() }
+                        Task { await session.resumeAccount(); await checkout.refreshConnection(session); await social.refresh(session); social.watchMessages(session); await LiyaVoIP.shared.updateRegistration() }
                     }
                 }
         }
