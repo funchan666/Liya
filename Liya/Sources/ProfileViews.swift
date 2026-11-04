@@ -497,7 +497,7 @@ struct SettingsView: View {
                 }.disabled(signingOut || session.isDeletingAccount)
             }.buttonStyle(.plain).padding(.top, 16).modifier(AdaptiveContainerMargins())
         }.sheet(isPresented: $confirmSignOut) {
-            LocalConfirmation(title: "Sign out?", message: "This account has no recovery method. If you sign out, you won't be able to return to it; your next sign-in will start a new account.", action: "Sign out") {
+            LocalConfirmation(title: "Sign out?", message: session.isGuest ? "This guest account has no recovery method. If you sign out, you won't be able to return to it." : "You can sign in again with the same account whenever you're ready.", action: "Sign out") {
                 confirmSignOut = false; signingOut = true; signOutError = nil
                 Task { await signOut() }
             } cancel: { confirmSignOut = false }.presentationDetents([.medium, .large])
@@ -700,14 +700,14 @@ struct AccountView: View {
                 HStack(spacing: 14) {
                     Image("setting-lock").resizable().scaledToFit().frame(width: 48, height: 48).accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Guest account").font(.headline).foregroundStyle(liyaInk)
-                        Text("No recovery method is linked.").font(.subheadline).foregroundStyle(.secondary)
+                        Text(session.isGuest ? "Guest account" : "Your account").font(.headline).foregroundStyle(liyaInk)
+                        Text(session.isGuest ? "No recovery method is linked." : "Your sign-in method keeps your account accessible.").font(.subheadline).foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }.frame(maxWidth: .infinity, alignment: .leading)
                 }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
                     .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 18))
 
-                Text("You can't return to this account after signing out or deleting it.")
+                Text(session.isGuest ? "You can't return to this account after signing out or deleting it." : "You can sign in again unless you delete your account.")
                     .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -730,7 +730,7 @@ struct AccountView: View {
                 if let error = session.deletionError ?? purchaseError { Text(LocalizedStringKey(error)).font(.footnote).foregroundStyle(.red) }
             }.padding(.top, 16).modifier(AdaptiveContainerMargins())
         }.sheet(isPresented: $confirming) {
-            LocalConfirmation(title: "Delete this account?", message: "Your account, posts, messages, uploaded media and coins will be permanently deleted. This anonymous account cannot be restored. Unsent drafts are not included.", action: "Delete account") {
+            LocalConfirmation(title: "Delete this account?", message: "Your account, posts, messages, uploaded media and coins will be permanently deleted. This account cannot be restored.", action: "Delete account") {
                 confirming = false; checking = true; purchaseError = nil
                 Task {
                     guard let owner = session.userID else { checking = false; return }

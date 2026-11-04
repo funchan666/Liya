@@ -1,4 +1,6 @@
 import SwiftUI
+import AuthenticationServices
+import CryptoKit
 
 private struct ProfileDetailVisibilityKey: EnvironmentKey {
     static let defaultValue: Binding<Bool> = .constant(false)
@@ -146,16 +148,19 @@ struct RootView: View {
 private struct WelcomeView: View {
     let enter: () -> Void
     @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var store: LocalStore
     @State private var policy: PolicyPage?
     @State private var agreed = false
     @State private var showAgreementReminder = false
+    @State private var showEmail = false
+    @State private var appleNonce: String?
     var body: some View {
         ZStack {
             LiyaBackground(name: "welcome-clear")
             DuoControlRegion { size in
                 ScrollView {
                     VStack(spacing: 0) {
-                        Spacer().frame(height: max(200, size.height * 0.42))
+                        Spacer().frame(height: max(180, size.height * 0.38))
                         VStack(spacing: 6) {
                             Text("Share how you feel")
                                 .font(.system(.title3, design: .rounded).weight(.semibold))
@@ -167,11 +172,48 @@ private struct WelcomeView: View {
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityElement(children: .combine)
-                        Spacer(minLength: 45)
+                        Spacer(minLength: 22)
                         WelcomeAction(title: session.isSigningIn ? "Connecting…" : "Continue to Liya", image: "welcome-button-v2", foreground: liyaInk, isLoading: session.isSigningIn, fullArtwork: true) {
                             if agreed { enter() } else { showAgreementReminder = true }
                         }
                         .disabled(session.isSigningIn)
+                        WelcomeAction(title: "Continue with email", image: "consent-button", foreground: .white) {
+                            if agreed { session.clearAuthFeedback(); showEmail = true }
+                            else { showAgreementReminder = true }
+                        }
+                        .disabled(session.isSigningIn)
+                        .padding(.top, 8)
+                        SignInWithAppleButton(.continue) { request in
+                            let nonce = UUID().uuidString + UUID().uuidString
+                            appleNonce = nonce
+                            request.requestedScopes = [.email, .fullName]
+                            request.nonce = SHA256.hash(data: Data(nonce.utf8)).map { String(format: "%02x", $0) }.joined()
+                        } onCompletion: { result in
+                            let nonce = appleNonce
+                            appleNonce = nil
+                            switch result {
+                            case .success(let authorization):
+                                guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                                      let data = credential.identityToken,
+                                      let token = String(data: data, encoding: .utf8), let nonce else {
+                                    session.appleAuthorizationFailed(); return
+                                }
+                                Task { if await session.appleSignIn(token: token, nonce: nonce) { finishSignIn() } }
+                            case .failure(let error):
+                                if (error as? ASAuthorizationError)?.code != .canceled { session.appleAuthorizationFailed() }
+                            }
+                        }
+                        .signInWithAppleButtonStyle(.white)
+                        .frame(height: 54)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .allowsHitTesting(agreed && !session.isSigningIn)
+                        .overlay {
+                            if !agreed {
+                                Button { showAgreementReminder = true } label: { Color.clear.contentShape(Rectangle()) }
+                                    .accessibilityLabel("Continue with Apple")
+                            }
+                        }
+                        .padding(.top, 8)
                         if let errorMessage = session.errorMessage {
                             Text(errorMessage).font(.footnote).foregroundStyle(.white)
                                 .multilineTextAlignment(.center).padding(.top, 8)
@@ -204,11 +246,24 @@ private struct WelcomeView: View {
                 }
                 .transition(.opacity)
             }
+        }.onLiyaChange(of: session.passwordRecovery) { recovering in
+            if recovering { showEmail = false }
+        }.sheet(isPresented: $showEmail) {
+            EmailAccountView {
+                showEmail = false
+                finishSignIn()
+            }
+            .environmentObject(session)
         }.sheet(item: $policy) { page in
             NavigationStack {
                 LegalDocumentView(page: page)
             }
         }
+    }
+
+    private func finishSignIn() {
+        if let owner = session.userID { store.restoreAccountMaterial(owner) }
+        store.inPreview = true
     }
 
     private var agreementRow: some View {
@@ -304,6 +359,156 @@ private struct WelcomePanelBackground: View {
             .clipped()
             .accessibilityHidden(true)
             .allowsHitTesting(false)
+        }
+    }
+}
+
+struct EmailAccountView: View {
+    enum Mode { case signIn, signUp, reset, newPassword }
+    let onSuccess: () -> Void
+    @EnvironmentObject private var session: LiyaSession
+    @Environment(\.dismiss) private var dismiss
+    @State private var mode: Mode
+    @State private var email = ""
+    @State private var password = ""
+    @State private var confirmation = ""
+    @State private var validation: String?
+    @FocusState private var focused: Field?
+    private enum Field { case email, password, confirmation }
+
+    init(recovery: Bool = false, onSuccess: @escaping () -> Void) {
+        self.onSuccess = onSuccess
+        _mode = State(initialValue: recovery ? .newPassword : .signIn)
+    }
+
+    private var title: String {
+        switch mode {
+        case .signIn: return "Welcome back"
+        case .signUp: return "Make Liya yours"
+        case .reset: return "Reset your password"
+        case .newPassword: return "Choose a new password"
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            LiyaBackground()
+            DuoControlRegion { size in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        HStack {
+                            Spacer()
+                            Button("Close") {
+                                if mode == .newPassword { Task { await session.cancelPasswordRecovery(); dismiss() } }
+                                else { dismiss() }
+                            }
+                            .font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .disabled(session.isSigningIn)
+                        }
+                        Text(LocalizedStringKey(title)).font(.system(.largeTitle, design: .rounded).weight(.bold)).foregroundStyle(liyaInk)
+                        Text(mode == .signIn ? "Sign in to pick up where you left off." : mode == .signUp ? "Create an account for your moments and connections." : mode == .reset ? "We'll send a link to your email address." : "Use a password you haven't used before.")
+                            .font(.subheadline).foregroundStyle(liyaInk.opacity(0.7))
+                            .fixedSize(horizontal: false, vertical: true)
+                        VStack(alignment: .leading, spacing: 16) {
+                            if mode != .newPassword {
+                                fieldLabel("Email")
+                                TextField("you@example.com", text: $email)
+                                    .textContentType(.emailAddress).keyboardType(.emailAddress)
+                                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                                    .focused($focused, equals: .email).submitLabel(.next)
+                                    .onSubmit { focused = mode == .reset ? nil : .password }
+                                    .padding(16).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 16))
+                            }
+                            if mode != .reset {
+                                fieldLabel(mode == .newPassword ? "New password" : "Password")
+                                SecureField("At least 6 characters", text: $password)
+                                    .textContentType(mode == .signIn ? .password : .newPassword)
+                                    .focused($focused, equals: .password).submitLabel(mode == .signIn ? .go : .next)
+                                    .onSubmit { if mode == .signIn { submit() } else { focused = .confirmation } }
+                                    .padding(16).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 16))
+                            }
+                            if mode == .signUp || mode == .newPassword {
+                                fieldLabel("Confirm password")
+                                SecureField("Enter your password again", text: $confirmation)
+                                    .textContentType(.newPassword).focused($focused, equals: .confirmation)
+                                    .submitLabel(.go).onSubmit { submit() }
+                                    .padding(16).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 16))
+                            }
+                        }
+                        if let message = validation ?? session.errorMessage {
+                            Text(message).font(.footnote.weight(.medium)).foregroundStyle(.red)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        if let notice = session.authNotice {
+                            Text(notice).font(.footnote.weight(.medium)).foregroundStyle(liyaInk)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        WelcomeAction(title: session.isSigningIn ? "Please wait…" : actionTitle, image: "consent-button", foreground: .white, isLoading: session.isSigningIn) { submit() }
+                            .disabled(session.isSigningIn)
+                        if mode != .newPassword {
+                            HStack {
+                                Button(mode == .signUp ? "Already have an account? Sign in" : "Create account") {
+                                    changeMode(mode == .signUp ? .signIn : .signUp)
+                                }
+                                .frame(minHeight: 44)
+                                Spacer()
+                                if mode == .signIn {
+                                    Button("Forgot password?") { changeMode(.reset) }.frame(minHeight: 44)
+                                } else if mode == .reset {
+                                    Button("Sign in") { changeMode(.signIn) }.frame(minHeight: 44)
+                                }
+                            }
+                            .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent)
+                            .disabled(session.isSigningIn)
+                        }
+                    }
+                    .frame(maxWidth: 430, alignment: .leading)
+                    .frame(maxWidth: .infinity, minHeight: size.height, alignment: .top)
+                    .padding(.horizontal, 24).padding(.bottom, 28)
+                }
+            }
+        }
+        .interactiveDismissDisabled(session.isSigningIn || mode == .newPassword)
+    }
+
+    private var actionTitle: String {
+        switch mode { case .signIn: return "Sign in"; case .signUp: return "Create account"; case .reset: return "Send reset link"; case .newPassword: return "Save password" }
+    }
+
+    private func fieldLabel(_ title: String) -> some View {
+        Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+    }
+
+    private func changeMode(_ next: Mode) {
+        mode = next; password = ""; confirmation = ""; validation = nil; session.clearAuthFeedback()
+    }
+
+    private func submit() {
+        validation = nil
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        if mode != .newPassword && (!cleanEmail.contains("@") || cleanEmail.contains(" ")) {
+            validation = "Enter a valid email address."; return
+        }
+        if mode != .reset && password.isEmpty { validation = "Enter your password."; return }
+        if (mode == .signUp || mode == .newPassword) && password.count < 6 {
+            validation = "Choose a password with at least 6 characters."; return
+        }
+        if (mode == .signUp || mode == .newPassword) && password != confirmation {
+            validation = "Your passwords don't match."; return
+        }
+        focused = nil
+        let selectedMode = mode
+        let submittedPassword = password
+        Task {
+            let succeeded: Bool
+            switch selectedMode {
+            case .signIn: succeeded = await session.emailSignIn(email: cleanEmail, password: submittedPassword)
+            case .signUp: succeeded = await session.emailSignUp(email: cleanEmail, password: submittedPassword)
+            case .reset: await session.sendPasswordReset(email: cleanEmail); succeeded = false
+            case .newPassword: succeeded = await session.updatePassword(submittedPassword)
+            }
+            if succeeded { password = ""; confirmation = ""; onSuccess() }
         }
     }
 }

@@ -15,7 +15,7 @@ pdfmetrics.registerFont(TTFont("LiyaArialBold", "/System/Library/Fonts/Supplemen
 styles = {
     "title": ParagraphStyle("title", fontName="LiyaArialBold", fontSize=21, leading=26, textColor=colors.HexColor("#28356D"), spaceAfter=10),
     "heading": ParagraphStyle("heading", fontName="LiyaArialBold", fontSize=12, leading=16, textColor=colors.HexColor("#5A42B8"), spaceBefore=12, spaceAfter=6, keepWithNext=True),
-    "body": ParagraphStyle("body", fontName="LiyaArial", fontSize=10.5, leading=14.5, textColor=colors.HexColor("#20243B"), spaceAfter=8),
+    "body": ParagraphStyle("body", fontName="LiyaArial", fontSize=10.5, leading=14.5, textColor=colors.HexColor("#20243B"), spaceAfter=8, allowWidows=0, allowOrphans=0),
 }
 def inline_markup(text):
     result, position = [], 0

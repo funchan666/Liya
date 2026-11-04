@@ -1,6 +1,6 @@
 # Liya Terms of Service
 
-Effective 3 November 2026.
+Effective 4 November 2026.
 
 ## Using Liya
 
@@ -8,7 +8,7 @@ Liya provides a space to explore emotional content, keep personal thoughts, and 
 
 ## Accounts and your content
 
-Liya can create an anonymous account for your use. An anonymous account may be lost if its session is removed, the device is lost, or the app is removed; account recovery is not currently available. You are responsible for the content you choose to create and for using only material you have the right to use.
+You may use Liya with a guest account, an email and password, or Sign in with Apple. A guest account may be lost if its session is removed, the device is lost, or the app is removed. An email or Apple sign-in creates or accesses its own account and does not automatically combine it with a guest account. Keep your sign-in details secure. You are responsible for the content you choose to create and for using only material you have the right to use.
 
 ## Conduct and availability
 

@@ -6,7 +6,7 @@ enum PolicyPage: String, Identifiable {
     var id: String { rawValue }
     var title: String { self == .terms ? "Terms of Service" : "Privacy Policy" }
     var url: URL {
-        URL(string: "https://hymfjhuglaqoftrcxfjx.supabase.co/storage/v1/object/public/liya-legal/\(rawValue)-20261103.pdf")!
+        URL(string: "https://hymfjhuglaqoftrcxfjx.supabase.co/storage/v1/object/public/liya-legal/\(rawValue)-20261104.pdf")!
     }
 }
 

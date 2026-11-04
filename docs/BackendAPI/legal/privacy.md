@@ -1,14 +1,14 @@
 # Liya Privacy Policy
 
-Effective 3 November 2026.
+Effective 4 November 2026.
 
 ## Information handled
 
-Liya uses an anonymous account identifier and session to connect to the service. The service stores the account's coin balance and welcome-gift record, account profile and selected profile photo, saved mood entries and private thoughts, community profile, posts and attachments, comments, likes, follows, blocks, messages and attachments, automated chat messages and responses, and reports you choose to submit. When the app connects, the hosting provider may process connection information such as IP address and ordinary service logs. Earlier device-only profiles and journal entries, local drafts and other features described in the app as device-only remain on your device unless you choose to send them.
+Liya uses an account identifier and session to connect to the service. You may use a guest account, register with an email address and password, or choose Sign in with Apple. Supabase processes the email address and authentication information needed to manage email accounts. If you choose Apple, Apple authenticates you and shares an account identifier and, where provided, an email address, which may be an Apple private relay address. Supabase processes the Apple authentication information to establish your Liya session. The service stores the account's coin balance and welcome-gift record, account profile and selected profile photo, saved mood entries and private thoughts, community profile, posts and attachments, comments, likes, follows, blocks, messages and attachments, AI chat messages and responses, and reports you choose to submit. When the app connects, the hosting provider may process connection information such as IP address and ordinary service logs. Local drafts remain on your device unless you choose to send them.
 
 ## How information is used
 
-The account and session support access to Liya, its example content, community and your saved account information. Your community name and introduction, and any avatar you choose to share, are visible to other signed-in members. Posts, attachments and comments are visible to the community; messages and their attachments are available to their participants. People you block cannot interact with you through the community while the block is in place. Supabase provides authentication, database and file hosting for the service. Reports are stored, but a review service has not yet been configured. When you choose to view a coin pack, Apple supplies its App Store product information. Purchases are not currently enabled.
+The account and session support access to Liya, its content, community and your saved account information. Your community name and introduction, and any avatar you choose to share, are visible to other signed-in members. Posts, attachments and comments are visible to the community; messages and their attachments are available to their participants. People you block cannot interact with you through the community while the block is in place. Supabase provides authentication, database and file hosting for the service. Reports are stored, but a review service has not yet been configured. When you choose a coin pack, Apple supplies its App Store product information and processes any purchase. Liya verifies signed transaction information to deliver coins and retains transaction identifiers to prevent duplicate delivery.
 
 ## AI conversations and third-party processing
 

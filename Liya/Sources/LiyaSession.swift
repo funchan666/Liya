@@ -11,6 +11,8 @@ final class LiyaSession: ObservableObject {
     @Published var welcomeNotice: String?
     @Published var deletionError: String?
     @Published private(set) var errorMessage: String?
+    @Published private(set) var authNotice: String?
+    @Published var passwordRecovery = false
     @Published private(set) var userID: UUID?
     @Published private(set) var photos: [LiyaMedia] = []
     @Published private(set) var videos: [LiyaMedia] = []
@@ -64,8 +66,155 @@ final class LiyaSession: ObservableObject {
         await connectAccount(restoring: false)
     }
 
+    var isGuest: Bool { client.auth.currentUser?.isAnonymous ?? true }
+    private static let confirmationURL = URL(string: "com.liyalumora.auroramuse://auth/confirm")!
+    private static let recoveryURL = URL(string: "com.liyalumora.auroramuse://auth/recovery")!
+
+    func clearAuthFeedback() { errorMessage = nil; authNotice = nil }
+    func appleAuthorizationFailed() { errorMessage = "Couldn't sign in with Apple. Please try again." }
+
+    private func canBeginAlternateSignIn() -> Bool {
+        guard userID == nil, client.auth.currentSession == nil else {
+            errorMessage = "An existing account is still on this device. Reconnect to it before changing accounts."
+            return false
+        }
+        return true
+    }
+
+    func emailSignIn(email: String, password: String) async -> Bool {
+        guard !isSigningIn else { return false }
+        clearAuthFeedback()
+        guard canBeginAlternateSignIn() else { return false }
+        isSigningIn = true
+        defer { isSigningIn = false }
+        do {
+            _ = try await client.auth.signIn(email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
+            return await activateSignedInAccount()
+        } catch {
+            errorMessage = "Couldn't sign in. Check your email and password, and make sure your email is confirmed."
+            return false
+        }
+    }
+
+    func emailSignUp(email: String, password: String) async -> Bool {
+        guard !isSigningIn else { return false }
+        clearAuthFeedback()
+        guard canBeginAlternateSignIn() else { return false }
+        isSigningIn = true
+        defer { isSigningIn = false }
+        do {
+            let result = try await client.auth.signUp(email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password, redirectTo: Self.confirmationURL)
+            if result.session != nil { return await activateSignedInAccount() }
+            authNotice = "Check your inbox for a confirmation link, then return to Liya."
+            return false
+        } catch {
+            errorMessage = "Couldn't create your account. Check your details and try again."
+            return false
+        }
+    }
+
+    func appleSignIn(token: String, nonce: String) async -> Bool {
+        guard !isSigningIn else { return false }
+        clearAuthFeedback()
+        guard canBeginAlternateSignIn() else { return false }
+        isSigningIn = true
+        defer { isSigningIn = false }
+        do {
+            _ = try await client.auth.signInWithIdToken(credentials: .init(provider: .apple, idToken: token, nonce: nonce))
+            return await activateSignedInAccount()
+        } catch {
+            errorMessage = "Couldn't sign in with Apple. Please try again."
+            return false
+        }
+    }
+
+    func sendPasswordReset(email: String) async {
+        guard !isSigningIn else { return }
+        clearAuthFeedback()
+        guard canBeginAlternateSignIn() else { return }
+        isSigningIn = true
+        defer { isSigningIn = false }
+        do {
+            try await client.auth.resetPasswordForEmail(email.trimmingCharacters(in: .whitespacesAndNewlines), redirectTo: Self.recoveryURL)
+            authNotice = "If an account exists for this email, a reset link is on its way."
+        } catch { errorMessage = "Couldn't send a reset link. Please try again." }
+    }
+
+    func handleAuthURL(_ url: URL) async -> Bool {
+        guard url.scheme == "com.liyalumora.auroramuse", url.host == "auth",
+              ["/confirm", "/recovery"].contains(url.path), !isSigningIn else { return false }
+        guard canBeginAlternateSignIn() else { return false }
+        isSigningIn = true; clearAuthFeedback()
+        defer { isSigningIn = false }
+        do {
+            if url.path == "/recovery" { UserDefaults.standard.set(true, forKey: "liya.pendingPasswordRecovery") }
+            _ = try await client.auth.session(from: url)
+            if url.path == "/recovery" {
+                passwordRecovery = true
+                return false
+            }
+            return await activateSignedInAccount()
+        } catch {
+            if url.path == "/recovery" { UserDefaults.standard.removeObject(forKey: "liya.pendingPasswordRecovery") }
+            errorMessage = "This link is invalid or has expired. Please request a new one on this device."
+            return false
+        }
+    }
+
+    func updatePassword(_ password: String) async -> Bool {
+        guard passwordRecovery, !isSigningIn else { return false }
+        isSigningIn = true; clearAuthFeedback()
+        defer { isSigningIn = false }
+        do {
+            _ = try await client.auth.update(user: UserAttributes(password: password))
+            UserDefaults.standard.removeObject(forKey: "liya.pendingPasswordRecovery")
+            passwordRecovery = false
+            return await activateSignedInAccount()
+        } catch {
+            errorMessage = "Couldn't update your password. Please try again."
+            return false
+        }
+    }
+
+    func cancelPasswordRecovery() async {
+        guard passwordRecovery, !isSigningIn else { return }
+        try? await client.auth.signOut(scope: .local)
+        UserDefaults.standard.removeObject(forKey: "liya.pendingPasswordRecovery")
+        passwordRecovery = false
+        clearAuthFeedback()
+    }
+
+    private func activateSignedInAccount() async -> Bool {
+        let generation = accountGeneration
+        do {
+            let current = try await client.auth.session
+            UserDefaults.standard.set(true, forKey: "liya.hasSupabaseAccount")
+            let response: BootstrapResponse = try await client.functions.invoke(
+                "liya-bootstrap", options: FunctionInvokeOptions(body: [String: String]())
+            )
+            guard generation == accountGeneration, response.code == 0, response.data.isEmpty else { throw SessionError.invalidBootstrap }
+            userID = current.user.id
+            welcomeNotice = nil
+            Task { await refreshCatalog() }
+            Task { await refreshWallet() }
+            Task { await refreshProfile() }
+            Task { await refreshLikes() }
+            startWalletUpdates(for: current.user.id)
+            return true
+        } catch {
+            errorMessage = "Your account is signed in, but Liya couldn't finish connecting. Please try again."
+            return false
+        }
+    }
+
     /// Resume only an existing account. A launch must never create a new one.
     func restoreSavedAccount() async -> Bool {
+        guard !isSigningIn else { return false }
+        if UserDefaults.standard.bool(forKey: "liya.pendingPasswordRecovery") {
+            if client.auth.currentSession != nil { passwordRecovery = true }
+            else { UserDefaults.standard.removeObject(forKey: "liya.pendingPasswordRecovery") }
+            return false
+        }
         guard client.auth.currentSession != nil || UserDefaults.standard.bool(forKey: "liya.hasSupabaseAccount") else { return false }
         return await connectAccount(restoring: true)
     }
@@ -106,7 +255,7 @@ final class LiyaSession: ObservableObject {
             return true
         } catch SessionError.savedSessionUnavailable {
             guard generation == accountGeneration else { return false }
-            errorMessage = "Your saved anonymous account is unavailable. Account recovery is not connected yet."
+            errorMessage = "Your saved account is unavailable. Check your connection or sign in again."
             return false
         } catch {
             guard generation == accountGeneration else { return false }
@@ -228,7 +377,7 @@ final class LiyaSession: ObservableObject {
         photos = []; videos = []; catalogGeneration = UUID(); imageGeneration = UUID()
         likesReady = false; likesError = nil
         UserDefaults.standard.removeObject(forKey: "liya.hasSupabaseAccount")
-        welcomeNotice = serverConfirmed ? "You are signed out. Continue to begin a new account." : "Signed out on this device. The server could not confirm sign-out."
+        welcomeNotice = serverConfirmed ? "You are signed out. Sign in whenever you're ready." : "Signed out on this device. The server could not confirm sign-out."
         return true
     }
 
