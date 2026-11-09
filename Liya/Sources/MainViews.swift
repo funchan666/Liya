@@ -71,7 +71,7 @@ struct ComposeHome: View {
                         publishing = true
                         Task {
                             if await social.publish(session, id: id, body: body, tags: tags, attachments: files) {
-                                store.composeText = ""; store.composeAttachments = []; store.composeTags = []; postAttempt = ""; postFingerprint = ""; savedMessage = "Shared with the community."
+                                store.composeText = ""; store.composeAttachments = []; store.composeTags = []; postAttempt = ""; postFingerprint = ""; savedMessage = "Submitted. Check your post for its review status."
                             }
                             publishing = false
                         }
@@ -148,7 +148,7 @@ struct DraftsView: View {
                                 Text(draft.date, style: .date).font(.caption).foregroundStyle(.secondary)
                                 Spacer()
                                 NavigationLink("Edit") { EditDraftView(draft: draft) }.font(.footnote.bold()).foregroundStyle(liyaAccent)
-                                Button(publishingDraft == draft.id ? "Sharing…" : (isShared(draft) ? "Shared" : "Share")) {
+                                Button(publishingDraft == draft.id ? "Sharing…" : (isShared(draft) ? "Submitted" : "Share")) {
                                     guard let owner = session.userID else { return }
                                     publishingDraft = draft.id
                                     Task {
@@ -158,6 +158,10 @@ struct DraftsView: View {
                                 }.disabled(publishingDraft != nil || !social.isJoined(session) || isShared(draft))
                                     .font(.footnote.bold()).foregroundStyle(liyaAccent)
                                 Button("Delete") { deletingDraft = draft }.font(.footnote.bold()).foregroundStyle(liyaAccent)
+                            }
+                            if isShared(draft), let owner = session.userID,
+                               let status = social.moderationText(kind: "post", id: SocialAttempt.draftPostID(owner: owner, draft: draft)) {
+                                Text(status).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                             }
                         }.padding(16).background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 14))
                     }

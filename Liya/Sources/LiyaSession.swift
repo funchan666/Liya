@@ -9,6 +9,7 @@ final class LiyaSession: ObservableObject {
     @Published private(set) var isSigningOut = false
     @Published var signOutError: String?
     @Published var welcomeNotice: String?
+    @Published private(set) var showAppleRevocationHelp = false
     @Published var deletionError: String?
     @Published private(set) var errorMessage: String?
     @Published private(set) var authNotice: String?
@@ -198,6 +199,7 @@ final class LiyaSession: ObservableObject {
             guard generation == accountGeneration, response.code == 0, response.data.isEmpty else { throw SessionError.invalidBootstrap }
             userID = current.user.id
             welcomeNotice = nil
+            showAppleRevocationHelp = false
             Task { await refreshCatalog() }
             Task { await refreshWallet() }
             Task { await refreshProfile() }
@@ -243,6 +245,7 @@ final class LiyaSession: ObservableObject {
             guard generation == accountGeneration else { return false }
             userID = session.user.id
             welcomeNotice = nil
+            showAppleRevocationHelp = false
             Task { await refreshCatalog() }
             Task { await refreshWallet() }
             Task { await refreshProfile() }
@@ -345,6 +348,8 @@ final class LiyaSession: ObservableObject {
             UserDefaults.standard.removeObject(forKey: key)
             UserDefaults.standard.removeObject(forKey: "liya.hasSupabaseAccount")
             welcomeNotice = "Your account has been deleted. You can start again whenever you're ready."
+            // No Apple refresh token was retained; Apple documents manual revocation for this case.
+            showAppleRevocationHelp = true
             return true
         } catch {
             deletionError = "Deletion could not be confirmed. Please retry before signing out; some uploaded files may already have been removed."

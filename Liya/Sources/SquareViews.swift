@@ -653,7 +653,7 @@ struct TreeHoleView: View {
         saving = true; notice = nil; actionError = nil
         Task {
             if await social.publish(session, id: id, body: value, tags: tags, attachments: []) {
-                text = ""; submissionID = ""; publicAttempt = ""; publicFingerprint = ""; notice = "Your thought is shared."
+                text = ""; submissionID = ""; publicAttempt = ""; publicFingerprint = ""; notice = "Submitted. Check your post for its review status."
             } else { actionError = social.error ?? "Couldn't confirm sharing. Please try again." }
             saving = false
         }
@@ -719,6 +719,9 @@ private struct TreeThoughtOptions: View {
                         if mode == 1 && !sent {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Why are you reporting this thought?").font(.headline).foregroundStyle(liyaInk)
+                                Text("Reports are stored; review is not yet configured.").font(.footnote).foregroundStyle(.secondary)
+                                Link("Email support: liya_support26@liya.vip", destination: URL(string: "mailto:liya_support26@liya.vip")!)
+                                    .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                                 ForEach(reasons, id: \.self) { item in
                                     VideoSafetyReason(title: item, selected: reason == item) {
                                         reason = item; requestID = UUID(); error = nil
@@ -1121,9 +1124,15 @@ struct ExamplePhotoDetail: View {
                                     NavigationLink(item.ownerID == session.userID ? "You" : (social.person(item.ownerID)?.displayName ?? "Liya member")) { CommunityPersonView(personID: item.ownerID) }
                                         .font(.caption.bold()).foregroundStyle(liyaAccent)
                                     Text(item.body).font(.subheadline).foregroundStyle(liyaInk).fixedSize(horizontal: false, vertical: true)
+                                    if item.ownerID == session.userID, let status = social.moderationText(kind: "media_comment", id: item.id) {
+                                        Text(status).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                                    }
                                 }.frame(maxWidth: .infinity, alignment: .leading)
                                 if item.ownerID == session.userID {
                                     Button("Delete") { Task { if await social.deleteVideoComment(session, id: item.id) { await refresh() } else { error = "Couldn't delete this comment. Please try again." } } }
+                                        .font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                                } else {
+                                    NavigationLink("Report") { CommunityReportView(target: item.ownerID, post: nil, mediaComment: item) }
                                         .font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
                                 }
                             }

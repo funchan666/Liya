@@ -1,0 +1,294 @@
+{
+  "schema_version": "1.0",
+  "audit": {
+    "project_label": "Liya",
+    "audited_at": "2026-11-09",
+    "skill_version": "1.2.0",
+    "revision": "master 433a12bffcadd4ef792f43bf67fe745c47e32849；审计前工作区干净",
+    "target": "Liya iOS SwiftUI；Bundle ID com.liyalumora.auroramuse；版本 1.0",
+    "configuration": "按 Xcode 项目 Release 配置及项目源码静态检查；实际提交 scheme、storefront 和最终归档未知",
+    "scope": "当前项目 Swift、Xcode 配置、Supabase functions 与 migrations、协议文本；没有现成 IPA、app、Archive 或匹配 Mach-O；未查线上服务及 ASC。P1 专项只读审查，不运行项目脚本、编译、测试或启动。",
+    "rule_verification": "partial",
+    "rule_checked_at": "2026-11-09",
+    "summary": "1 项已确认 P1：面向真实用户的社区举报与支持页面声明处理和支持渠道未配置；另有 1 项潜在 P1：Apple 登录账号删除未见撤销 Apple 凭证，需核查实际服务。未发现已确认 P0。结论仅覆盖源码及本地资料，不能证明线上或提交包状态。",
+    "rule_sources": [
+      {
+        "title": "App Review Guidelines",
+        "url": "https://developer.apple.com/app-store/review/guidelines/",
+        "checked_at": "2026-11-09",
+        "status": "reviewed",
+        "scope": "已阅读 1.2、2.1、5.1.1 和 5.1.2 对本次发现的相关正文"
+      },
+      {
+        "title": "Account deletion",
+        "url": "https://developer.apple.com/help/app-review/guideline-reference/5-1-1-account-deletion",
+        "checked_at": "2026-11-09",
+        "status": "reviewed",
+        "scope": "账号删除与 Sign in with Apple 撤销指引"
+      },
+      {
+        "title": "Complete Review",
+        "url": "https://developer.apple.com/help/app-review/before-submitting-for-review/complete-review",
+        "checked_at": "2026-11-09",
+        "status": "reviewed",
+        "scope": "审核账号与外部服务资料"
+      },
+      {
+        "title": "Submit an In-App Purchase",
+        "url": "https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-in-app-purchase",
+        "checked_at": "2026-11-09",
+        "status": "reviewed",
+        "scope": "每种类型首个内购与 App 版本提交条件"
+      },
+      {
+        "title": "iPhone Duo adaptive layouts",
+        "url": "https://developer.apple.com/videos/play/tech-talks/111463/",
+        "checked_at": "2026-11-09",
+        "status": "reviewed",
+        "scope": "布局区域与可达性设计建议"
+      }
+    ],
+    "coverage": [
+      {
+        "area": "发布配置",
+        "status": "needs_evidence",
+        "detail": "核对 pbxproj、project.yml、Info.plist、entitlements；实际 Release 归档、版本 build、scheme、storefront、签名及最终合并配置未知。"
+      },
+      {
+        "area": "启动与完整性",
+        "status": "needs_evidence",
+        "detail": "静态追踪 RootView 和登录入口；设备、邮件、服务可用性、审核账号未验证。"
+      },
+      {
+        "area": "账号和删除",
+        "status": "needs_evidence",
+        "detail": "追踪设置、LiyaSession 和本地删除函数；Apple 撤销、线上部署和数据级联需要证据。"
+      },
+      {
+        "area": "隐私与 AI",
+        "status": "needs_evidence",
+        "detail": "追踪 AI 同意、Groq 转发与权限文案；ASC 隐私问卷、线上策略和最终 manifest 未验证。"
+      },
+      {
+        "area": "支付",
+        "status": "needs_evidence",
+        "detail": "追踪 StoreKit 2、账户绑定、服务端验签、重复交付与 finish；ASC 商品、开关状态和沙盒/生产到账未验证。"
+      },
+      {
+        "area": "UGC 内容安全",
+        "status": "needs_evidence",
+        "detail": "追踪发布、读回、举报、拉黑、帮助及本地 migrations；实际过滤、运营工具、响应时间、服务端部署与联系渠道未验证。"
+      },
+      {
+        "area": "远程行为与示例内容",
+        "status": "needs_evidence",
+        "detail": "检查示例资料、消息、云目录及服务开关；线上内容、版权与用户实际展示一致性需核验；未确认审核差异分流。"
+      },
+      {
+        "area": "依赖与平台 API",
+        "status": "needs_evidence",
+        "detail": "查看 Xcode 和 SPM 依赖；无法验证最终第三方 SDK、manifest、签名、静态链接及私有 API。"
+      },
+      {
+        "area": "提交包与逆向",
+        "status": "needs_evidence",
+        "detail": "工作区内未发现 IPA、app、xcarchive、framework 或 dylib；REA MCP 工具可发现，但无匹配发布二进制，未打开分析；Hopper 未执行，架构与加密未知。"
+      },
+      {
+        "area": "iPhone Duo",
+        "status": "needs_evidence",
+        "detail": "源码可见 DuoControlRegion 的 reserved region 分支及部分 safe area；未编译，未验证 SDK 可用性、键盘、切屏、播放或设备姿态，非完整视觉审计。"
+      },
+      {
+        "area": "产品、版权与提交材料",
+        "status": "needs_evidence",
+        "detail": "素材权属、截图描述、年龄分级、隐私声明、审核账号及 ASC 商品配置未提供；不能推断已完成。"
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "AR-001",
+      "title": "真实社区的举报处理与支持渠道仍标示未配置",
+      "area": "UGC 内容安全",
+      "severity": "P1",
+      "status": "confirmed",
+      "confidence": "high",
+      "release_path": "RootView 社区路径 → SocialStore 发布和读取 liya_posts → CommunityPostCard/CommunityReportView → liya_social_reports；设置 Help & legal → Help & Support。源码均属于主 App 源目录，未见仅 Debug 限制。",
+      "trigger": "用户在社区发布内容，其他用户举报帖子或成员，或尝试联系支持。",
+      "impact": "App 明确告诉用户举报审核和支持尚未配置；保存举报不等于能及时响应。该社交产品的 UGC 安全闭环存在重大提审风险。",
+      "evidence": [
+        {
+          "kind": "code",
+          "location": "Liya/Sources/RootView.swift",
+          "line": 70,
+          "detail": "登录后包含 Square 等主 tab 并初始化社区数据。"
+        },
+        {
+          "kind": "code",
+          "location": "Liya/Sources/SocialStore.swift",
+          "line": 227,
+          "detail": "社区内容带文字及附件写入云端帖子并刷新。"
+        },
+        {
+          "kind": "code",
+          "location": "Liya/Sources/SocialViews.swift",
+          "line": 184,
+          "detail": "他人社区帖子提供举报入口。"
+        },
+        {
+          "kind": "code",
+          "location": "Liya/Sources/SocialViews.swift",
+          "line": 421,
+          "detail": "举报页声明审核团队尚未配置，成功后仍声明 review is not yet configured。"
+        },
+        {
+          "kind": "code",
+          "location": "Liya/Sources/SocialStore.swift",
+          "line": 367,
+          "detail": "举报写入表并回读以确认保存；本路径不证明人工处理。"
+        },
+        {
+          "kind": "code",
+          "location": "Liya/Sources/ProfileViews.swift",
+          "line": 629,
+          "detail": "帮助页显示支持渠道尚未配置。"
+        },
+        {
+          "kind": "metadata",
+          "location": "docs/BackendAPI/legal/terms.md",
+          "line": 15,
+          "detail": "本地条款亦说明举报审核尚未配置；公开文档线上状态未复验。"
+        }
+      ],
+      "rules": [
+        {
+          "section": "1.2 User-Generated Content",
+          "url": "https://developer.apple.com/app-store/review/guidelines/",
+          "checked_at": "2026-11-09",
+          "applicability": "真实用户发布及互动适用：要求不良内容过滤、举报和及时响应、拉黑与公开联系信息。"
+        }
+      ],
+      "remediation": [
+        "客户端/运营：建立真实可达支持渠道及举报接收、分派、响应和处置流程；在流程实际可用后更新页面和协议文案。",
+        "后台/运营：建立适用于文字、图片、视频及评论的可执行过滤与违规内容下架机制，并明确时限、责任人与记录；保留有效拉黑。"
+      ],
+      "validation": [
+        "用两个真实测试账号提交违规样例并举报，验证运营收到、及时处置、内容对其他账号不可见及举报结果可追踪。",
+        "验证支持渠道实际收发，并用测试内容核对过滤、拉黑和网络失败重试；复查提交包和线上协议。"
+      ],
+      "owner": "客户端、后台、社区运营与支持",
+      "effort": "M–L；取决于现有运营系统和过滤服务",
+      "uncertainty": [
+        "未查看生产后台；可能已有外部运营流程，但本次未见证据，且当前页面仍明确提示未配置。",
+        "源码直接上传与数据库约束未体现内容审核；生产端是否存在独立过滤服务尚未验证。"
+      ]
+    },
+    {
+      "id": "AR-002",
+      "title": "Apple 登录账号删除未见 Apple 凭证撤销",
+      "area": "账号和隐私",
+      "severity": "P1",
+      "status": "needs_verification",
+      "confidence": "medium",
+      "release_path": "WelcomeView 使用 Sign in with Apple → LiyaSession.appleSignIn → 设置中删除账号 → liya-delete-account。",
+      "trigger": "用户通过 Apple 创建账号后在 App 内删除账号，且线上没有额外的 Apple token 撤销流程。",
+      "impact": "如果删除仅执行仓库内代码，Apple 登录授权可能仍未撤销，与 Apple 的账号删除指引存在高风险差距。",
+      "evidence": [
+        {
+          "kind": "code",
+          "location": "Liya/Sources/RootView.swift",
+          "line": 175,
+          "detail": "使用 Apple 授权，读取 identityToken；此路径未发现用于后续撤销的 authorizationCode 处理。"
+        },
+        {
+          "kind": "code",
+          "location": "Liya/Sources/ProfileViews.swift",
+          "line": 733,
+          "detail": "设置确认后调用 deleteAccount。"
+        },
+        {
+          "kind": "code",
+          "location": "Liya/Sources/LiyaSession.swift",
+          "line": 316,
+          "detail": "客户端调用 liya-delete-account 并在确认成功后清理本地会话。"
+        },
+        {
+          "kind": "code",
+          "location": "supabase/functions/liya-delete-account/index.ts",
+          "line": 48,
+          "detail": "函数移除用户媒体后调用 Supabase admin.deleteUser；整个函数未包含 Apple token 撤销调用。"
+        },
+        {
+          "kind": "search_scope",
+          "location": "Liya、supabase、docs",
+          "line": null,
+          "detail": "对 Apple revoke、authorizationCode、refresh token、通知等词检索；未检查托管 Supabase 内部实现或独立服务。"
+        }
+      ],
+      "rules": [
+        {
+          "section": "5.1.1(v) Sign in with Apple account deletion",
+          "url": "https://developer.apple.com/help/app-review/guideline-reference/5-1-1-account-deletion",
+          "checked_at": "2026-11-09",
+          "applicability": "Apple 指引称使用 Apple 登录的 App 应通过 Sign in with Apple REST API 撤销用户 token。"
+        }
+      ],
+      "remediation": [
+        "核查托管 Auth 和其他服务是否已实际撤销；若未覆盖，安全地接入 Apple 授权码交换、服务端凭证保存及撤销，确保失败可重试并避免提前声称完整删除。"
+      ],
+      "validation": [
+        "使用专门的 Apple 测试账号完成授权与删除，核对服务端撤销结果、账号数据删除及重试过程；核对失败、超时和重复请求。"
+      ],
+      "owner": "身份认证后台与 iOS 客户端",
+      "effort": "M；取决于现有服务与 Apple 凭证配置",
+      "uncertainty": [
+        "线上托管认证服务或仓库外服务可能另行处理，尚未取得部署与运行证据；该项不计入已确认 P1 数量。"
+      ]
+    }
+  ],
+  "validation_gaps": [
+    {
+      "id": "GAP-001",
+      "priority": "P1",
+      "question": "真实 Release 包是否与此源码一致并包含可读主程序和 SDK？",
+      "needed_evidence": "提供拟提交 IPA、Archive 或 app 及版本/build；按架构检查加密、哈希，使用 REA MCP 的 Hopper 后端复核。",
+      "owner": "发布负责人"
+    },
+    {
+      "id": "GAP-002",
+      "priority": "P1",
+      "question": "审核账号、邮箱与 Apple 登录以及生产服务是否可被审核人员使用？",
+      "needed_evidence": "可用的审核账号与审核说明；设备上验证邮件确认、密码重置、Apple 登录及服务可达。",
+      "owner": "认证/ASC 负责人"
+    },
+    {
+      "id": "GAP-003",
+      "priority": "P1",
+      "question": "消耗型内购在 ASC 与服务器均已配置并可可靠交付？",
+      "needed_evidence": "对应商品及首个类型与版本同批提交记录、服务开关、沙盒购买/未完成交易重试/到账和退款处理验证。",
+      "owner": "支付后台与 ASC 负责人"
+    },
+    {
+      "id": "GAP-004",
+      "priority": "P1",
+      "question": "示例资料、视频和本地消息在真实体验中是否清楚标明为示例及不可送达，素材是否获授权？",
+      "needed_evidence": "实际 Release 页面、视频目录、素材授权及真实用户路径截图或录屏；检查 App Store 元数据。",
+      "owner": "产品与内容负责人"
+    },
+    {
+      "id": "GAP-005",
+      "priority": "P1",
+      "question": "AI 同意及数据流、隐私清单、ASC 问卷与实际服务是否一致？",
+      "needed_evidence": "线上部署与隐私配置、服务商数据处理信息、Release 隐私报告及 ASC 问卷。",
+      "owner": "隐私与后台负责人"
+    },
+    {
+      "id": "GAP-006",
+      "priority": "P2",
+      "question": "Duo 及普通设备的布局和状态连续性是否可用？",
+      "needed_evidence": "获授权后使用实际支持 SDK 和设备/模拟器检查开合、左右分屏、安全区、键盘、导航、播放及通话连续性。",
+      "owner": "iOS 客户端"
+    }
+  ]
+}

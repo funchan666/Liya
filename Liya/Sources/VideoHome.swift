@@ -354,6 +354,10 @@ private struct VideoCommentTarget: Identifiable {
     let body: String
 }
 
+private struct HiddenCuratedStarter: Decodable {
+    let position: Int
+}
+
 private struct VideoCommentsView: View {
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
@@ -367,13 +371,15 @@ private struct VideoCommentsView: View {
     @State private var loadID = UUID()
     @State private var attempt = UUID()
     @State private var loadedDraft = false
+    @State private var starterMediaID: String?
+    @State private var hiddenStarters: Set<Int> = []
     @State private var target: VideoCommentTarget?
     @State private var showProfileSetup = false
     @FocusState private var commentFocused: Bool
     private var mediaID: String? { session.videos.indices.contains(index) ? session.videos[index].id : nil }
     private var hasVisibleStarters: Bool {
-        guard mediaID != nil, !session.photos.isEmpty else { return false }
-        return (0..<2).contains { !store.blockedExamples.contains((10 + index * 2 + $0) % session.photos.count) }
+        guard let mediaID, starterMediaID == mediaID, !session.photos.isEmpty else { return false }
+        return (0..<2).contains { !hiddenStarters.contains($0) && !store.blockedExamples.contains((10 + index * 2 + $0) % session.photos.count) }
     }
     private var draftKey: String { "liya.video.commentDraft.\(session.userID?.uuidString ?? "none").\(mediaID ?? "none")" }
     private let starters = [
@@ -398,10 +404,10 @@ private struct VideoCommentsView: View {
                     .padding(.top, 12)
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 10) {
-                        if let mediaID, !session.photos.isEmpty {
+                        if let mediaID, starterMediaID == mediaID, !session.photos.isEmpty {
                             ForEach(0..<2, id: \.self) { position in
                                 let photoIndex = (10 + index * 2 + position) % session.photos.count
-                                if !store.blockedExamples.contains(photoIndex) {
+                                if !hiddenStarters.contains(position) && !store.blockedExamples.contains(photoIndex) {
                                     let name = starterNames[(index * 2 + position) % starterNames.count]
                                     let body = starters[index % starters.count][position]
                                     let key = "\(mediaID):starter:\(position)"
@@ -482,6 +488,9 @@ private struct VideoCommentsView: View {
                     Text("Suggested").font(.caption2.weight(.medium)).foregroundStyle(.secondary)
                 }
                 Text(body).font(.subheadline).foregroundStyle(liyaInk.opacity(0.9)).lineSpacing(3).fixedSize(horizontal: false, vertical: true)
+                if personID == session.userID, let id = action.commentID, let status = social.moderationText(kind: "media_comment", id: id) {
+                    Text(status).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
             }.frame(maxWidth: .infinity, alignment: .leading)
             if personID == session.userID, let id = action.commentID {
                 Button("Delete") { Task { if await social.deleteVideoComment(session, id: id) { await load() } else { error = "Couldn't delete this comment. Please try again." } } }
@@ -495,11 +504,14 @@ private struct VideoCommentsView: View {
     }
 
     private func load() async {
-        guard let mediaID, let owner = session.userID else { comments = []; loading = false; return }
+        guard let mediaID, let owner = session.userID else { starterMediaID = nil; comments = []; loading = false; return }
         let request = UUID(); loadID = request; loading = true; error = nil
+        starterMediaID = nil
         do {
+            let hidden: [HiddenCuratedStarter] = try await session.client.rpc("liya_hidden_curated_starters", params: ["p_media_id": mediaID]).execute().value
             let rows = try await social.videoComments(session, mediaID: mediaID)
             guard loadID == request, self.mediaID == mediaID, session.userID == owner else { return }
+            hiddenStarters = Set(hidden.map(\.position)); starterMediaID = mediaID
             comments = rows; loading = false
         } catch {
             guard loadID == request else { return }
@@ -632,6 +644,9 @@ private struct VideoCommentSafetyView: View {
                 if target.presetKey != nil { Text("Suggested content").font(.caption).foregroundStyle(.secondary) }
                 if mode == 1 && !sent {
                     Text("Why are you reporting this comment?").font(.headline).foregroundStyle(liyaInk).padding(.top, 8)
+                    Text("Reports are stored; review is not yet configured.").font(.footnote).foregroundStyle(.secondary)
+                    Link("Email support: liya_support26@liya.vip", destination: URL(string: "mailto:liya_support26@liya.vip")!)
+                        .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                     VStack(spacing: 8) {
                         ForEach(reasons, id: \.self) { reason in
                             VideoSafetyReason(title: reason, selected: selected == reason) {

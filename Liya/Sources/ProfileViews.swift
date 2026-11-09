@@ -631,7 +631,9 @@ private struct SettingsSupportView: View {
         PageShell(title: "Help & legal") {
             VStack(alignment: .leading, spacing: 22) {
                 SettingsGroup(title: "Support") {
-                    NavigationLink { InformationView(title: "Help & Support", message: "A support channel has not been configured.") } label: { SettingsRow("Help & Support", image: "setting-help") }
+                    Link(destination: URL(string: "mailto:liya_support26@liya.vip")!) {
+                        SettingsRow("Email support: liya_support26@liya.vip", image: "setting-help")
+                    }
                     SettingsDivider()
                     NavigationLink { InformationView(title: "About Liya", message: "Liya is a place to share moments and connect with others.") } label: { SettingsRow("About Liya", image: "app-mark") }
                 }
@@ -775,6 +777,10 @@ struct PrivacyView: View {
                         SettingsRow("Hidden collection profiles", image: "nav-soft-profile")
                     }
                     SettingsDivider()
+                    NavigationLink { SubmittedReportsView() } label: {
+                        SettingsRow("Submitted reports", image: "report")
+                    }
+                    SettingsDivider()
                     NavigationLink { ReportDraftsView() } label: {
                         SettingsRow("Unsent reports", image: "report")
                     }
@@ -783,6 +789,88 @@ struct PrivacyView: View {
                     .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }.padding(.top, 16).modifier(AdaptiveContainerMargins())
         }
+    }
+}
+
+private struct SubmittedReportsView: View {
+    @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var social: SocialStore
+    @State private var reports: [SubmittedReport] = []
+    @State private var loading = false
+    @State private var error: String?
+    @State private var requestID = UUID()
+    @State private var reportOwner: UUID?
+
+    var body: some View {
+        PageShell(title: "Submitted reports") {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("See the current status of reports you submitted from this account.")
+                    .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Button("Refresh") { Task { await load() } }
+                    .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44).disabled(loading)
+                if loading { LiyaLoadingIndicator(size: 28).accessibilityLabel("Loading reports") }
+                if let error {
+                    Text(error).font(.footnote).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
+                    Button("Try again") { Task { await load() } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
+                } else if !loading && reports.isEmpty {
+                    EmptyState(title: "No submitted reports", detail: "Reports sent from this account will appear here.")
+                }
+                ForEach(reportOwner == session.userID ? reports : []) { report in
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(LocalizedStringKey(reportTitle(report.kind))).font(.subheadline.bold()).foregroundStyle(liyaInk)
+                        Text(LocalizedStringKey(report.reason)).font(.subheadline).foregroundStyle(liyaInk)
+                        Text(LocalizedStringKey(reportStatus(report.status))).font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent)
+                        Text(reportDate(report.createdAt)).font(.caption).foregroundStyle(.secondary)
+                    }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
+                        .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
+                }
+                Link("Email support: liya_support26@liya.vip", destination: URL(string: "mailto:liya_support26@liya.vip")!)
+                    .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+            }.padding(.top, 16).modifier(AdaptiveContainerMargins())
+        }.task(id: session.userID) { await load() }
+            .onLiyaChange(of: social.syncGeneration) { _ in Task { await load() } }
+    }
+
+    private func load() async {
+        guard let owner = session.userID else { requestID = UUID(); reportOwner = nil; reports = []; loading = false; error = nil; return }
+        if reportOwner != owner { reports = []; reportOwner = owner }
+        let request = UUID(); requestID = request; loading = true; error = nil
+        do {
+            let result = try await social.submittedReports(session)
+            guard session.userID == owner, requestID == request, !Task.isCancelled else { return }
+            reports = result; loading = false
+        } catch {
+            guard session.userID == owner, requestID == request, !Task.isCancelled else { return }
+            reports = []; loading = false; error = "Couldn't load your reports. Please try again."
+        }
+    }
+
+    private func reportTitle(_ kind: String) -> String {
+        switch kind {
+        case "social": return "Community report"
+        case "curated": return "Collection report"
+        case "media_comment", "post_comment": return "Comment report"
+        case "message": return "Message report"
+        default: return "Report"
+        }
+    }
+
+    private func reportStatus(_ status: String) -> String {
+        switch status {
+        case "pending": return "Received · awaiting review"
+        case "resolved": return "Reviewed · action completed"
+        case "dismissed": return "Reviewed · no action taken"
+        default: return "Status unavailable"
+        }
+    }
+
+    private func reportDate(_ value: String) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let fractional = formatter.date(from: value)
+        formatter.formatOptions = [.withInternetDateTime]
+        guard let date = fractional ?? formatter.date(from: value) else { return String(value.prefix(10)) }
+        return date.formatted(date: .abbreviated, time: .omitted)
     }
 }
 

@@ -40,27 +40,34 @@ struct SocialAvatar: View {
 struct CommunityJoinView: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
-    @Environment(\.dismiss) private var dismiss
     @State private var name = ""
     @State private var signature = ""
     @State private var initialized = false
     @State private var saving = false
     @State private var shareAvatar = false
+    @State private var loadingProfile = true
+    @State private var notice: String?
+    @State private var profileLoadError: String?
     var body: some View {
         PageShell(title: "Community profile") {
             VStack(alignment: .leading, spacing: 15) {
-                Text("Your profile and posts are visible to community members. Messages stay private.")
+                Text("Community profile changes may need review. Approved profile details are shown to other members. Messages stay private unless you choose to report one.")
                     .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                if loadingProfile { LiyaLoadingIndicator(size: 26).accessibilityLabel("Loading community profile") }
+                if let owner = session.userID, let status = social.moderationText(kind: "profile", id: owner) {
+                    Text(status).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+                if let notice { Text(notice).font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).fixedSize(horizontal: false, vertical: true) }
                 Text("Community name").font(.headline).foregroundStyle(liyaInk)
-                TextField("Choose a name", text: $name).padding(14).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
+                TextField("Choose a name", text: $name).padding(14).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14)).disabled(saving || loadingProfile || profileLoadError != nil)
                 Text("Introduction").font(.headline).foregroundStyle(liyaInk)
-                TextField("A little about you", text: $signature, axis: .vertical).lineLimit(2...5).padding(14).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
+                TextField("A little about you", text: $signature, axis: .vertical).lineLimit(2...5).padding(14).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14)).disabled(saving || loadingProfile || profileLoadError != nil)
                 Button { shareAvatar.toggle() } label: {
                     HStack(spacing: 12) {
                         Image("avatar-camera").resizable().scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Share profile photo").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
-                            Text(LocalizedStringKey(shareAvatar ? "Visible to members" : "Only visible to you"))
+                            Text(LocalizedStringKey(shareAvatar ? "Share with community" : "Not shared"))
                                 .font(.caption).foregroundStyle(.secondary)
                         }.frame(maxWidth: .infinity, alignment: .leading)
                         Image(shareAvatar ? "consent-on" : "consent-off").resizable().scaledToFit().frame(width: 28, height: 28).accessibilityHidden(true)
@@ -68,18 +75,41 @@ struct CommunityJoinView: View {
                         .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 16))
                 }.buttonStyle(.plain).accessibilityLabel("Share profile photo")
                     .accessibilityValue(shareAvatar ? "On" : "Off").accessibilityAddTraits(shareAvatar ? .isSelected : [])
+                    .disabled(saving || loadingProfile || profileLoadError != nil)
                 if shareAvatar && session.profile?.avatarPath == nil { Text("Add an avatar to your account profile before sharing it.").font(.footnote).foregroundStyle(.secondary) }
-                if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
-                PrimaryButton(title: saving ? "Saving…" : "Save community profile", disabled: saving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || name.count > 80 || signature.count > 500 || (shareAvatar && session.profile?.avatarPath == nil)) {
-                    saving = true
-                    Task { if await social.join(session, name: name, signature: signature, shareAvatar: shareAvatar) { dismiss() }; saving = false }
+                if let profileLoadError {
+                    Text(profileLoadError).font(.footnote).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
+                    Button("Try again") { Task { await loadProfile() } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
                 }
-            }.padding(.top, 12).disabled(saving)
-        }.onAppear {
-            guard !initialized else { return }
-            if let owner = session.userID, let person = social.person(owner) { name = person.displayName; signature = person.signature; shareAvatar = person.avatarPath != nil }
+                if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
+                PrimaryButton(title: saving ? "Saving…" : "Save community profile", disabled: saving || loadingProfile || profileLoadError != nil || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || name.count > 80 || signature.count > 500 || (shareAvatar && session.profile?.avatarPath == nil)) {
+                    saving = true
+                    Task {
+                        if await social.join(session, name: name, signature: signature, shareAvatar: shareAvatar), let owner = session.userID {
+                            await social.refreshModeration(session)
+                            notice = social.moderationText(kind: "profile", id: owner) ?? "Community profile saved."
+                        }
+                        saving = false
+                    }
+                }
+            }.padding(.top, 12)
+        }.task(id: session.userID) {
+            initialized = false; name = ""; signature = ""; shareAvatar = false; notice = nil
+            await loadProfile()
+        }
+    }
+    private func loadProfile() async {
+        guard !initialized, let owner = session.userID else { loadingProfile = false; return }
+        loadingProfile = true; profileLoadError = nil
+        do {
+            let person = try await social.editableProfile(session)
+            guard session.userID == owner, !Task.isCancelled else { return }
+            if let person { name = person.displayName; signature = person.signature; shareAvatar = person.avatarPath != nil }
             else { name = session.profile?.displayName ?? ""; signature = session.profile?.signature ?? "" }
-            initialized = true
+            initialized = true; loadingProfile = false
+        } catch {
+            guard session.userID == owner, !Task.isCancelled else { return }
+            loadingProfile = false; profileLoadError = "Couldn't load your community profile. Please try again."
         }
     }
 }
@@ -183,6 +213,9 @@ struct CommunityPostCard: View {
                 } else {
                     NavigationLink("Report") { CommunityReportView(target: post.ownerID, post: post.id) }.font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
                 }
+            }
+            if post.ownerID == session.userID, let status = social.moderationText(kind: "post", id: post.id) {
+                Text(status).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             if !post.body.isEmpty { Text(post.body).foregroundStyle(liyaInk).frame(maxWidth: .infinity, alignment: .leading) }
             if !post.tags.isEmpty { Text(post.tags.map { "# " + $0 }.joined(separator: "   ")).font(.caption).foregroundStyle(liyaAccent) }
@@ -409,6 +442,9 @@ struct CommunityReportView: View {
     @EnvironmentObject private var social: SocialStore
     let target: UUID
     let post: UUID?
+    var comment: SocialComment? = nil
+    var mediaComment: VideoComment? = nil
+    var message: SocialMessage? = nil
     @State private var selected: String?
     @State private var id = UUID()
     @State private var sending = false
@@ -419,6 +455,12 @@ struct CommunityReportView: View {
         PageShell(title: "Report") {
             VStack(alignment: .leading, spacing: 12) {
                 OfflineNote(text: "Reports are stored for review. A review team has not yet been configured.")
+                if message != nil {
+                    Text("Sending this report shares this message and its attachments with Liya for review. Other messages are not included.")
+                        .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+                Link("Email support: liya_support26@liya.vip", destination: URL(string: "mailto:liya_support26@liya.vip")!)
+                    .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                 ForEach(reasons, id: \.self) { reason in
                     Button { selected = reason; id = UUID(); failed = false } label: {
                         HStack { Text(reason); Spacer(); if selected == reason { Text("Selected").font(.caption.bold()).foregroundStyle(liyaAccent) } }
@@ -429,7 +471,15 @@ struct CommunityReportView: View {
                 if sent { Text("Report received. Review is not yet configured.").font(.footnote).foregroundStyle(liyaAccent) }
                 PrimaryButton(title: sending ? "Sending…" : "Send report", disabled: selected == nil || sending || sent) {
                     guard let selected else { return }; sending = true
-                    Task { sent = await social.report(session, id: id, target: target, post: post, reason: selected); failed = !sent; sending = false }
+                    Task {
+                        if let message { sent = await social.reportMessage(session, id: id, message: message, reason: selected) }
+                        else if let comment { sent = await social.reportComment(session, id: id, comment: comment, reason: selected) }
+                        else if let mediaComment {
+                            sent = await social.reportVideoComment(session, id: id, mediaID: mediaComment.mediaID, commentID: mediaComment.id, presetKey: nil, body: mediaComment.body, reason: selected)
+                        }
+                        else { sent = await social.report(session, id: id, target: target, post: post, reason: selected) }
+                        failed = !sent; sending = false
+                    }
                 }
             }.padding(.top, 12)
         }
@@ -460,8 +510,14 @@ struct CommunityCommentsView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         NavigationLink(social.person(comment.ownerID)?.displayName ?? "Liya member") { CommunityPersonView(personID: comment.ownerID) }.font(.caption.bold()).foregroundStyle(liyaAccent)
                         Text(comment.body).foregroundStyle(liyaInk)
+                        if comment.ownerID == session.userID, let status = social.moderationText(kind: "post_comment", id: comment.id) {
+                            Text(status).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        }
                         if comment.ownerID == session.userID {
                             Button("Delete") { deleting = comment }.font(.caption.bold()).foregroundStyle(liyaAccent)
+                        } else {
+                            NavigationLink("Report comment") { CommunityReportView(target: comment.ownerID, post: nil, comment: comment) }
+                                .font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading).padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                 }
@@ -909,6 +965,9 @@ struct CommunityConversationView: View {
                     if mine {
                         Button("Delete") { deleting = message }.font(.caption2.weight(.semibold))
                             .foregroundStyle(liyaAccent).frame(minHeight: 44)
+                    } else {
+                        NavigationLink("Report") { CommunityReportView(target: message.senderID, post: nil, message: message) }
+                            .font(.caption2.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                     }
                 }
             }.frame(maxWidth: 340, alignment: mine ? .trailing : .leading)

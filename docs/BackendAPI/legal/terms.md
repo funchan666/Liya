@@ -20,4 +20,4 @@ Liya AI is an automated service that can generate conversational responses. Its 
 
 ## Support
 
-The proposed support address is support@liya.com. It has not yet been confirmed or activated.
+You can contact Liya at liya_support26@liya.vip.

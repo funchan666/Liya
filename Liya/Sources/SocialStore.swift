@@ -109,6 +109,40 @@ private struct SocialReport: Codable, Equatable {
     enum CodingKeys: String, CodingKey { case id, reason; case reporterID = "reporter_id", targetUser = "target_user", postID = "post_id" }
 }
 
+private struct PostCommentReport: Codable, Equatable {
+    let id: UUID; let reporterID: UUID; let commentID: UUID; let postID: UUID
+    let targetUser: UUID; let bodySnapshot: String; let reason: String
+    enum CodingKeys: String, CodingKey {
+        case id, reason; case reporterID = "reporter_id", commentID = "comment_id", postID = "post_id"
+        case targetUser = "target_user", bodySnapshot = "body_snapshot"
+    }
+}
+
+private struct MessageReport: Codable, Equatable {
+    let id: UUID; let reporterID: UUID; let messageID: UUID; let targetUser: UUID
+    let bodySnapshot: String; let mediaPaths: [String]; let mediaKinds: [String]; let reason: String
+    enum CodingKeys: String, CodingKey {
+        case id, reason; case reporterID = "reporter_id", messageID = "message_id", targetUser = "target_user"
+        case bodySnapshot = "body_snapshot", mediaPaths = "media_paths", mediaKinds = "media_kinds"
+    }
+}
+
+private struct ModerationStatus: Decodable {
+    let kind: String; let contentID: UUID; let status: String
+    enum CodingKeys: String, CodingKey { case kind, status; case contentID = "content_id" }
+}
+
+private struct ProfileSubmission: Decodable {
+    let displayName: String; let signature: String; let avatarPath: String?
+    enum CodingKeys: String, CodingKey { case signature; case displayName = "display_name", avatarPath = "avatar_path" }
+}
+
+struct SubmittedReport: Decodable, Identifiable {
+    let kind: String; let reportID: UUID; let status: String; let reason: String; let createdAt: String
+    var id: String { "\(kind):\(reportID.uuidString)" }
+    enum CodingKeys: String, CodingKey { case kind, status, reason; case reportID = "report_id", createdAt = "created_at" }
+}
+
 @MainActor
 final class SocialStore: ObservableObject {
     @Published private(set) var people: [SocialPerson] = []
@@ -122,6 +156,8 @@ final class SocialStore: ObservableObject {
     @Published private(set) var notificationsLoading = false
     @Published private(set) var syncGeneration = UUID()
     @Published private(set) var realtimeConnected = false
+    @Published private(set) var moderationStatuses: [String: String] = [:]
+    @Published private(set) var moderationAvailable = false
     @Published var notificationsError: String?
     @Published private(set) var loading = false
     @Published private(set) var messagesLoading = false
@@ -132,18 +168,77 @@ final class SocialStore: ObservableObject {
     private var messageTask: Task<Void, Never>?
     private var watchID = UUID()
     private var accountGeneration = UUID()
+    private var moderationGeneration = UUID()
     private var refreshMessagesAgain = false
     private var refreshNotificationsAgain = false
     private var refreshAgain = false
 
     func person(_ id: UUID) -> SocialPerson? { people.first { $0.id == id } }
     func isJoined(_ session: LiyaSession) -> Bool { session.userID.map { person($0) != nil } ?? false }
+    func moderationText(kind: String, id: UUID) -> String? {
+        guard moderationAvailable else { return "Review status unavailable." }
+        switch moderationStatuses["\(kind):\(id.uuidString.lowercased())"] {
+        case "pending": return kind == "profile" ? "Changes awaiting review · only approved profile details are public." : "Awaiting review · visible to you and reviewers."
+        case "rejected": return kind == "profile" ? "Changes not approved · only approved profile details are public. Contact support if needed." : "Not approved · visible to you and reviewers. Contact support if needed."
+        case "hidden": return "Your community profile is hidden. Contact support if you need help."
+        default: return nil
+        }
+    }
+
+    func refreshModeration(_ session: LiyaSession) async {
+        guard let owner = session.userID else { return }
+        let generation = accountGeneration
+        let request = UUID(); moderationGeneration = request
+        do {
+            let rows: [ModerationStatus] = try await pages { offset in
+                try await session.client.rpc("liya_my_moderation_status", params: [String: String]())
+                    .order("kind").order("content_id").range(from: offset, to: offset + 499).execute().value
+            }
+            guard session.userID == owner, accountGeneration == generation, moderationGeneration == request else { return }
+            moderationStatuses = Dictionary(rows.map { ("\($0.kind):\($0.contentID.uuidString.lowercased())", $0.status) }, uniquingKeysWith: { _, last in last })
+            moderationAvailable = true
+        } catch {
+            guard session.userID == owner, accountGeneration == generation, moderationGeneration == request else { return }
+            moderationStatuses = [:]; moderationAvailable = false
+        }
+    }
+
+    func submittedReports(_ session: LiyaSession) async throws -> [SubmittedReport] {
+        guard let owner = session.userID else { throw SocialError.conflict }
+        let result: [SubmittedReport] = try await pages { offset in
+            try await session.client.rpc("liya_my_report_status", params: [String: String]())
+                .order("created_at", ascending: false).order("kind").order("report_id")
+                .range(from: offset, to: offset + 499).execute().value
+        }
+        guard session.userID == owner else { throw SocialError.conflict }
+        return result
+    }
+
+    func pendingProfile(_ session: LiyaSession) async throws -> SocialPerson? {
+        guard let owner = session.userID else { throw SocialError.conflict }
+        let generation = accountGeneration
+        let rows: [ProfileSubmission] = try await session.client.rpc("liya_my_profile_submission", params: [String: String]())
+            .limit(1).execute().value
+        guard session.userID == owner, generation == accountGeneration else { throw SocialError.conflict }
+        return rows.first.map { SocialPerson(id: owner, displayName: $0.displayName, signature: $0.signature, avatarPath: $0.avatarPath) }
+    }
+
+    func editableProfile(_ session: LiyaSession) async throws -> SocialPerson? {
+        guard let owner = session.userID else { throw SocialError.conflict }
+        if let pending = try await pendingProfile(session) { return pending }
+        let generation = accountGeneration
+        let rows: [SocialPerson] = try await session.client.from("liya_people")
+            .select("id,display_name,signature,avatar_path").eq("id", value: owner.uuidString).limit(1).execute().value
+        guard session.userID == owner, accountGeneration == generation else { throw SocialError.conflict }
+        return rows.first
+    }
 
     func clearAccount() {
         accountGeneration = UUID(); loading = false; messagesLoading = false; messagesReady = false
         refreshAgain = false; refreshMessagesAgain = false
         watchID = UUID(); messageTask?.cancel(); messageTask = nil; realtimeConnected = false
         people = []; posts = []; likes = []; follows = []; followers = []; blocked = []
+        moderationStatuses = [:]; moderationAvailable = false; moderationGeneration = UUID()
         messages = []; notifications = []; error = nil; messageError = nil; messageLoadError = nil; notificationsError = nil
         syncGeneration = UUID()
     }
@@ -188,6 +283,7 @@ final class SocialStore: ObservableObject {
             follows = relations.filter { $0.ownerID == owner }.map(\.targetID)
             followers = relations.filter { $0.targetID == owner }.map(\.ownerID)
             blocked = blocks.map(\.targetID); likes = Set(liked.map(\.postID))
+            await refreshModeration(session)
         } catch {
             if owner == session.userID && accountGeneration == generation {
                 people = []; posts = []; likes = []; follows = []; followers = []; blocked = []
@@ -202,7 +298,10 @@ final class SocialStore: ObservableObject {
         do {
             try await session.client.from("liya_people").upsert(person, onConflict: "id").execute()
             let result: SocialPerson = try await session.client.from("liya_people").select("id,display_name,signature,avatar_path").eq("id", value: owner.uuidString).single().execute().value
-            guard result == person, owner == session.userID else { return false }
+            guard owner == session.userID else { return false }
+            if result != person {
+                guard try await pendingProfile(session) == person else { throw SocialError.conflict }
+            }
             people.removeAll { $0.id == owner }; people.append(result)
             await refresh(session); return true
         } catch { self.error = "Couldn't save your community profile. Please try again."; return false }
@@ -318,6 +417,8 @@ final class SocialStore: ObservableObject {
             let rows: [VideoComment] = try await session.client.from("liya_video_comments")
                 .select("id,media_id,owner_id,body,created_at").eq("id", value: id.uuidString).execute().value
             guard session.userID == owner, rows.contains(where: { $0.id == id && $0.mediaID == mediaID && $0.ownerID == owner && $0.body == body }) else { return false }
+            await refreshModeration(session)
+            guard session.userID == owner else { return false }
             syncGeneration = UUID()
             return true
         } catch { return false }
@@ -352,7 +453,10 @@ final class SocialStore: ObservableObject {
         do { try await session.client.from("liya_post_comments").insert(item).execute() } catch { }
         do {
             let rows: [SocialComment] = try await session.client.from("liya_post_comments").select("id,owner_id,post_id,body").eq("id", value: id.uuidString).execute().value
-            return rows.first == item && session.userID == owner
+            guard rows.first == item && session.userID == owner else { return false }
+            await refreshModeration(session)
+            guard session.userID == owner else { return false }
+            return true
         } catch { self.error = "Couldn't confirm the comment. Your text is still here."; return false }
     }
 
@@ -370,6 +474,30 @@ final class SocialStore: ObservableObject {
         do { try await session.client.from("liya_social_reports").insert(item).execute() } catch { }
         do {
             let rows: [SocialReport] = try await session.client.from("liya_social_reports").select("id,reporter_id,target_user,post_id,reason").eq("id", value: id.uuidString).execute().value
+            return rows.first == item && session.userID == owner
+        } catch { self.error = "Couldn't confirm your report. Please try again."; return false }
+    }
+
+    func reportComment(_ session: LiyaSession, id: UUID, comment: SocialComment, reason: String) async -> Bool {
+        guard let owner = session.userID, owner != comment.ownerID else { return false }
+        let item = PostCommentReport(id: id, reporterID: owner, commentID: comment.id, postID: comment.postID,
+                                     targetUser: comment.ownerID, bodySnapshot: comment.body, reason: reason)
+        do { try await session.client.from("liya_post_comment_reports").insert(item).execute() } catch { }
+        do {
+            let rows: [PostCommentReport] = try await session.client.from("liya_post_comment_reports")
+                .select("id,reporter_id,comment_id,post_id,target_user,body_snapshot,reason").eq("id", value: id.uuidString).execute().value
+            return rows.first == item && session.userID == owner
+        } catch { self.error = "Couldn't confirm your report. Please try again."; return false }
+    }
+
+    func reportMessage(_ session: LiyaSession, id: UUID, message: SocialMessage, reason: String) async -> Bool {
+        guard let owner = session.userID, message.recipientID == owner, message.senderID != owner else { return false }
+        let item = MessageReport(id: id, reporterID: owner, messageID: message.id, targetUser: message.senderID,
+                                 bodySnapshot: message.body, mediaPaths: message.mediaPaths, mediaKinds: message.mediaKinds, reason: reason)
+        do { try await session.client.from("liya_message_reports").insert(item).execute() } catch { }
+        do {
+            let rows: [MessageReport] = try await session.client.from("liya_message_reports")
+                .select("id,reporter_id,message_id,target_user,body_snapshot,media_paths,media_kinds,reason").eq("id", value: id.uuidString).execute().value
             return rows.first == item && session.userID == owner
         } catch { self.error = "Couldn't confirm your report. Please try again."; return false }
     }

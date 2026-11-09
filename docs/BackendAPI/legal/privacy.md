@@ -10,7 +10,7 @@ Earlier versions supported anonymous accounts. Existing anonymous sessions and t
 
 ## How information is used
 
-The account and session support access to Liya, its content, community and your saved account information. Your community name and introduction, and any avatar you choose to share, are visible to other signed-in members. Posts, attachments and comments are visible to the community; messages and their attachments are available to their participants. People you block cannot interact with you through the community while the block is in place. Supabase provides authentication, database and file hosting for the service. Reports are stored, but a review service has not yet been configured. When you choose a coin pack, Apple supplies its App Store product information and processes any purchase. Liya verifies signed transaction information to deliver coins and retains transaction identifiers to prevent duplicate delivery.
+The account and session support access to Liya, its content, community and your saved account information. Your community name and introduction, and any avatar you choose to share, are visible to other signed-in members. Posts, attachments and comments are visible to the community; messages and their attachments are available to their participants. People you block cannot interact with you through the community while the block is in place. Supabase provides authentication, database and file hosting for the service. Reports are stored, but a review service has not yet been configured. When you choose to report a private message, the report includes that message's text and references to its attachments for an authorized reviewer; other messages in the conversation are not included. When you choose a coin pack, Apple supplies its App Store product information and processes any purchase. Liya verifies signed transaction information to deliver coins and retains transaction identifiers to prevent duplicate delivery.
 
 ## AI conversations and third-party processing
 
@@ -30,4 +30,4 @@ You can choose whether to select photos or videos using the system picker or tak
 
 ## Security and contact
 
-Access controls are used to protect account information, but no system can guarantee absolute security. If the service changes, this policy may be updated. The proposed support address is support@liya.com; it has not yet been confirmed or activated.
+Access controls are used to protect account information, but no system can guarantee absolute security. If the service changes, this policy may be updated. You can contact Liya at liya_support26@liya.vip.

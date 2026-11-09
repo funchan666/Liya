@@ -61,12 +61,16 @@ struct LocalPostCard: View {
                 }
             }
             if social.isJoined(session) {
-                Button(sharing ? "Sharing…" : (isShared ? "Shared with community" : "Share with community")) {
+                Button(sharing ? "Sharing…" : (isShared ? "Submitted to community" : "Share with community")) {
                     guard let owner = session.userID else { return }
                     sharing = true
                     Task { _ = await social.publish(session, id: SocialAttempt.draftPostID(owner: owner, draft: post), body: post.text, tags: post.tags ?? [], attachments: post.attachments ?? []); sharing = false }
                 }.font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
                     .disabled(sharing || isShared)
+                if isShared, let owner = session.userID,
+                   let status = social.moderationText(kind: "post", id: SocialAttempt.draftPostID(owner: owner, draft: post)) {
+                    Text(status).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
                 if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
             }
         }.padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 16))

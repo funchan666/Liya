@@ -225,6 +225,13 @@ private struct WelcomeView: View {
                             Text(LocalizedStringKey(notice)).font(.footnote.weight(.medium)).foregroundStyle(.white)
                                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true).padding(.top, 8)
                         }
+                        if session.showAppleRevocationHelp {
+                            Text("If you used Sign in with Apple, you can also stop using Apple with Liya in your Apple Account settings.")
+                                .font(.footnote).foregroundStyle(.white)
+                                .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true).padding(.top, 8)
+                            Link("How to manage Sign in with Apple", destination: URL(string: "https://support.apple.com/en-us/102571")!)
+                                .font(.footnote.weight(.semibold)).underline().foregroundStyle(.white).frame(minHeight: 44)
+                        }
                         agreementRow
                             .padding(.top, 10)
                     }
