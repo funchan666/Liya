@@ -11,7 +11,7 @@ const A='00000000-0000-4000-8000-000000000001', B='00000000-0000-4000-8000-00000
 async function sql(s) { return db.exec(s); }
 async function q(s) { return (await db.query(s)).rows; }
 async function as(id) { await sql(`reset role; select set_config('request.jwt.claim.sub','${id ?? ''}',false); ${id ? 'set role authenticated;' : ''}`); }
-async function reject(s) { let rejected=false; try { await sql(s); } catch (_) { rejected=true; } assert.equal(rejected,true,'Expected statement to be rejected'); }
+async function reject(s) { let rejected=false; try { await sql(s); } catch (error) { assert.equal(error.code, '42501', `Unexpected rejection: ${error.message}`); rejected=true; } assert.equal(rejected,true,'Expected a permission or row-security rejection'); }
 await sql(`create role anon; create role authenticated; create role service_role; create schema auth; create schema storage;
 create table auth.users(id uuid primary key); grant usage on schema auth,storage to authenticated,anon;
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
@@ -91,7 +91,13 @@ await as(null); assert.equal((await q(`select liya_social_private.set_profile_hi
 await as(B); assert.equal((await q(`select count(*)::int as n from storage.objects where name='${A}/avatars/new.jpg'`))[0].n,0);
 await as(null); assert.equal((await q(`select liya_social_private.set_profile_hidden('${A}',false,'reviewer') as ok`))[0].ok,true);
 await as(B); assert.equal((await q(`select count(*)::int as n from storage.objects where name='${A}/avatars/new.jpg'`))[0].n,1);
-await as(A); await sql(`insert into public.liya_video_comments(id,media_id,owner_id,body) values ('20000000-0000-4000-8000-000000000002','example-photo-001','${A}','Photo comment');`);
+await as(A); await sql(`insert into public.liya_people(id,display_name,signature,avatar_path) values ('${A}','Alice revised','Updated',null) on conflict(id) do update set display_name=excluded.display_name,signature=excluded.signature,avatar_path=excluded.avatar_path;`);
+await as(B); assert.equal((await q(`select count(*)::int as n from storage.objects where name='${A}/avatars/new.jpg'`))[0].n,0);
+await as(null); assert.equal((await q(`select liya_social_private.review_report('post_comment','${REPORT}','resolved','reviewer') as ok`))[0].ok,true);
+await as(A); assert.equal((await q(`select status from public.liya_my_report_status() where report_id='${REPORT}'`))[0].status,'resolved');
+await as(null); assert.equal((await q(`select liya_social_private.set_curated_starter_hidden('example-video-001',0,false,'reviewer') as ok`))[0].ok,true);
+await as(A); assert.equal((await q(`select count(*)::int as n from public.liya_hidden_curated_starters('example-video-001')`))[0].n,0);
+await sql(`insert into public.liya_video_comments(id,media_id,owner_id,body) values ('20000000-0000-4000-8000-000000000002','example-photo-001','${A}','Photo comment');`);
 await as(B); assert.equal((await q(`select comment_count::int as n from public.liya_photo_counts('example-photo-001')`))[0].n,0);
 await as(null); assert.equal((await q(`select liya_social_private.review_content('media_comment','20000000-0000-4000-8000-000000000002',1,'approved','reviewer') as ok`))[0].ok,true);
 await as(B); assert.equal((await q(`select comment_count::int as n from public.liya_photo_counts('example-photo-001')`))[0].n,1);
