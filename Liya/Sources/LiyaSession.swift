@@ -1,670 +1,147 @@
 import Foundation
 import Combine
-import Supabase
 
 @MainActor
 final class LiyaSession: ObservableObject {
-    @Published private(set) var isSigningIn = false
-    @Published private(set) var isDeletingAccount = false
-    @Published private(set) var isSigningOut = false
-    @Published var signOutError: String?
-    @Published var welcomeNotice: String?
-    @Published private(set) var showAppleRevocationHelp = false
-    @Published var deletionError: String?
-    @Published private(set) var errorMessage: String?
-    @Published private(set) var authNotice: String?
-    @Published var passwordRecovery = false
-    @Published private(set) var userID: UUID?
-    @Published private(set) var photos: [LiyaMedia] = []
-    @Published private(set) var videos: [LiyaMedia] = []
-    @Published private(set) var catalogError: String?
-    @Published private(set) var catalogLoading = false
-    @Published private(set) var catalogGeneration = UUID()
-    @Published private(set) var imageGeneration = UUID()
-    @Published private(set) var coinBalance: Int64?
-    @Published private(set) var walletError: String?
-    @Published private(set) var walletLive = false
-    private var walletUsesSandbox = false
-    @Published var welcomeGift: WelcomeGift?
-    @Published private(set) var moodEntries: [CloudMood] = []
-    @Published private(set) var moodError: String?
-    @Published private(set) var moodLoading = false
-    @Published private(set) var profile: CloudProfile?
-    @Published private(set) var profileAvatarURL: URL?
-    @Published private(set) var profileError: String?
-    @Published private(set) var profileLoading = false
-    @Published private(set) var likedMediaIDs: Set<String> = []
-    @Published private(set) var likesLoading = false
-    @Published private(set) var likesReady = false
-    @Published private(set) var likesError: String?
-    @Published private(set) var treeEntries: [TreeEntry] = []
-    @Published private(set) var treeLoading = false
-    @Published private(set) var treeError: String?
-    private var walletTask: Task<Void, Never>?
-    private var walletGeneration = UUID()
-    private var walletWatchGeneration = UUID()
-    private var profileGeneration = UUID()
-    private var moodGeneration = UUID()
-    private var accountGeneration = UUID()
-    private static let projectURL = URL(string: "https://hymfjhuglaqoftrcxfjx.supabase.co")!
-    private static let publishableKey = "sb_publishable_taByCR_N24fMyWxw4aFUqw_eZMldttB"
-
-    let client: SupabaseClient = {
-        let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 30
-        configuration.timeoutIntervalForResource = 900
-        return SupabaseClient(
-            supabaseURL: LiyaSession.projectURL,
-            supabaseKey: LiyaSession.publishableKey,
-            options: SupabaseClientOptions(
-                auth: .init(emitLocalSessionAsInitialSession: true),
-                global: .init(session: URLSession(configuration: configuration))
-            )
-        )
-    }()
-
-    var isGuest: Bool { client.auth.currentUser?.isAnonymous ?? true }
-    private static let confirmationURL = URL(string: "com.liyalumora.auroramuse://auth/confirm")!
-    private static let recoveryURL = URL(string: "com.liyalumora.auroramuse://auth/recovery")!
-
-    func clearAuthFeedback() { errorMessage = nil; authNotice = nil }
-    func appleAuthorizationFailed() { errorMessage = "Couldn't sign in with Apple. Please try again." }
-
-    private func canBeginAlternateSignIn() -> Bool {
-        guard userID == nil, client.auth.currentSession == nil else {
-            errorMessage = "An existing account is still on this device. Reconnect to it before changing accounts."
-            return false
-        }
-        return true
-    }
-
-    func emailSignIn(email: String, password: String) async -> Bool {
-        guard !isSigningIn else { return false }
-        clearAuthFeedback()
-        guard canBeginAlternateSignIn() else { return false }
-        isSigningIn = true
-        defer { isSigningIn = false }
-        do {
-            _ = try await client.auth.signIn(email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
-            return await activateSignedInAccount()
-        } catch {
-            errorMessage = "Couldn't sign in. Check your email and password, and make sure your email is confirmed."
-            return false
-        }
-    }
-
-    func emailSignUp(email: String, password: String) async -> Bool {
-        guard !isSigningIn else { return false }
-        clearAuthFeedback()
-        guard canBeginAlternateSignIn() else { return false }
-        isSigningIn = true
-        defer { isSigningIn = false }
-        do {
-            let result = try await client.auth.signUp(email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password, redirectTo: Self.confirmationURL)
-            if result.session != nil { return await activateSignedInAccount() }
-            authNotice = "Check your inbox for a confirmation link, then return to Liya."
-            return false
-        } catch {
-            errorMessage = "Couldn't create your account. Check your details and try again."
-            return false
-        }
-    }
-
-    func appleSignIn(token: String, nonce: String) async -> Bool {
-        guard !isSigningIn else { return false }
-        clearAuthFeedback()
-        guard canBeginAlternateSignIn() else { return false }
-        isSigningIn = true
-        defer { isSigningIn = false }
-        do {
-            _ = try await client.auth.signInWithIdToken(credentials: .init(provider: .apple, idToken: token, nonce: nonce))
-            return await activateSignedInAccount()
-        } catch {
-            errorMessage = "Couldn't sign in with Apple. Please try again."
-            return false
-        }
-    }
-
-    func sendPasswordReset(email: String) async {
-        guard !isSigningIn else { return }
-        clearAuthFeedback()
-        guard canBeginAlternateSignIn() else { return }
-        isSigningIn = true
-        defer { isSigningIn = false }
-        do {
-            try await client.auth.resetPasswordForEmail(email.trimmingCharacters(in: .whitespacesAndNewlines), redirectTo: Self.recoveryURL)
-            authNotice = "If an account exists for this email, a reset link is on its way."
-        } catch { errorMessage = "Couldn't send a reset link. Please try again." }
-    }
-
-    func handleAuthURL(_ url: URL) async -> Bool {
-        guard url.scheme == "com.liyalumora.auroramuse", url.host == "auth",
-              ["/confirm", "/recovery"].contains(url.path), !isSigningIn else { return false }
-        guard canBeginAlternateSignIn() else { return false }
-        isSigningIn = true; clearAuthFeedback()
-        defer { isSigningIn = false }
-        do {
-            if url.path == "/recovery" { UserDefaults.standard.set(true, forKey: "liya.pendingPasswordRecovery") }
-            _ = try await client.auth.session(from: url)
-            if url.path == "/recovery" {
-                passwordRecovery = true
-                return false
-            }
-            return await activateSignedInAccount()
-        } catch {
-            if url.path == "/recovery" { UserDefaults.standard.removeObject(forKey: "liya.pendingPasswordRecovery") }
-            errorMessage = "This link is invalid or has expired. Please request a new one on this device."
-            return false
-        }
-    }
-
-    func updatePassword(_ password: String) async -> Bool {
-        guard passwordRecovery, !isSigningIn else { return false }
-        isSigningIn = true; clearAuthFeedback()
-        defer { isSigningIn = false }
-        do {
-            _ = try await client.auth.update(user: UserAttributes(password: password))
-            UserDefaults.standard.removeObject(forKey: "liya.pendingPasswordRecovery")
-            passwordRecovery = false
-            return await activateSignedInAccount()
-        } catch {
-            errorMessage = "Couldn't update your password. Please try again."
-            return false
-        }
-    }
-
-    func cancelPasswordRecovery() async -> Bool {
-        guard passwordRecovery, !isSigningIn else { return false }
-        isSigningIn = true
-        defer { isSigningIn = false }
-        try? await client.auth.signOut(scope: .local)
-        guard client.auth.currentSession == nil else {
-            errorMessage = "Couldn't close password recovery. Please try again."
-            return false
-        }
-        UserDefaults.standard.removeObject(forKey: "liya.pendingPasswordRecovery")
-        passwordRecovery = false
-        clearAuthFeedback()
-        return true
-    }
-
-    private func activateSignedInAccount() async -> Bool {
-        let generation = accountGeneration
-        do {
-            let current = try await client.auth.session
-            UserDefaults.standard.set(true, forKey: "liya.hasSupabaseAccount")
-            let response: BootstrapResponse = try await client.functions.invoke(
-                "liya-bootstrap", options: FunctionInvokeOptions(body: [String: String]())
-            )
-            guard generation == accountGeneration, response.code == 0, response.data.isEmpty else { throw SessionError.invalidBootstrap }
-            userID = current.user.id
-            welcomeNotice = nil
-            showAppleRevocationHelp = false
-            Task { await refreshCatalog() }
-            Task { await refreshWallet() }
-            Task { await refreshProfile() }
-            Task { await refreshLikes() }
-            startWalletUpdates(for: current.user.id)
-            return true
-        } catch {
-            errorMessage = "Your account is signed in, but Liya couldn't finish connecting. Please try again."
-            return false
-        }
-    }
-
-    /// Resume only an existing account. A launch must never create a new one.
-    func restoreSavedAccount() async -> Bool {
-        guard !isSigningIn else { return false }
-        if UserDefaults.standard.bool(forKey: "liya.pendingPasswordRecovery") {
-            if client.auth.currentSession != nil { passwordRecovery = true }
-            else { UserDefaults.standard.removeObject(forKey: "liya.pendingPasswordRecovery") }
-            return false
-        }
-        guard client.auth.currentSession != nil || UserDefaults.standard.bool(forKey: "liya.hasSupabaseAccount") else { return false }
-        return await connectAccount()
-    }
-
-    private func connectAccount() async -> Bool {
-        guard !isSigningIn else { return false }
-        isSigningIn = true
-        let generation = accountGeneration
-        errorMessage = nil
-        defer { isSigningIn = false }
-        do {
-            // Restore an existing account without creating a new anonymous session.
-            guard client.auth.currentSession != nil else { throw SessionError.savedSessionUnavailable }
-            let session = try await client.auth.session
-            guard generation == accountGeneration else { return false }
-            UserDefaults.standard.set(true, forKey: "liya.hasSupabaseAccount")
-            let response: BootstrapResponse = try await client.functions.invoke(
-                "liya-bootstrap", options: FunctionInvokeOptions(body: [String: String]())
-            )
-            guard response.code == 0, response.data.isEmpty else {
-                throw SessionError.invalidBootstrap
-            }
-            guard generation == accountGeneration else { return false }
-            userID = session.user.id
-            welcomeNotice = nil
-            showAppleRevocationHelp = false
-            Task { await refreshCatalog() }
-            Task { await refreshWallet() }
-            Task { await refreshProfile() }
-            Task { await refreshLikes() }
-            startWalletUpdates(for: session.user.id)
-            return true
-        } catch SessionError.savedSessionUnavailable {
-            guard generation == accountGeneration else { return false }
-            errorMessage = "Your saved account is unavailable. Check your connection or sign in again."
-            return false
-        } catch {
-            guard generation == accountGeneration else { return false }
-            errorMessage = "Couldn't connect to Liya. Check your connection and try again."
-            return false
-        }
-    }
-
-    func refreshCatalog() async {
-        guard let owner = userID, !catalogLoading else { return }
-        catalogLoading = true
-        catalogError = nil
-        photos = []; videos = []; catalogGeneration = UUID(); imageGeneration = UUID()
-        defer { catalogLoading = false }
-        do {
-            var rows: [LiyaMedia] = []
-            var offset = 0
-            while true {
-                let page: [LiyaMedia] = try await client.from("liya_example_media")
-                    .select("id,kind,sort_order,object_key")
-                    .order("sort_order").order("id").range(from: offset, to: offset + 499).execute().value
-                rows.append(contentsOf: page)
-                if page.count < 500 { break }
-                offset += 500
-            }
-            guard userID == owner else { return }
-            photos = rows.filter { $0.kind == "photo" }
-            videos = rows.filter { $0.kind == "video" }
-            catalogGeneration = UUID(); imageGeneration = UUID()
-        } catch {
-            if userID == owner { catalogError = "Couldn't load the content. Please try again." }
-        }
-    }
-
-    func mediaURL(kind: String, index: Int) async throws -> URL {
-        let media = kind == "photo" ? photos : videos
-        guard media.indices.contains(index) else { throw SessionError.mediaUnavailable }
-        return try await client.storage.from("liya-example-media")
-            .createSignedURL(path: media[index].objectKey, expiresIn: 3600)
-    }
-
-    func resumeAccount() async {
-        guard let owner = userID, !isDeletingAccount, !isSigningOut else { return }
-        imageGeneration = UUID()
-        startWalletUpdates(for: owner)
-        await refreshProfile()
-        await refreshWallet()
-    }
-
-    /// Restore an existing session for an incoming call; never create a new account here.
-    func restoreForIncomingCall() async -> Bool {
-        if userID != nil { return true }
-        guard !passwordRecovery, !UserDefaults.standard.bool(forKey: "liya.pendingPasswordRecovery") else { return false }
-        guard !isDeletingAccount, !isSigningOut, UserDefaults.standard.bool(forKey: "liya.hasSupabaseAccount") else { return false }
-        do {
-            let saved = try await client.auth.session
-            userID = saved.user.id
-            return true
-        } catch { return false }
-    }
-
-    func deleteAccount() async -> Bool {
-        guard let owner = userID, !isDeletingAccount else { return false }
-        isDeletingAccount = true; deletionError = nil
-        accountGeneration = UUID()
-        defer { isDeletingAccount = false }
-        let key = "liya.deleteRequest.\(owner.uuidString.lowercased())"
-        let requestID: UUID
-        if let saved = UserDefaults.standard.string(forKey: key), let id = UUID(uuidString: saved) { requestID = id }
-        else { requestID = UUID(); UserDefaults.standard.set(requestID.uuidString, forKey: key) }
-        do {
-            let token = try await client.auth.session.accessToken
-            var request = URLRequest(url: Self.projectURL.appendingPathComponent("functions").appendingPathComponent("v1").appendingPathComponent("liya-delete-account"))
-            request.httpMethod = "POST"; request.timeoutInterval = 90
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            request.setValue(Self.publishableKey, forHTTPHeaderField: "apikey")
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = try JSONEncoder().encode(["request_id": requestID.uuidString])
-            let config = URLSessionConfiguration.ephemeral
-            config.timeoutIntervalForRequest = 90; config.timeoutIntervalForResource = 120
-            let connection = URLSession(configuration: config, delegate: DeleteRedirectGuard(), delegateQueue: nil)
-            defer { connection.invalidateAndCancel() }
-            let (data, reply) = try await connection.data(for: request)
-            let result = try JSONDecoder().decode(DeletionResponse.self, from: data)
-            guard let http = reply as? HTTPURLResponse, (200..<300).contains(http.statusCode), result.code == 0, result.data.status == "deleted" else { throw SessionError.deletionUnconfirmed }
-            walletTask?.cancel(); walletTask = nil; walletGeneration = UUID(); walletWatchGeneration = UUID()
-            userID = nil; coinBalance = nil; walletLive = false; walletUsesSandbox = false; welcomeGift = nil
-            profile = nil; profileAvatarURL = nil; moodEntries = []; treeEntries = []; likedMediaIDs = []
-            photos = []; videos = []; catalogGeneration = UUID(); imageGeneration = UUID()
-            try? await client.auth.signOut(scope: .local)
-            UserDefaults.standard.removeObject(forKey: key)
-            UserDefaults.standard.removeObject(forKey: "liya.hasSupabaseAccount")
-            welcomeNotice = "Your account has been deleted. You can start again whenever you're ready."
-            // No Apple refresh token was retained; Apple documents manual revocation for this case.
-            showAppleRevocationHelp = true
-            return true
-        } catch {
-            deletionError = "Deletion could not be confirmed. Please retry before signing out; some uploaded files may already have been removed."
-            return false
-        }
-    }
-
-    func signOut() async -> Bool {
-        guard userID != nil, !isSigningOut, !isDeletingAccount else { return false }
-        isSigningOut = true; signOutError = nil
-        accountGeneration = UUID()
-        defer { isSigningOut = false }
-        var serverConfirmed = client.auth.currentSession != nil
-        do {
-            try await client.auth.signOut(scope: .local)
-        } catch {
-            guard client.auth.currentSession == nil else {
-                signOutError = "Couldn't sign out. Please check your connection and try again."
-                return false
-            }
-            // The SDK can clear its local session before its server request fails.
-            serverConfirmed = false
-        }
-        walletTask?.cancel(); walletTask = nil; walletGeneration = UUID(); walletWatchGeneration = UUID()
-        userID = nil; coinBalance = nil; walletLive = false; walletUsesSandbox = false; welcomeGift = nil
-        profile = nil; profileAvatarURL = nil; moodEntries = []; treeEntries = []; likedMediaIDs = []
-        photos = []; videos = []; catalogGeneration = UUID(); imageGeneration = UUID()
-        likesReady = false; likesError = nil
-        UserDefaults.standard.removeObject(forKey: "liya.hasSupabaseAccount")
-        welcomeNotice = serverConfirmed ? "You are signed out. Sign in whenever you're ready." : "Signed out on this device. The server could not confirm sign-out."
-        return true
-    }
-
-    func refreshWallet() async {
-        guard let owner = userID else { return }
-        let generation = UUID()
-        walletGeneration = generation
-        do {
-            let function = walletUsesSandbox ? "liya_claim_sandbox_welcome" : "liya_claim_welcome"
-            let rows: [WalletState] = try await client.rpc(function).execute().value
-            guard generation == walletGeneration, owner == userID else { return }
-            guard let row = rows.first else { throw SessionError.walletUnavailable }
-            coinBalance = row.balance
-            walletError = nil
-            if row.welcomePending && welcomeGift == nil { welcomeGift = WelcomeGift(coins: 600) }
-        } catch {
-            guard generation == walletGeneration, owner == userID else { return }
-            coinBalance = nil
-            walletError = "Couldn't load your coin balance. Please try again."
-        }
-    }
-
-    func configurePurchaseWallet(sandbox: Bool, owner: UUID) async -> Bool {
-        guard userID == owner else { return false }
-        if walletUsesSandbox != sandbox {
-            walletUsesSandbox = sandbox
-            coinBalance = nil
-            welcomeGift = nil
-            walletTask?.cancel(); walletTask = nil
-            walletWatchGeneration = UUID()
-        }
-        await refreshWallet()
-        guard userID == owner, walletUsesSandbox == sandbox, coinBalance != nil else { return false }
-        startWalletUpdates(for: owner)
-        return true
-    }
-
-    func acknowledgeWelcome() async -> Bool {
-        do {
-            let function = walletUsesSandbox ? "liya_acknowledge_sandbox_welcome" : "liya_acknowledge_welcome"
-            try await client.rpc(function).execute()
-            walletGeneration = UUID()
-            welcomeGift = nil
-            return true
-        } catch {
-            walletError = "Couldn't save this confirmation. Please try again."
-            return false
-        }
-    }
-
-    func refreshMoods() async {
-        guard let owner = userID, !moodLoading else { return }
-        let generation = UUID(); moodGeneration = generation
-        moodLoading = true; moodError = nil; moodEntries = []
-        defer { moodLoading = false }
-        do {
-            var rows: [CloudMood] = []
-            var offset = 0
-            while true {
-                let page: [CloudMood] = try await client.from("liya_moods")
-                    .select("owner_id,day,state,mood,note")
-                    .eq("owner_id", value: owner.uuidString).eq("state", value: "saved")
-                    .order("day", ascending: false).range(from: offset, to: offset + 499).execute().value
-                rows.append(contentsOf: page)
-                if page.count < 500 { break }
-                offset += 500
-            }
-            guard userID == owner, moodGeneration == generation else { return }
-            moodEntries = rows
-        } catch {
-            if userID == owner && moodGeneration == generation { moodError = "Couldn't load your journal. Please try again." }
-        }
-    }
-
-    func saveMood(_ mood: String, note: String, date: Date) async -> Bool {
-        guard let owner = userID else { moodError = "Connect your account to save."; return false }
-        moodGeneration = UUID()
-        let row = CloudMood(ownerID: owner, day: CloudMood.dayKey(date), state: "saved", mood: mood, note: note)
-        do {
-            let saved: [CloudMood] = try await client.from("liya_moods")
-                .upsert(row, onConflict: "owner_id,day,state").execute().value
-            guard userID == owner, let confirmed = saved.first,
-                  confirmed.day == row.day, confirmed.mood == mood, confirmed.note == note else {
-                throw SessionError.moodUnavailable
-            }
-            moodEntries.removeAll { $0.day == row.day }
-            moodEntries.append(confirmed)
-            moodEntries.sort { $0.day > $1.day }
-            moodError = nil
-            return true
-        } catch {
-            moodError = "Couldn't save your journal entry. Your draft is still available; please try again."
-            return false
-        }
-    }
-
-    func refreshProfile() async {
-        guard let owner = userID, !profileLoading else { return }
-        let generation = UUID(); profileGeneration = generation
-        profileLoading = true
-        profileError = nil
-        defer { profileLoading = false }
-        do {
-            let value: CloudProfile = try await client.from("liya_profiles")
-                .select("id,display_name,signature,tags,avatar_path")
-                .eq("id", value: owner.uuidString).single().execute().value
-            let url: URL?
-            if let path = value.avatarPath {
-                url = try await client.storage.from("liya-user-media").createSignedURL(path: path, expiresIn: 3600)
-            } else { url = nil }
-            guard userID == owner, profileGeneration == generation else { return }
-            profile = value; profileAvatarURL = url
-        } catch {
-            if userID == owner && profileGeneration == generation { profileError = "Couldn't load your profile. Please try again." }
-        }
-    }
-
-    func saveProfile(name: String, signature: String, tags: [String], avatar: DraftAttachment?) async -> Bool {
-        guard let owner = userID, let current = profile else {
-            profileError = "Load your account profile before saving."; return false
-        }
-        profileGeneration = UUID()
-        do {
-            var path = current.avatarPath
-            if let avatar {
-                let ext = DraftFiles.url(avatar).pathExtension.lowercased()
-                let safeExtension = ext.isEmpty ? "jpg" : ext
-                let newPath = "\(owner.uuidString.lowercased())/avatars/\(UUID().uuidString.lowercased()).\(safeExtension)"
-                try await client.storage.from("liya-user-media").upload(newPath, fileURL: DraftFiles.url(avatar))
-                path = newPath
-            }
-            let update = ProfileUpdate(displayName: name, signature: signature, tags: tags, avatarPath: path)
-            let saved: CloudProfile = try await client.from("liya_profiles").update(update)
-                .eq("id", value: owner.uuidString).select("id,display_name,signature,tags,avatar_path").single().execute().value
-            guard userID == owner else { return false }
-            profile = saved
-            profileAvatarURL = nil
-            profileError = nil
-            if let path = saved.avatarPath {
-                profileAvatarURL = try? await client.storage.from("liya-user-media").createSignedURL(path: path, expiresIn: 3600)
-            }
-            return true
-        } catch {
-            profileError = "Couldn't save your profile. Please try again."
-            return false
-        }
-    }
-
-    func submitReport(id: UUID, index: Int, targetType: String, reason: String) async -> Bool {
-        guard let owner = userID else { return false }
-        let media = targetType == "video" ? videos : photos
-        guard media.indices.contains(index) else { return false }
-        let report = ContentReport(id: id, reporterID: owner, mediaID: media[index].id, targetType: targetType, reason: reason)
-        do { try await client.from("liya_content_reports").insert(report).execute() }
-        catch { /* The insert may have succeeded before the connection failed; read it back. */ }
-        do {
-            let rows: [ContentReport] = try await client.from("liya_content_reports")
-                .select("id,reporter_id,media_id,target_type,reason").eq("id", value: id.uuidString).execute().value
-            return userID == owner && rows.first == report
-        } catch { return false }
-    }
-
-    func refreshLikes() async {
-        guard let owner = userID, !likesLoading else { return }
-        likesLoading = true; likesReady = false; likesError = nil; likedMediaIDs = []
-        defer { likesLoading = false }
-        do {
-            var rows: [MediaLike] = []
-            var offset = 0
-            while true {
-                let page: [MediaLike] = try await client.from("liya_media_likes")
-                    .select("owner_id,media_id").eq("owner_id", value: owner.uuidString)
-                    .order("media_id").range(from: offset, to: offset + 499).execute().value
-                rows.append(contentsOf: page)
-                if page.count < 500 { break }
-                offset += 500
-            }
-            guard userID == owner else { return }
-            likedMediaIDs = Set(rows.map(\.mediaID)); likesReady = true
-        } catch {
-            if userID == owner { likesError = "Couldn't load your likes. Please try again." }
-        }
-    }
-
-    func toggleLike(kind: String, index: Int) async {
-        guard let owner = userID, likesReady, !likesLoading else { return }
-        let media = kind == "photo" ? photos : videos
-        guard media.indices.contains(index) else { return }
-        let id = media[index].id
-        let shouldLike = !likedMediaIDs.contains(id)
-        likesLoading = true; likesError = nil
-        do {
-            if shouldLike {
-                try await client.from("liya_media_likes").insert(MediaLike(ownerID: owner, mediaID: id)).execute()
-            } else {
-                try await client.from("liya_media_likes").delete().eq("owner_id", value: owner.uuidString).eq("media_id", value: id).execute()
-            }
-        } catch { /* Read back below to resolve an uncertain request. */ }
-        likesLoading = false
-        await refreshLikes()
-        if likesReady && likedMediaIDs.contains(id) != shouldLike {
-            likesError = "Couldn't update this like. Please try again."
-        }
-    }
-
-    func isLiked(kind: String, index: Int) -> Bool {
-        let media = kind == "photo" ? photos : videos
-        return media.indices.contains(index) && likedMediaIDs.contains(media[index].id)
-    }
-
-    func refreshTreeEntries() async {
-        guard let owner = userID, !treeLoading else { return }
-        treeLoading = true; treeError = nil; treeEntries = []
-        defer { treeLoading = false }
-        do {
-            var rows: [TreeEntry] = []
-            var offset = 0
-            while true {
-                let page: [TreeEntry] = try await client.from("liya_tree_entries")
-                    .select("id,owner_id,mood,body").eq("owner_id", value: owner.uuidString)
-                    .order("created_at", ascending: false).order("id").range(from: offset, to: offset + 499).execute().value
-                rows.append(contentsOf: page)
-                if page.count < 500 { break }
-                offset += 500
-            }
-            guard owner == userID else { return }
-            treeEntries = rows
-        } catch { if owner == userID { treeError = "Couldn't load your private thoughts. Please try again." } }
-    }
-
-    func saveTreeEntry(id: UUID, mood: String, body: String) async -> Bool {
-        guard let owner = userID else { return false }
-        let row = TreeEntry(id: id, ownerID: owner, mood: mood, body: body)
-        do { try await client.from("liya_tree_entries").insert(row).execute() }
-        catch { /* A prior attempt may already have reached the server. */ }
-        do {
-            let rows: [TreeEntry] = try await client.from("liya_tree_entries")
-                .select("id,owner_id,mood,body").eq("id", value: id.uuidString).execute().value
-            guard owner == userID, rows.first == row else { throw SessionError.treeUnavailable }
-            await refreshTreeEntries()
-            return true
-        } catch { treeError = "Couldn't confirm saving. Your words are still here; please try again."; return false }
-    }
-
-    func deleteTreeEntry(_ id: UUID) async {
-        guard let owner = userID else { return }
-        do {
-            try await client.from("liya_tree_entries").delete().eq("id", value: id.uuidString)
-                .eq("owner_id", value: owner.uuidString).execute()
-            await refreshTreeEntries()
-            if treeError == nil && treeEntries.contains(where: { $0.id == id }) { treeError = "Couldn't delete this thought." }
-        } catch { treeError = "Couldn't delete this thought. Please try again." }
-    }
-
-    private func startWalletUpdates(for owner: UUID) {
-        walletTask?.cancel()
-        walletLive = false
-        let watchGeneration = UUID()
-        walletWatchGeneration = watchGeneration
-        let client = client
-        let channel = client.channel("liya-wallet-\(owner.uuidString.lowercased())-\(watchGeneration.uuidString.lowercased())")
-        let changes = channel.postgresChange(
-            AnyAction.self, schema: "public", table: walletUsesSandbox ? "liya_sandbox_wallets" : "liya_wallets",
-            filter: .eq("owner_id", value: owner.uuidString.lowercased())
-        )
-        walletTask = Task { [weak self] in
-            do {
-                try await channel.subscribeWithError()
-                guard !Task.isCancelled else { await client.removeChannel(channel); return }
-                if self?.walletWatchGeneration == watchGeneration { self?.walletLive = true }
-                await self?.refreshWallet()
-                for await _ in changes {
-                    if Task.isCancelled { break }
-                    await self?.refreshWallet()
-                }
-            } catch {
-                if self?.walletWatchGeneration == watchGeneration {
-                    self?.walletLive = false
-                    await self?.refreshWallet()
-                }
-            }
-            if self?.walletWatchGeneration == watchGeneration { self?.walletLive = false }
-            await client.removeChannel(channel)
-        }
-    }
+ @Published private(set) var isSigningIn = false
+ @Published private(set) var isDeletingAccount = false
+ @Published private(set) var isSigningOut = false
+ @Published var signOutError: String?
+ @Published var welcomeNotice: String?
+ @Published private(set) var showAppleRevocationHelp = false
+ @Published var deletionError: String?
+ @Published private(set) var errorMessage: String?
+ @Published private(set) var authNotice: String?
+ @Published var passwordRecovery = false
+ @Published private(set) var userID: UUID?
+ @Published private(set) var photos: [LiyaMedia] = []
+ @Published private(set) var videos: [LiyaMedia] = []
+ @Published private(set) var catalogError: String?
+ @Published private(set) var catalogLoading = false
+ @Published private(set) var catalogGeneration = UUID()
+ @Published private(set) var imageGeneration = UUID()
+ @Published private(set) var coinBalance: Int64?
+ @Published private(set) var walletError: String?
+ @Published private(set) var walletLive = false
+ @Published var welcomeGift: WelcomeGift?
+ @Published private(set) var moodEntries: [CloudMood] = []
+ @Published private(set) var moodError: String?
+ @Published private(set) var moodLoading = false
+ @Published private(set) var profile: CloudProfile?
+ @Published private(set) var profileAvatarURL: URL?
+ @Published private(set) var profileError: String?
+ @Published private(set) var profileLoading = false
+ @Published private(set) var likedMediaIDs: Set<String> = []
+ @Published private(set) var likesLoading = false
+ @Published private(set) var likesReady = false
+ @Published private(set) var likesError: String?
+ @Published private(set) var treeEntries: [TreeEntry] = []
+ @Published private(set) var treeLoading = false
+ @Published private(set) var treeError: String?
+ private let defaults = UserDefaults.standard
+ var isGuest: Bool { false }
+ private var ownerKey: String { "liya.local.identity" }
+ private func storageKey(_ name: String) -> String { "liya.local.\(userID?.uuidString ?? "none").\(name)" }
+ private func read<T: Decodable>(_ type: T.Type, _ name: String) -> T? {
+  defaults.data(forKey: storageKey(name)).flatMap { try? JSONDecoder().decode(type, from: $0) }
+ }
+ private func write<T: Encodable>(_ value: T, _ name: String) -> Bool {
+  guard let data = try? JSONEncoder().encode(value) else { return false }
+  defaults.set(data, forKey: storageKey(name)); return true
+ }
+ func clearAuthFeedback() { errorMessage = nil; authNotice = nil }
+ func appleAuthorizationFailed() { errorMessage = "Apple sign-in is currently unavailable." }
+ func emailSignIn(email: String, password: String) async -> Bool {
+  guard !isSigningIn else { return false }
+  let text = email.trimmingCharacters(in: .whitespacesAndNewlines)
+  let pieces = text.split(separator: "@", omittingEmptySubsequences: false)
+  guard pieces.count == 2, !pieces[0].isEmpty, pieces[1].contains("."), !pieces[1].hasPrefix("."), !pieces[1].hasSuffix("."), !text.contains(where: { $0.isWhitespace }), !password.isEmpty else {
+   errorMessage = "Enter a valid email address and password."; return false
+  }
+  isSigningIn = true; defer { isSigningIn = false }
+  let id = defaults.string(forKey: ownerKey).flatMap(UUID.init(uuidString:)) ?? UUID()
+  defaults.set(id.uuidString, forKey: ownerKey); defaults.set(true, forKey: "liya.local.signedIn")
+  userID = id; clearAuthFeedback(); welcomeNotice = nil
+  await loadLocalData(); return true
+ }
+ func emailSignUp(email: String, password: String) async -> Bool { errorMessage = "Account registration is unavailable."; return false }
+ func appleSignIn(token: String, nonce: String) async -> Bool { errorMessage = "Apple sign-in is currently unavailable."; return false }
+ func sendPasswordReset(email: String) async { errorMessage = "Password reset is currently unavailable." }
+ func handleAuthURL(_ url: URL) async -> Bool { false }
+ func updatePassword(_ password: String) async -> Bool { false }
+ func cancelPasswordRecovery() async -> Bool { passwordRecovery = false; return true }
+ func restoreSavedAccount() async -> Bool {
+  guard defaults.bool(forKey: "liya.local.signedIn"), let value = defaults.string(forKey: ownerKey), let id = UUID(uuidString: value) else { return false }
+  userID = id; await loadLocalData(); return true
+ }
+ private func loadLocalData() async { await refreshCatalog(); await refreshProfile(); await refreshMoods(); await refreshLikes(); await refreshTreeEntries(); await refreshWallet() }
+ func refreshCatalog() async {
+  func bundled(_ kind: String, count: Int, ext: String) -> [LiyaMedia] {
+   (1...count).compactMap { number in
+    let suffix = String(format: "%03d", number); let filename = "example_\(kind)_\(suffix)"
+    guard Bundle.main.url(forResource: filename, withExtension: ext, subdirectory: "Examples") != nil else { return nil }
+    return LiyaMedia(id: "example-\(kind)-\(suffix)", kind: kind, sortOrder: number - 1, objectKey: "\(filename).\(ext)")
+   }
+  }
+  photos = bundled("photo", count: 40, ext: "jpg"); videos = bundled("video", count: 10, ext: "mp4")
+  catalogError = photos.count == 40 && videos.count == 10 ? nil : "Some content is unavailable."
+  catalogGeneration = UUID(); imageGeneration = UUID()
+ }
+ func mediaURL(kind: String, index: Int) async throws -> URL {
+  let media = kind == "photo" ? photos : videos
+  guard media.indices.contains(index) else { throw LocalError.unavailable }
+  let name = media[index].objectKey as NSString
+  guard let url = Bundle.main.url(forResource: name.deletingPathExtension, withExtension: name.pathExtension, subdirectory: "Examples") else { throw LocalError.unavailable }
+  return url
+ }
+ func resumeAccount() async { guard userID != nil else { return }; await loadLocalData() }
+ func restoreForIncomingCall() async -> Bool { false }
+ func signOut() async -> Bool {
+  guard userID != nil else { return false }; isSigningOut = true; defer { isSigningOut = false }
+  defaults.set(false, forKey: "liya.local.signedIn"); userID = nil; profile = nil; profileAvatarURL = nil; moodEntries = []; treeEntries = []; likedMediaIDs = []; coinBalance = nil
+  welcomeNotice = "You are signed out."; return true
+ }
+ func deleteAccount() async -> Bool { deletionError = "Online account deletion is unavailable. Your previous account has not been deleted."; return false }
+ func refreshWallet() async { coinBalance = nil; walletError = nil; welcomeGift = nil }
+ func configurePurchaseWallet(sandbox: Bool, owner: UUID) async -> Bool { false }
+ func acknowledgeWelcome() async -> Bool { welcomeGift = nil; return true }
+ func refreshMoods() async { moodEntries = read([CloudMood].self, "moods") ?? []; moodError = nil }
+ func saveMood(_ mood: String, note: String, date: Date) async -> Bool {
+  guard let owner = userID else { return false }
+  let item = CloudMood(ownerID: owner, day: CloudMood.dayKey(date), state: "saved", mood: mood, note: note)
+  var items = moodEntries.filter { $0.day != item.day }; items.append(item); items.sort { $0.day > $1.day }
+  guard write(items, "moods") else { moodError = "Couldn't save your entry."; return false }
+  moodEntries = items; moodError = nil; return true
+ }
+ func refreshProfile() async {
+  guard let owner = userID else { return }
+  profile = read(CloudProfile.self, "profile") ?? CloudProfile(id: owner, displayName: "", signature: "", tags: [], avatarPath: nil)
+  if let path = profile?.avatarPath { profileAvatarURL = URL(fileURLWithPath: path) } else { profileAvatarURL = nil }
+  profileError = nil
+ }
+ func saveProfile(name: String, signature: String, tags: [String], avatar: DraftAttachment?) async -> Bool {
+  guard let owner = userID else { return false }
+  let path = avatar.map { DraftFiles.url($0).path } ?? profile?.avatarPath
+  let value = CloudProfile(id: owner, displayName: name, signature: signature, tags: tags, avatarPath: path)
+  guard write(value, "profile") else { profileError = "Couldn't save your profile."; return false }
+  profile = value; profileAvatarURL = path.map { URL(fileURLWithPath: $0) }; profileError = nil; return true
+ }
+ func submitReport(id: UUID, index: Int, targetType: String, reason: String) async -> Bool { false }
+ func refreshLikes() async { likedMediaIDs = Set(read([String].self, "likes") ?? []); likesReady = true; likesError = nil }
+ func toggleLike(kind: String, index: Int) async {
+  let items = kind == "photo" ? photos : videos; guard items.indices.contains(index) else { return }
+  var next = likedMediaIDs; let id = items[index].id
+  if next.contains(id) { next.remove(id) } else { next.insert(id) }
+  if write(Array(next), "likes") { likedMediaIDs = next } else { likesError = "Couldn't save your like." }
+ }
+ func isLiked(kind: String, index: Int) -> Bool { let items = kind == "photo" ? photos : videos; return items.indices.contains(index) && likedMediaIDs.contains(items[index].id) }
+ func refreshTreeEntries() async { treeEntries = read([TreeEntry].self, "tree") ?? []; treeError = nil }
+ func saveTreeEntry(id: UUID, mood: String, body: String) async -> Bool {
+  guard let owner = userID else { return false }; var next = treeEntries.filter { $0.id != id }; next.insert(TreeEntry(id: id, ownerID: owner, mood: mood, body: body), at: 0)
+  guard write(next, "tree") else { treeError = "Couldn't save your thought."; return false }; treeEntries = next; return true
+ }
+ func deleteTreeEntry(_ id: UUID) async { let next = treeEntries.filter { $0.id != id }; if write(next, "tree") { treeEntries = next } else { treeError = "Couldn't remove your thought." } }
+ private enum LocalError: Error { case unavailable }
 }
 
 struct LiyaMedia: Decodable, Identifiable {
@@ -702,7 +179,7 @@ struct CloudMood: Codable, Identifiable, Equatable {
     }
 }
 
-struct CloudProfile: Decodable {
+struct CloudProfile: Codable {
     let id: UUID
     let displayName: String
     let signature: String
@@ -714,78 +191,8 @@ struct CloudProfile: Decodable {
     }
 }
 
-private struct ProfileUpdate: Encodable {
-    let displayName: String
-    let signature: String
-    let tags: [String]
-    let avatarPath: String?
-    enum CodingKeys: String, CodingKey {
-        case signature, tags
-        case displayName = "display_name", avatarPath = "avatar_path"
-    }
-}
-
-private struct ContentReport: Codable, Equatable {
-    let id: UUID
-    let reporterID: UUID
-    let mediaID: String
-    let targetType: String
-    let reason: String
-    enum CodingKeys: String, CodingKey {
-        case id, reason
-        case reporterID = "reporter_id", mediaID = "media_id", targetType = "target_type"
-    }
-}
-
-private struct MediaLike: Codable {
-    let ownerID: UUID
-    let mediaID: String
-    enum CodingKeys: String, CodingKey { case ownerID = "owner_id", mediaID = "media_id" }
-}
 
 struct TreeEntry: Codable, Identifiable, Equatable {
-    let id: UUID
-    let ownerID: UUID
-    let mood: String
-    let body: String
-    enum CodingKeys: String, CodingKey { case id, mood, body; case ownerID = "owner_id" }
-}
-
-private struct WalletState: Decodable {
-    let balance: Int64
-    let welcomePending: Bool
-    enum CodingKeys: String, CodingKey { case balance; case welcomePending = "welcome_pending" }
-}
-
-private enum SessionError: Error { case invalidBootstrap, savedSessionUnavailable, mediaUnavailable, walletUnavailable, moodUnavailable, treeUnavailable, deletionUnconfirmed }
-
-private struct DeletionResponse: Decodable {
-    struct Result: Decodable { let status: String }
-    let code: Int
-    let data: Result
-}
-
-private final class DeleteRedirectGuard: NSObject, URLSessionTaskDelegate {
-    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
-        completionHandler(nil)
-    }
-}
-
-private struct BootstrapResponse: Decodable {
-    let code: Int
-    let message: String
-    let data: EmptyObject
-}
-
-private struct EmptyObject: Decodable {
-    let isEmpty: Bool
-    private struct Key: CodingKey {
-        let stringValue: String
-        let intValue: Int?
-        init?(stringValue: String) { self.stringValue = stringValue; intValue = nil }
-        init?(intValue: Int) { stringValue = String(intValue); self.intValue = intValue }
-    }
-    init(from decoder: Decoder) throws {
-        isEmpty = try decoder.container(keyedBy: Key.self).allKeys.isEmpty
-    }
+ let id: UUID; let ownerID: UUID; let mood: String; let body: String
+ enum CodingKeys: String, CodingKey { case id, mood, body; case ownerID = "owner_id" }
 }

@@ -48,7 +48,7 @@ struct ProfileHome: View {
                     Text(session.profile.flatMap { $0.displayName.isEmpty ? nil : $0.displayName } ?? "Your profile").font(.title2.bold()).foregroundStyle(liyaInk)
                     profileRelations
                     if relationsUnavailable {
-                        profileNotice("Couldn't refresh your connections.") { await refreshProfileContent() }
+                        Text("Connections are unavailable right now.").font(.footnote).foregroundStyle(.secondary)
                     }
                     Text(session.profile.flatMap { $0.signature.isEmpty ? nil : $0.signature } ?? "Add a little about yourself.")
                         .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -146,59 +146,16 @@ struct ProfileHome: View {
     }
 
     private func refreshProfileContent() async {
-        guard let owner = session.userID else { return }
-        let request = UUID()
-        profileLoadID = request
-        if profileOwner != owner {
-            profileOwner = owner; ownPosts = []; postsReady = false; relationCounts = nil
-        }
-        postsLoading = true; postsUnavailable = false; relationsUnavailable = false
-        do {
-            var rows: [SocialPost] = []
-            var offset = 0
-            while true {
-                let page: [SocialPost] = try await session.client.from("liya_posts")
-                    .select("id,owner_id,body,tags,media_paths,media_kinds,created_at,updated_at")
-                    .eq("owner_id", value: owner.uuidString).order("created_at", ascending: false)
-                    .order("id", ascending: false).range(from: offset, to: offset + 499).execute().value
-                rows.append(contentsOf: page)
-                if page.count < 500 { break }; offset += 500
-            }
-            guard session.userID == owner, profileLoadID == request else { return }
-            ownPosts = rows; postsReady = true; postsLoading = false
-        } catch {
-            guard session.userID == owner, profileLoadID == request else { return }
-            postsLoading = false; postsUnavailable = true
-        }
-        do {
-            func countRelations(column: String, order: String) async throws -> Int {
-                var count = 0
-                while true {
-                    let page: [ProfileRelationRow] = try await session.client.from("liya_follows")
-                        .select("owner_id,target_id").eq(column, value: owner.uuidString)
-                        .order(order).range(from: count, to: count + 499).execute().value
-                    count += page.count
-                    if page.count < 500 { return count }
-                }
-            }
-            let followers = try await countRelations(column: "target_id", order: "owner_id")
-            let following = try await countRelations(column: "owner_id", order: "target_id")
-            guard session.userID == owner, profileLoadID == request else { return }
-            relationCounts = (followers, following)
-        } catch {
-            guard session.userID == owner, profileLoadID == request else { return }
-            relationsUnavailable = true
-        }
+        profileOwner = session.userID
+        ownPosts = []; postsReady = true; postsLoading = false; postsUnavailable = false
+        relationCounts = nil; relationsUnavailable = true
     }
 
     private func profileHero(width: CGFloat, height: CGFloat, topInset: CGFloat) -> some View {
         ZStack {
             Group {
-                if let url = session.profileAvatarURL {
-                    AsyncImage(url: url) { phase in
-                        if let image = phase.image { image.resizable().scaledToFill() }
-                        else { Image("profile-default-photo").resizable().scaledToFill() }
-                    }
+                if let url = session.profileAvatarURL, let image = UIImage(contentsOfFile: url.path) {
+                    Image(uiImage: image).resizable().scaledToFill()
                 } else {
                     Image("profile-default-photo").resizable().scaledToFill()
                 }
@@ -291,6 +248,7 @@ private struct ProfileHomeTabs: View {
 
 struct EditProfileView: View {
     @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var store: LocalStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.profileDetailVisible) private var detailVisible
     @State private var name = ""
@@ -366,7 +324,13 @@ struct EditProfileView: View {
                 PrimaryButton(title: saving ? "Saving…" : "Save profile", disabled: loading || saving || session.profile == nil || !initialized || name.count > 80 || signature.count > 500) {
                     saving = true
                     Task {
-                        if await session.saveProfile(name: name, signature: signature, tags: tags, avatar: avatar) { dismiss() }
+                        if await session.saveProfile(name: name, signature: signature, tags: tags, avatar: avatar) {
+                            store.nickname = name
+                            store.signature = signature
+                            store.saveProfileTags(tags)
+                            if let avatar { store.saveAvatar(avatar) }
+                            dismiss()
+                        }
                         saving = false
                     }
                 }
@@ -415,10 +379,8 @@ struct EditProfileView: View {
 
     @ViewBuilder private var profilePhoto: some View {
         if let avatar { MediaThumbnail(item: avatar) }
-        else if let url = session.profileAvatarURL {
-            AsyncImage(url: url) { image in image.resizable().scaledToFill() } placeholder: {
-                Image("profile-default-photo").resizable().scaledToFill()
-            }
+        else if let url = session.profileAvatarURL, let image = UIImage(contentsOfFile: url.path) {
+            Image(uiImage: image).resizable().scaledToFill()
         } else { Image("profile-default-photo").resizable().scaledToFill() }
     }
 
@@ -464,10 +426,6 @@ struct SettingsView: View {
                     NavigationLink { AccountView() } label: { SettingsRow("Account & Security", image: "setting-lock") }
                     SettingsDivider()
                     NavigationLink { PrivacyView() } label: { SettingsRow("Privacy", image: "setting-privacy") }
-                    SettingsDivider()
-                    NavigationLink { CommunityJoinView() } label: {
-                        SettingsRow(social.isJoined(session) ? "Community profile" : "Set up community profile", image: "setting-privacy")
-                    }
                 }
                 SettingsGroup(title: "Preferences") {
                     NavigationLink { NotificationSettingsView() } label: {
@@ -497,7 +455,7 @@ struct SettingsView: View {
                 }.disabled(signingOut || session.isDeletingAccount)
             }.buttonStyle(.plain).padding(.top, 16).modifier(AdaptiveContainerMargins())
         }.sheet(isPresented: $confirmSignOut) {
-            LocalConfirmation(title: "Sign out?", message: session.isGuest ? "This guest account has no recovery method. If you sign out, you won't be able to return to it." : "You can sign in again with the same account whenever you're ready.", action: "Sign out") {
+            LocalConfirmation(title: "Sign out?", message: "Your local space will be available when you return on this device.", action: "Sign out") {
                 confirmSignOut = false; signingOut = true; signOutError = nil
                 Task { await signOut() }
             } cancel: { confirmSignOut = false }.presentationDetents([.medium, .large])
@@ -631,8 +589,8 @@ private struct SettingsSupportView: View {
         PageShell(title: "Help & legal") {
             VStack(alignment: .leading, spacing: 22) {
                 SettingsGroup(title: "Support") {
-                    Link(destination: URL(string: "mailto:liya_support26@liya.vip")!) {
-                        SettingsRow("Email support: liya_support26@liya.vip", image: "setting-help")
+                    Link(destination: URL(string: "mailto:Liya2026support@liya.vip")!) {
+                        SettingsRow("Email support: Liya2026support@liya.vip", image: "setting-help")
                     }
                     SettingsDivider()
                     NavigationLink { InformationView(title: "About Liya", message: "Liya is a place to share moments and connect with others.") } label: { SettingsRow("About Liya", image: "app-mark") }
@@ -702,14 +660,14 @@ struct AccountView: View {
                 HStack(spacing: 14) {
                     Image("setting-lock").resizable().scaledToFit().frame(width: 48, height: 48).accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(session.isGuest ? "Guest account" : "Your account").font(.headline).foregroundStyle(liyaInk)
-                        Text(session.isGuest ? "No recovery method is linked." : "Your sign-in method keeps your account accessible.").font(.subheadline).foregroundStyle(.secondary)
+                        Text("Your local space").font(.headline).foregroundStyle(liyaInk)
+                        Text("Online account services are unavailable.").font(.subheadline).foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }.frame(maxWidth: .infinity, alignment: .leading)
                 }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
                     .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 18))
 
-                Text(session.isGuest ? "You can't return to this account after signing out or deleting it." : "You can sign in again unless you delete your account.")
+                Text("Your earlier online account is not affected by changes to this local space.")
                     .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -721,7 +679,7 @@ struct AccountView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(LocalizedStringKey(session.isDeletingAccount ? "Deleting account…" : (checking ? "Checking purchases…" : "Delete account")))
                                     .font(.subheadline.weight(.semibold)).foregroundStyle(.red.opacity(0.85))
-                                Text("Permanently remove your account and its data.")
+                                Text("Online account deletion is unavailable right now.")
                                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                             }.frame(maxWidth: .infinity, alignment: .leading)
                             if session.isDeletingAccount || checking { LiyaLoadingIndicator(size: 26).accessibilityHidden(true) }
@@ -732,7 +690,7 @@ struct AccountView: View {
                 if let error = session.deletionError ?? purchaseError { Text(LocalizedStringKey(error)).font(.footnote).foregroundStyle(.red) }
             }.padding(.top, 16).modifier(AdaptiveContainerMargins())
         }.sheet(isPresented: $confirming) {
-            LocalConfirmation(title: "Delete this account?", message: "Your account, posts, messages, uploaded media and coins will be permanently deleted. This account cannot be restored.", action: "Delete account") {
+            LocalConfirmation(title: "Delete this account?", message: "Online account deletion is unavailable. Your earlier online account will not be deleted.", action: "Delete account") {
                 confirming = false; checking = true; purchaseError = nil
                 Task {
                     guard let owner = session.userID else { checking = false; return }
@@ -824,7 +782,7 @@ private struct SubmittedReportsView: View {
                     }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
                         .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                 }
-                Link("Email support: liya_support26@liya.vip", destination: URL(string: "mailto:liya_support26@liya.vip")!)
+                Link("Email support: Liya2026support@liya.vip", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
                     .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
             }.padding(.top, 16).modifier(AdaptiveContainerMargins())
         }.task(id: session.userID) { await load() }

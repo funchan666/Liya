@@ -179,7 +179,7 @@ private struct AppleCoinPackSheet: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         if !loading && product == nil {
-                            PrimaryButton(title: "Try again") { Task { await loadProduct() } }
+                            PrimaryButton(title: "Purchases unavailable", disabled: true) { }
                         } else {
                             PrimaryButton(title: checkout.busy ? "Processing…" : "Continue with Apple",
                                           disabled: loading || product?.type != .consumable || !checkout.canPurchase) {
@@ -222,19 +222,11 @@ private struct AppleCoinPackSheet: View {
     }
 
     @MainActor private func loadProduct() async {
-        guard !loading || product == nil else { return }
-        loading = true; product = nil; message = nil
-        do {
-            let products = try await Product.products(for: [pack.id])
-            guard !Task.isCancelled else { return }
-            product = products.first { $0.id == pack.id }
-            if product == nil { message = "This pack is not available from the App Store right now." }
-        } catch {
-            guard !Task.isCancelled else { return }
-            message = "Could not load the App Store price. Please try again."
-        }
         loading = false
+        product = nil
+        message = "Purchases are unavailable right now."
     }
+
 }
 
 /// Present only after the server confirms the one-time grant for this account.

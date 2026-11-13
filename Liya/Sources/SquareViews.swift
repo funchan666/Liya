@@ -33,7 +33,7 @@ struct SquareHome: View {
                     } else {
                         HStack(alignment: .top, spacing: 10) { wellbeingLinks }
                     }
-                    CommunityFeed()
+                    OfflineNote(text: "Community sharing is unavailable right now.")
                     if store.drafts.contains(where: { $0.publishedLocally == true }) {
                         Text("Unshared posts").font(.headline).foregroundStyle(liyaInk)
                         LazyVStack(spacing: 16) {
@@ -560,17 +560,12 @@ struct TreeHoleView: View {
                             .background(Color(red: 0.19, green: 0.22, blue: 0.35).opacity(0.95), in: RoundedRectangle(cornerRadius: 16))
                             .disabled(saving)
                         if text.count > 4000 { Text("Please keep your thought under 4,000 characters.").font(.footnote).foregroundStyle(.white) }
-                        PrimaryButton(title: saving ? "Saving…" : "Share to tree", disabled: saving || social.loading || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || text.count > 4000) {
-                            if social.isJoined(session) { shareThought() }
-                            else { showCommunitySetup = true }
+                        PrimaryButton(title: saving ? "Saving…" : "Keep this thought", disabled: saving || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || text.count > 4000) {
+                            savePrivate()
                         }
-                        Text("Visible to the community")
-                            .font(.caption).foregroundStyle(.white.opacity(0.8)).multilineTextAlignment(.center)
                         if let error = actionError ?? social.error { Text(error).font(.footnote).foregroundStyle(.white).multilineTextAlignment(.center) }
                         if let notice { Text(notice).font(.footnote.weight(.medium)).foregroundStyle(.white) }
                         HStack(spacing: 18) {
-                            Button("Keep private") { savePrivate() }
-                                .disabled(saving || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || text.count > 4000)
                             NavigationLink("My private thoughts") { TreeHistoryView() }
                         }.font(.footnote.weight(.semibold)).foregroundStyle(.white.opacity(0.9)).frame(minHeight: 44)
                     }
@@ -720,7 +715,7 @@ private struct TreeThoughtOptions: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Why are you reporting this thought?").font(.headline).foregroundStyle(liyaInk)
                                 Text("Reports are stored; review is not yet configured.").font(.footnote).foregroundStyle(.secondary)
-                                Link("Email support: liya_support26@liya.vip", destination: URL(string: "mailto:liya_support26@liya.vip")!)
+                                Link("Email support: Liya2026support@liya.vip", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
                                     .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                                 ForEach(reasons, id: \.self) { item in
                                     VideoSafetyReason(title: item, selected: reason == item) {
@@ -934,19 +929,8 @@ private struct PhotoCounts: Decodable {
     @Published private(set) var counts: PhotoCounts?
     private var request = UUID()
 
-    func refresh(_ session: LiyaSession, index: Int) async {
-        guard let owner = session.userID, session.photos.indices.contains(index) else { counts = nil; return }
-        let mediaID = session.photos[index].id
-        let current = UUID(); request = current
-        do {
-            let rows: [PhotoCounts] = try await session.client.rpc("liya_photo_counts", params: ["p_media_id": mediaID]).execute().value
-            guard request == current, session.userID == owner,
-                  session.photos.indices.contains(index), session.photos[index].id == mediaID else { return }
-            counts = rows.first
-        } catch {
-            if request == current { counts = nil }
-        }
-    }
+    func refresh(_ session: LiyaSession, index: Int) async { counts = nil }
+
 }
 
 private struct ExamplePhotoRow: View {

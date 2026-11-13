@@ -1,6 +1,5 @@
 import SwiftUI
 import Combine
-import Supabase
 
 struct AutoChatMessage: Decodable, Identifiable {
     let id: UUID
@@ -13,105 +12,20 @@ struct AutoChatMessage: Decodable, Identifiable {
 
 @MainActor
 final class AutomaticChat: ObservableObject {
-    @Published private(set) var messages: [AutoChatMessage] = []
-    @Published private(set) var loading = false
-    @Published private(set) var sending = false
-    @Published private(set) var waiting = false
-    @Published private(set) var consentLoaded = false
-    @Published private(set) var consentGranted = false
-    @Published private(set) var updatingConsent = false
-    @Published var error: String?
-    private var generation = UUID()
-    private var sendGeneration = UUID()
-    private var loadedOwner: UUID?
-
-    func loadConsent(_ session: LiyaSession) async {
-        guard let owner = session.userID else { return }
-        do {
-            struct Consent: Decodable { let granted: Bool; let consent_version: String }
-            let rows: [Consent] = try await session.client.from("liya_ai_consents")
-                .select("granted,consent_version").eq("owner_id", value: owner.uuidString).limit(1).execute().value
-            guard session.userID == owner, !Task.isCancelled else { return }
-            consentGranted = rows.first.map { $0.granted && $0.consent_version == "groq-v1" } ?? false
-            consentLoaded = true
-        } catch {
-            guard session.userID == owner, !Task.isCancelled else { return }
-            consentLoaded = false; self.error = "Couldn't check your AI privacy choice. Please try again."
-        }
-    }
-
-    func setConsent(_ session: LiyaSession, granted: Bool) async -> Bool {
-        guard let owner = session.userID, !updatingConsent else { return false }
-        updatingConsent = true; defer { updatingConsent = false }
-        do {
-            let result: Bool = try await session.client.rpc("liya_ai_set_consent", params: ["p_granted": granted]).execute().value
-            guard session.userID == owner, !Task.isCancelled, result == granted else { return false }
-            consentGranted = granted; consentLoaded = true; error = nil
-            return true
-        } catch {
-            if session.userID == owner && !Task.isCancelled { self.error = "Couldn't update your AI privacy choice. Please try again." }
-            return false
-        }
-    }
-
-    func load(_ session: LiyaSession) async {
-        guard let owner = session.userID, !loading else { return }
-        let current = UUID(); generation = current
-        if loadedOwner != owner { messages = []; loadedOwner = owner }
-        loading = true; error = nil
-        defer { if generation == current { loading = false } }
-        do {
-            var all: [AutoChatMessage] = []; var offset = 0
-            while true {
-                let page: [AutoChatMessage] = try await session.client.from("liya_ai_messages")
-                    .select("id,request_id,role,body,created_at").eq("owner_id", value: owner.uuidString)
-                    .order("created_at").order("id").range(from: offset, to: offset + 499).execute().value
-                all.append(contentsOf: page)
-                if page.count < 500 { break }; offset += 500
-            }
-            guard session.userID == owner, generation == current else { return }
-            messages = all
-        } catch { if session.userID == owner && generation == current { self.error = "Couldn't load this conversation. Please try again." } }
-    }
-
-    func send(_ session: LiyaSession, id: UUID, text: String) async -> Bool {
-        guard let owner = session.userID, !sending, !waiting else { return false }
-        let current = UUID(); sendGeneration = current
-        sending = true; waiting = true; error = nil
-        defer { if sendGeneration == current { sending = false; waiting = false } }
-        do {
-            struct Reply: Decodable { let code: String }
-            let response: Reply = try await session.client.functions.invoke("liya-ai-chat", options: FunctionInvokeOptions(body: ["request_id": id.uuidString, "text": text]))
-            guard !Task.isCancelled, sendGeneration == current, session.userID == owner else { return false }
-            guard response.code == "completed" else { throw ChatError.unconfirmed }
-            await load(session)
-            guard !Task.isCancelled, sendGeneration == current, session.userID == owner else { return false }
-            guard error == nil, messages.contains(where: { $0.requestID == id && $0.role == "user" && $0.body == text }),
-                  messages.contains(where: { $0.requestID == id && $0.role == "assistant" }) else { throw ChatError.unconfirmed }
-            return true
-        } catch {
-            guard !Task.isCancelled, sendGeneration == current, session.userID == owner else { return false }
-            if let functionError = error as? FunctionsError, case let .httpError(code, data) = functionError {
-                let serverCode = (try? JSONDecoder().decode(ServerError.self, from: data))?.code
-                switch code {
-                case 401: self.error = "Your session has expired. Please sign in again."
-                case 403 where serverCode == "consent_required":
-                    consentLoaded = false; consentGranted = false
-                    self.error = "Please review your AI privacy choice to continue."
-                case 503 where serverCode == "ai_not_configured": self.error = "AI chat is being prepared. Please try again later."
-                case 409: self.error = "Your reply is still being prepared. Please try again shortly."
-                case 429: self.error = "A little busy right now. Please wait and try again."
-                default: self.error = "Couldn't get a reply right now. Please try again."
-                }
-            } else { self.error = "Couldn't get a reply right now. Please try again." }
-            return false
-        }
-    }
-
-    func stop() { generation = UUID(); sendGeneration = UUID(); loading = false; sending = false; waiting = false }
-    func resetConsent() { consentLoaded = false; consentGranted = false }
-    private struct ServerError: Decodable { let code: String }
-    private enum ChatError: Error { case unconfirmed }
+ @Published private(set) var messages: [AutoChatMessage] = []
+ @Published private(set) var loading = false
+ @Published private(set) var sending = false
+ @Published private(set) var waiting = false
+ @Published private(set) var consentLoaded = true
+ @Published private(set) var consentGranted = false
+ @Published private(set) var updatingConsent = false
+ @Published var error: String? = "AI chat is unavailable right now."
+ func loadConsent(_ session: LiyaSession) async { consentLoaded = true; consentGranted = false }
+ func setConsent(_ session: LiyaSession, granted: Bool) async -> Bool { error = "AI chat is unavailable right now."; return false }
+ func load(_ session: LiyaSession) async { error = "AI chat is unavailable right now." }
+ func send(_ session: LiyaSession, id: UUID, text: String) async -> Bool { error = "AI chat is unavailable right now."; return false }
+ func stop() { loading = false; sending = false; waiting = false }
+ func resetConsent() { consentLoaded = true; consentGranted = false }
 }
 
 struct AutomaticChatView: View {
@@ -291,7 +205,7 @@ private struct AIPrivacySheet: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Image("ai-heading").resizable().scaledToFit().frame(width: 145, height: 52).accessibilityHidden(true)
                         Text("Your AI privacy").font(.title2.bold()).foregroundStyle(liyaInk)
-                        Text("To reply, Liya sends your message and recent AI conversation to Groq through Supabase. Your conversation is saved to your account. You can change this choice here at any time.")
+                        Text("AI chat is currently unavailable.")
                             .font(.subheadline).foregroundStyle(liyaInk.opacity(0.82)).fixedSize(horizontal: false, vertical: true)
                         Text("Liya AI is an automated companion, not a person or professional support.")
                             .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)

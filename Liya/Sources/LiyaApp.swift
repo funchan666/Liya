@@ -26,7 +26,7 @@ struct LiyaApp: App {
                     guard !didBeginSessionRestore else { return }
                     didBeginSessionRestore = true
                     if await session.restoreSavedAccount(), let owner = session.userID {
-                        store.restoreAccountMaterial(owner)
+                        store.prepareLocalSpace(owner)
                         store.inPreview = true
                     }
                     try? await Task.sleep(nanoseconds: 850_000_000)

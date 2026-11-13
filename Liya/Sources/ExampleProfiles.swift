@@ -396,7 +396,7 @@ struct ReportDraftView: View {
         PageShell(title: "Report type") {
             VStack(alignment: .leading, spacing: 12) {
                 OfflineNote(text: "Send a report about this example content, or save an unsent draft. A review service has not yet been configured.")
-                Link("Email support: liya_support26@liya.vip", destination: URL(string: "mailto:liya_support26@liya.vip")!)
+                Link("Email support: Liya2026support@liya.vip", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
                     .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                 ForEach(reasons, id: \.self) { reason in
                     Button { selected = reason; saved = false; reportID = UUID(); reportError = nil } label: {

@@ -6136,34 +6136,6 @@
         }
       }
     },
-    "To reply, Liya sends your message and recent AI conversation to Groq through Supabase. Your conversation is saved to your account. You can change this choice here at any time." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Para responder, Liya envía tu mensaje y la conversación reciente con la IA a Groq mediante Supabase. La conversación se guarda en tu cuenta. Puedes cambiar esta opción aquí en cualquier momento."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pour répondre, Liya transmet votre message et les échanges récents avec l’IA à Groq via Supabase. Votre conversation est enregistrée dans votre compte. Vous pouvez modifier ce choix ici à tout moment."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "返信のため、Liya はあなたのメッセージと最近の AI との会話を Supabase 経由で Groq に送信します。会話はアカウントに保存されます。この選択はいつでもここで変更できます。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "为了生成回复，Liya 会通过 Supabase 将你的消息和最近的 AI 对话发送给 Groq。对话会保存到你的账号。你可以随时在此更改选择。"
-          }
-        }
-      }
-    },
     "Try again" : {
       "localizations" : {
         "es" : {

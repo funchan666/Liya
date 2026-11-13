@@ -246,15 +246,8 @@ struct CommunityPostCard: View {
             .onAppear { Task { await loadCounts() } }
     }
 
-    private func loadCounts() async {
-        guard let owner = session.userID else { counts = nil; return }
-        let current = UUID(); countsRequest = current
-        do {
-            let rows: [CommunityPostCounts] = try await session.client.rpc("liya_post_counts", params: ["p_post_id": post.id.uuidString]).execute().value
-            guard countsRequest == current, session.userID == owner else { return }
-            counts = rows.first
-        } catch { if countsRequest == current { counts = nil } }
-    }
+    private func loadCounts() async { counts = nil }
+
 }
 
 struct CommunityEditPostView: View {
@@ -459,7 +452,7 @@ struct CommunityReportView: View {
                     Text("Sending this report shares this message and its attachments with Liya for review. Other messages are not included.")
                         .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
-                Link("Email support: liya_support26@liya.vip", destination: URL(string: "mailto:liya_support26@liya.vip")!)
+                Link("Email support: Liya2026support@liya.vip", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
                     .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                 ForEach(reasons, id: \.self) { reason in
                     Button { selected = reason; id = UUID(); failed = false } label: {

@@ -96,6 +96,17 @@ final class LocalStore: ObservableObject {
         if let data = defaults.data(forKey: "liya.avatar"), let saved = try? JSONDecoder().decode(DraftAttachment.self, from: data) { avatar = saved }
     }
 
+    /// Preserve material from an earlier account without assigning it to a new local identity.
+    func prepareLocalSpace(_ owner: UUID) {
+        if !defaults.bool(forKey: "liya.local.legacySeparated") {
+            let archive = UUID()
+            archiveAccountMaterial(archive)
+            defaults.set(archive.uuidString, forKey: "liya.local.legacyArchive")
+            defaults.set(true, forKey: "liya.local.legacySeparated")
+        }
+        restoreAccountMaterial(owner)
+    }
+
     /// Keep unsent material separate from the next account without deleting it.
     func archiveAccountMaterial(_ owner: UUID) {
         detachedOwner = owner

@@ -508,7 +508,7 @@ private struct VideoCommentsView: View {
         let request = UUID(); loadID = request; loading = true; error = nil
         starterMediaID = nil
         do {
-            let hidden: [HiddenCuratedStarter] = try await session.client.rpc("liya_hidden_curated_starters", params: ["p_media_id": mediaID]).execute().value
+            let hidden: [HiddenCuratedStarter] = []
             let rows = try await social.videoComments(session, mediaID: mediaID)
             guard loadID == request, self.mediaID == mediaID, session.userID == owner else { return }
             hiddenStarters = Set(hidden.map(\.position)); starterMediaID = mediaID
@@ -645,7 +645,7 @@ private struct VideoCommentSafetyView: View {
                 if mode == 1 && !sent {
                     Text("Why are you reporting this comment?").font(.headline).foregroundStyle(liyaInk).padding(.top, 8)
                     Text("Reports are stored; review is not yet configured.").font(.footnote).foregroundStyle(.secondary)
-                    Link("Email support: liya_support26@liya.vip", destination: URL(string: "mailto:liya_support26@liya.vip")!)
+                    Link("Email support: Liya2026support@liya.vip", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
                         .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                     VStack(spacing: 8) {
                         ForEach(reasons, id: \.self) { reason in

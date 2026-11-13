@@ -61,25 +61,13 @@ struct ComposeHome: View {
                     DraftMediaPicker(attachments: $store.composeAttachments, loading: $store.composeLoading, note: "Add up to 9 photos or videos.", compactButtons: true).disabled(publishing)
                     if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
                     Button {
-                        guard social.isJoined(session) else { showCommunitySetup = true; return }
-                        guard let owner = session.userID else { return }
-                        let body = store.composeText.trimmingCharacters(in: .whitespacesAndNewlines)
-                        let tags = store.composeTags; let files = store.composeAttachments
-                        let stamp = SocialAttempt.fingerprint(owner: owner, text: body, tags: tags, files: files)
-                        if stamp != postFingerprint || UUID(uuidString: postAttempt) == nil { postFingerprint = stamp; postAttempt = UUID().uuidString }
-                        guard let id = UUID(uuidString: postAttempt) else { return }
-                        publishing = true
-                        Task {
-                            if await social.publish(session, id: id, body: body, tags: tags, attachments: files) {
-                                store.composeText = ""; store.composeAttachments = []; store.composeTags = []; postAttempt = ""; postFingerprint = ""; savedMessage = "Submitted. Check your post for its review status."
-                            }
-                            publishing = false
-                        }
+                        store.saveDraft(store.composeText.trimmingCharacters(in: .whitespacesAndNewlines), attachments: store.composeAttachments, published: true, tags: store.composeTags)
+                        store.composeText = ""; store.composeAttachments = []; store.composeTags = []; savedMessage = "Moment saved."
                     } label: {
                         HStack(spacing: 8) {
                             if publishing { LiyaLoadingIndicator(size: 24) }
                             else { Image("profile-home-posts").resizable().scaledToFit().frame(width: 34, height: 34).accessibilityHidden(true) }
-                            Text(LocalizedStringKey(publishing ? "Sharing…" : "Share post")).font(.subheadline.weight(.bold))
+                            Text(LocalizedStringKey(publishing ? "Saving…" : "Save moment")).font(.subheadline.weight(.bold))
                         }.foregroundStyle(canShare ? Color.white : liyaInk.opacity(0.58))
                             .frame(maxWidth: .infinity, minHeight: 56)
                             .background {
@@ -126,9 +114,6 @@ struct DraftsView: View {
         PageShell(title: "Your drafts") {
             VStack(spacing: 12) {
                 OfflineNote(text: "Drafts are private and aren't synced to your account.")
-                if !social.isJoined(session) && !social.loading {
-                    NavigationLink("Create a community profile to share") { CommunityJoinView() }.foregroundStyle(liyaAccent)
-                }
                 if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
                 if unpublished.isEmpty {
                     EmptyState(title: "No drafts yet", detail: "Save a thought to find it here later.")
@@ -148,14 +133,7 @@ struct DraftsView: View {
                                 Text(draft.date, style: .date).font(.caption).foregroundStyle(.secondary)
                                 Spacer()
                                 NavigationLink("Edit") { EditDraftView(draft: draft) }.font(.footnote.bold()).foregroundStyle(liyaAccent)
-                                Button(publishingDraft == draft.id ? "Sharing…" : (isShared(draft) ? "Submitted" : "Share")) {
-                                    guard let owner = session.userID else { return }
-                                    publishingDraft = draft.id
-                                    Task {
-                                        _ = await social.publish(session, id: SocialAttempt.draftPostID(owner: owner, draft: draft), body: draft.text, tags: draft.tags ?? [], attachments: draft.attachments ?? [])
-                                        publishingDraft = nil
-                                    }
-                                }.disabled(publishingDraft != nil || !social.isJoined(session) || isShared(draft))
+                                Button("Save moment") { store.publishLocally(draft.id) }
                                     .font(.footnote.bold()).foregroundStyle(liyaAccent)
                                 Button("Delete") { deletingDraft = draft }.font(.footnote.bold()).foregroundStyle(liyaAccent)
                             }
@@ -237,7 +215,9 @@ struct MessagesHome: View {
                     Image("message-title").resizable().scaledToFit().frame(width: 160, height: 46).accessibilityLabel("Messages")
                     SegmentedTabs(items: ["Message", "Interaction"], selection: $section)
                     if section == 0 {
-                        CommunityMessagesView(hasLocalDrafts: !messageIndexes.isEmpty)
+                        if messageIndexes.isEmpty {
+                            EmptyState(title: "No messages yet", detail: "Messaging is currently unavailable.")
+                        }
                         if !messageIndexes.isEmpty { OfflineNote(text: "Earlier drafts for example profiles are private and have not been sent.") }
                         ForEach(messageIndexes, id: \.self) { index in
                             HStack(spacing: 12) {

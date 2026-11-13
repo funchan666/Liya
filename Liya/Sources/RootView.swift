@@ -79,9 +79,6 @@ struct RootView: View {
                 if session.userID != nil { await social.refresh(session); social.watchMessages(session) }
             }
             .task(id: session.userID) { await calls.watch(session) }
-            .fullScreenCover(item: Binding(get: { calls.call }, set: { _ in })) { call in
-                LiyaCallScreen(initial: call).environmentObject(calls).environmentObject(session).environmentObject(social)
-            }
             .onLiyaChange(of: store.videoRequest) { request in
                 if request != nil { selection = .discover }
             }
@@ -208,12 +205,14 @@ private struct WelcomeView: View {
                             }
                             .accessibilityLabel(Text(verbatim: "Continue with Apple"))
                             .clipShape(Capsule())
-                            .allowsHitTesting(agreed && !session.isSigningIn)
+                            .allowsHitTesting(false)
                             .overlay {
-                                if !agreed {
-                                    Button { showAgreementReminder = true } label: { Color.clear.contentShape(Rectangle()) }
-                                        .accessibilityLabel("Continue with Apple")
-                                }
+                                Button {
+                                    if agreed { session.appleAuthorizationFailed() }
+                                    else { showAgreementReminder = true }
+                                } label: { Color.clear.contentShape(Rectangle()) }
+                                    .disabled(session.isSigningIn)
+                                    .accessibilityLabel("Continue with Apple")
                             }
                         }
                         .frame(maxWidth: 350)
@@ -276,7 +275,7 @@ private struct WelcomeView: View {
     }
 
     private func finishSignIn() {
-        if let owner = session.userID { store.restoreAccountMaterial(owner) }
+        if let owner = session.userID { store.prepareLocalSpace(owner) }
         store.inPreview = true
     }
 
@@ -421,7 +420,7 @@ struct EmailAccountView: View {
                             .disabled(session.isSigningIn)
                         }
                         Text(LocalizedStringKey(title)).font(.system(.largeTitle, design: .rounded).weight(.bold)).foregroundStyle(liyaInk)
-                        Text(mode == .signIn ? "Sign in to pick up where you left off." : mode == .signUp ? "Create an account for your moments and connections." : mode == .reset ? "We'll send a link to your email address." : "Use a password you haven't used before.")
+                        Text("Enter an email and password to open your local space. The email and password are not verified.")
                             .font(.subheadline).foregroundStyle(liyaInk.opacity(0.7))
                             .fixedSize(horizontal: false, vertical: true)
                         VStack(alignment: .leading, spacing: 16) {
@@ -436,7 +435,7 @@ struct EmailAccountView: View {
                             }
                             if mode != .reset {
                                 fieldLabel(mode == .newPassword ? "New password" : "Password")
-                                SecureField("At least 6 characters", text: $password)
+                                SecureField("Enter your password", text: $password)
                                     .textContentType(mode == .signIn ? .password : .newPassword)
                                     .focused($focused, equals: .password).submitLabel(mode == .signIn ? .go : .next)
                                     .onSubmit { if mode == .signIn { submit() } else { focused = .confirmation } }
@@ -460,22 +459,7 @@ struct EmailAccountView: View {
                         }
                         WelcomeAction(title: session.isSigningIn ? "Please wait…" : actionTitle, image: "consent-button", foreground: .white, isLoading: session.isSigningIn) { submit() }
                             .disabled(session.isSigningIn)
-                        if mode != .newPassword {
-                            HStack {
-                                Button(mode == .signUp ? "Already have an account? Sign in" : "Create account") {
-                                    changeMode(mode == .signUp ? .signIn : .signUp)
-                                }
-                                .frame(minHeight: 44)
-                                Spacer()
-                                if mode == .signIn {
-                                    Button("Forgot password?") { changeMode(.reset) }.frame(minHeight: 44)
-                                } else if mode == .reset {
-                                    Button("Sign in") { changeMode(.signIn) }.frame(minHeight: 44)
-                                }
-                            }
-                            .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent)
-                            .disabled(session.isSigningIn)
-                        }
+
                     }
                     .frame(maxWidth: 430, alignment: .leading)
                     .frame(maxWidth: .infinity, minHeight: size.height, alignment: .top)
