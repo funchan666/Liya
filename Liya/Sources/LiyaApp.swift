@@ -11,7 +11,6 @@ struct LiyaApp: App {
     @StateObject private var calls = LiyaCalls()
     @StateObject private var voip = LiyaVoIP.shared
     @State private var showingLaunch = true
-    @State private var didBeginSessionRestore = false
     @AppStorage("liya.language") private var language = "en"
 
     var body: some Scene {
@@ -23,12 +22,8 @@ struct LiyaApp: App {
                     if showingLaunch { LiyaLaunchOverlay() }
                 }
                 .task {
-                    guard !didBeginSessionRestore else { return }
-                    didBeginSessionRestore = true
-                    if await session.restoreSavedAccount(), let owner = session.userID {
-                        store.prepareLocalSpace(owner)
-                        store.inPreview = true
-                    }
+                    guard showingLaunch else { return }
+                    session.prepareWelcome(store: store)
                     try? await Task.sleep(nanoseconds: 850_000_000)
                     showingLaunch = false
                 }
@@ -38,10 +33,7 @@ struct LiyaApp: App {
                             try? await Task.sleep(nanoseconds: 100_000_000)
                             if Task.isCancelled { return }
                         }
-                        if await session.handleAuthURL(url), let owner = session.userID {
-                            store.restoreAccountMaterial(owner)
-                            store.inPreview = true
-                        }
+                        _ = await session.handleAuthURL(url)
                     }
                 }
                 .sheet(isPresented: Binding(get: { voip.permissionReminder != nil && scenePhase == .active }, set: { if !$0 { voip.dismissPermissionReminder() } })) {
@@ -53,9 +45,14 @@ struct LiyaApp: App {
                     LiyaVoIP.shared.bind(session: session, calls: calls, store: store)
                     await LiyaVoIP.shared.updateRegistration()
                 }
+                .task(id: scenePhase) {
+                    guard scenePhase == .active else { return }
+                    async let recovery: Void = checkout.recover()
+                    async let storeIdentification: Void = checkout.identifyStore()
+                    _ = await (recovery, storeIdentification)
+                }
                 .onLiyaChange(of: session.userID) { _ in
-                    checkout.clearConnection()
-                    Task { await checkout.refreshConnection(session); await LiyaVoIP.shared.updateRegistration() }
+                    Task { await LiyaVoIP.shared.updateRegistration() }
                 }
                 .onLiyaChange(of: calls.call?.id) { id in
                     if id != nil { showingLaunch = false }
@@ -63,7 +60,7 @@ struct LiyaApp: App {
                 }
                 .onLiyaChange(of: scenePhase) { phase in
                     if phase == .active {
-                        Task { await session.resumeAccount(); await checkout.refreshConnection(session); await social.refresh(session); social.watchMessages(session); await LiyaVoIP.shared.updateRegistration() }
+                        Task { await session.resumeAccount(); await social.refresh(session); social.watchMessages(session); await LiyaVoIP.shared.updateRegistration() }
                     }
                 }
         }

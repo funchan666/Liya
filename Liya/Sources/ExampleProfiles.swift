@@ -127,7 +127,7 @@ struct ProfileDetailActionLabel: View {
     var body: some View {
         HStack(spacing: 7) {
             Image(icon).resizable().scaledToFit().frame(width: 30, height: 30).accessibilityHidden(true)
-            Text(title).font(.subheadline.weight(.semibold))
+            Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold))
                 .lineLimit(1).minimumScaleFactor(0.8)
         }
         .foregroundStyle(style == .following ? liyaAccent : liyaInk)
@@ -219,6 +219,56 @@ struct ExampleAvatar: View {
     }
 }
 
+struct CuratedFollowButton<Label: View>: View {
+    @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var store: LocalStore
+    let id: String
+    let label: (Bool, String) -> Label
+    @State private var retryFollowing: Bool?
+    @State private var attempt: UUID?
+
+    init(id: String, @ViewBuilder label: @escaping (Bool, String) -> Label) {
+        self.id = id
+        self.label = label
+    }
+
+    var body: some View {
+        let following = session.isFollowingCurated(id, store: store)
+        let busy = attempt != nil || session.curatedFollowPending.contains(id) || (!session.curatedFollowsReady && session.curatedFollowsLoading)
+        let retry = retryFollowing != nil || !session.curatedFollowsReady
+        Button {
+            guard attempt == nil, let owner = session.userID else { return }
+            let request = UUID()
+            attempt = request
+            let desired = retryFollowing ?? !following
+            let refreshOnly = !session.curatedFollowsReady
+            Task {
+                guard attempt == request, session.userID == owner else { return }
+                if refreshOnly {
+                    if session.catalogError != nil { await session.refreshCatalog() }
+                    guard attempt == request, session.userID == owner else { return }
+                    await session.refreshCuratedFollows(store: store)
+                } else {
+                    let saved = await session.setCuratedFollow(desired, id: id, store: store)
+                    guard attempt == request, session.userID == owner else { return }
+                    retryFollowing = saved ? nil : desired
+                }
+                guard attempt == request, session.userID == owner else { return }
+                attempt = nil
+            }
+        } label: {
+            label(following, retry ? "Try again" : (following ? "Following" : "Follow"))
+                .opacity(busy ? 0.2 : 1)
+                .overlay { if busy { LiyaLoadingIndicator(size: 20).accessibilityHidden(true) } }
+        }
+        .buttonStyle(.plain)
+        .disabled(busy || id.isEmpty)
+        .accessibilityAddTraits(following ? .isSelected : [])
+        .onLiyaChange(of: id) { _ in retryFollowing = nil; attempt = nil }
+        .onLiyaChange(of: session.userID) { _ in retryFollowing = nil; attempt = nil }
+    }
+}
+
 struct ExampleProfileView: View {
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
@@ -226,19 +276,37 @@ struct ExampleProfileView: View {
     let index: Int
     var displayName: String? = nil
     var introduction: String? = nil
-    @State private var options = false
+    var mediaID: String? = nil
+    @State private var options: CollectionSafetyTarget?
     @State private var connectionNotice: ConnectionNotice?
 
     var body: some View {
+        if let mediaID {
+            if let current = session.photos.firstIndex(where: { $0.id == mediaID }) {
+                profile(at: current)
+            } else {
+                PageShell(title: "Profile") {
+                    EmptyState(title: "Profile unavailable", detail: "Please try again when the content has loaded.")
+                }
+            }
+        } else {
+            profile(at: index)
+        }
+    }
+
+    private func profile(at index: Int) -> some View {
         let photoID = session.photos.indices.contains(index) ? session.photos[index].id : nil
-        let pairedCreator = ExampleVideoCreator.byVideoID.values.first { $0.photoID == photoID }
-        let name = displayName ?? pairedCreator?.name ?? "Example profile \(index + 1)"
+        let pairedCreator = photoID.flatMap { session.curatedCreator(for: $0) }
+        let name = pairedCreator?.name ?? displayName ?? "Liya collection"
         let bio = introduction ?? pairedCreator?.caption ?? ""
         let videos = session.videos.indices.filter { videoIndex in
-            guard let photoID, let creator = ExampleVideoCreator.byVideoID[session.videos[videoIndex].id] else { return false }
+            guard let photoID, let creator = session.curatedVideoCreators[session.videos[videoIndex].id] else { return false }
             return creator.photoID == photoID
         }
-        return ProfileDetailLayout(name: name, introduction: bio, showOptions: { options = true }) {
+        return ProfileDetailLayout(name: name, introduction: bio, showOptions: {
+            guard let photoID else { return }
+            options = CollectionSafetyTarget(mediaID: photoID, name: name, kind: .profile, ownerID: session.userID)
+        }) {
             if let avatarIndex = ExampleAvatar.photoIndex(for: index, in: session.photos) {
                 CloudPhoto(index: avatarIndex, contentMode: .fill)
             } else {
@@ -247,12 +315,9 @@ struct ExampleProfileView: View {
         } actions: {
                     VStack(spacing: 10) {
                         HStack(spacing: 10) {
-                            Button {
-                                guard !store.blockedExamples.contains(index) else { return }
-                                store.toggleFollow(index)
-                            } label: {
-                                ProfileDetailActionLabel(title: store.followedExamples.contains(index) ? "Following" : "Follow", style: store.followedExamples.contains(index) ? .following : .follow)
-                            }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
+                            CuratedFollowButton(id: photoID ?? "") { following, title in
+                                ProfileDetailActionLabel(title: title, style: following ? .following : .follow)
+                            }.disabled(store.blockedExamples.contains(index))
                             NavigationLink { ExampleChatView(index: index) } label: {
                                 ProfileDetailActionLabel(title: "Message", style: .message)
                             }.buttonStyle(.plain).disabled(store.blockedExamples.contains(index))
@@ -264,7 +329,10 @@ struct ExampleProfileView: View {
                     }
         } content: {
                     if store.blockedExamples.contains(index) {
-                        EmptyState(title: "Blocked", detail: "Unblock this example in More options to view its content.")
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Profile blocked").font(.headline).foregroundStyle(liyaInk)
+                            Text("Unblock this profile to see their posts again.").font(.subheadline).foregroundStyle(.secondary)
+                        }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 12)
                     } else if !videos.isEmpty {
                             Text("Videos").font(.headline).foregroundStyle(liyaInk).padding(.top, 8)
                             if videos.count == 1, let videoIndex = videos.first {
@@ -282,7 +350,7 @@ struct ExampleProfileView: View {
                             }
                     }
         }
-            .sheet(isPresented: $options) { ExampleOptionsView(index: index) }
+            .sheet(item: $options) { ExampleOptionsView(target: $0) }
             .sheet(item: $connectionNotice) { notice in
                 ConnectionNoticeSheet(notice: notice) { connectionNotice = nil }.presentationDetents([.medium, .large])
             }
@@ -318,9 +386,9 @@ struct ExampleChatView: View {
     @State private var loaded = false
     @State private var connectionNotice: ConnectionNotice?
     private var name: String {
-        guard session.photos.indices.contains(index) else { return "Collection" }
+        guard session.photos.indices.contains(index) else { return "Liya collection" }
         let id = session.photos[index].id
-        return ExampleVideoCreator.byVideoID.values.first { $0.photoID == id }?.name ?? "Collection"
+        return session.curatedDisplayName(for: id)
     }
     var body: some View {
         PageShell(title: "Messages") {
@@ -356,72 +424,153 @@ struct ExampleChatView: View {
     }
 }
 
+struct CollectionSafetyTarget: Identifiable {
+    enum Kind: String { case profile, post }
+
+    let mediaID: String
+    let name: String
+    let kind: Kind
+    let ownerID: UUID?
+    var id: String { mediaID }
+}
+
 struct ExampleOptionsView: View {
+    private enum Step { case menu, report, confirmBlock, received, draftSaved }
+
     @EnvironmentObject private var store: LocalStore
+    @EnvironmentObject private var session: LiyaSession
     @Environment(\.dismiss) private var dismiss
-    let index: Int
-    var reportTarget = "profile"
+    let target: CollectionSafetyTarget
+    @State private var step = Step.menu
+    @State private var reason: String?
+    @State private var reportID = UUID()
+    @State private var sending = false
+    @State private var failed = false
+
+    private var index: Int? {
+        guard session.userID == target.ownerID else { return nil }
+        return session.photos.firstIndex { $0.id == target.mediaID }
+    }
+
+    private var reportTitle: String { target.kind == .post ? "Report post" : "Report profile" }
+    private var title: String {
+        switch step {
+        case .menu: return target.kind == .post ? "Post options" : "Profile options"
+        case .report: return reportTitle
+        case .confirmBlock: return "Block this profile?"
+        case .received: return "Report received."
+        case .draftSaved: return "Draft saved"
+        }
+    }
+
     var body: some View {
-        NavigationStack {
-            PageShell(title: "More options") {
-                VStack(spacing: 14) {
-                    NavigationLink { ReportDraftView(index: index, targetType: reportTarget) } label: { option(reportTarget == "post" ? "Report post" : "Report profile", image: "report") }
-                        .buttonStyle(.plain)
-                    Button {
-                        store.setBlocked(index, blocked: !store.blockedExamples.contains(index)); dismiss()
-                    } label: { option(store.blockedExamples.contains(index) ? "Unblock" : "Block", image: "setting-privacy") }
-                        .buttonStyle(.plain)
-                }.padding(.top, 12)
+        SafetyPanel(title: title, subject: target.name,
+                    back: step == .report || step == .confirmBlock ? { step = .menu } : nil,
+                    close: { dismiss() }, busy: sending) {
+            if let index {
+                ExampleAvatar(index: index, size: 46)
+            } else {
+                Image("profile-home-people").resizable().scaledToFit().frame(width: 46, height: 46)
+            }
+        } content: {
+            if step == .received || step == .draftSaved {
+                if step == .draftSaved {
+                    Text("Your report is saved in Settings under Unsent reports.")
+                        .font(.subheadline).foregroundStyle(liyaInk.opacity(0.75))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                SafetySubmitButton(title: "Done") { dismiss() }
+            } else if let index {
+                switch step {
+                case .menu:
+                    VStack(spacing: 0) {
+                        SafetyActionRow(title: reportTitle, kind: .report) { step = .report }
+                        Divider().padding(.leading, 56)
+                        if store.blockedExamples.contains(index) {
+                            SafetyActionRow(title: "Unblock", kind: .unblock) { setBlocked(false) }
+                        } else {
+                            SafetyActionRow(title: "Block profile", kind: .block) { step = .confirmBlock }
+                        }
+                    }
+                case .confirmBlock:
+                    Text("Their photo posts will be hidden. You can unblock them in Settings.")
+                        .font(.body).foregroundStyle(liyaInk.opacity(0.8)).fixedSize(horizontal: false, vertical: true)
+                    SafetySubmitButton(title: "Block profile", destructive: true) { setBlocked(true) }
+                    SafetySecondaryButton(title: "Cancel") { step = .menu }
+                case .report:
+                    reportForm
+                case .received, .draftSaved:
+                    EmptyView()
+                }
+            } else {
+                Text("This profile is no longer available.").font(.body).foregroundStyle(liyaInk)
+                SafetySubmitButton(title: "Done") { dismiss() }
+            }
+        }
+        .onLiyaChange(of: session.userID) { owner in if owner != target.ownerID { dismiss() } }
+    }
+
+    private var reportForm: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Choose a reason").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+            SafetyReasonList(selected: reason) { choice in
+                guard !sending, choice != reason else { return }
+                reason = choice
+                reportID = UUID()
+                failed = false
+            }.disabled(sending)
+            if failed {
+                Text("Couldn't confirm the report. Please try again.")
+                    .font(.footnote.weight(.medium)).foregroundStyle(liyaInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            SafetySubmitButton(title: sending ? "Sending…" : "Send report", busy: sending,
+                               disabled: reason == nil || sending) { sendReport() }
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 16) { draftButton; supportLink }
+                VStack(spacing: 0) { draftButton; supportLink }
             }
         }
     }
-    private func option(_ title: String, image: String) -> some View {
-        HStack { Image(image).resizable().scaledToFit().frame(width: 28, height: 28); Text(title); Spacer() }
-            .foregroundStyle(liyaInk).padding(16).background(.white, in: RoundedRectangle(cornerRadius: 14))
-    }
-}
 
-struct ReportDraftView: View {
-    @EnvironmentObject private var store: LocalStore
-    @EnvironmentObject private var session: LiyaSession
-    let index: Int
-    var targetType = "profile"
-    @State private var selected: String?
-    @State private var saved = false
-    @State private var sending = false
-    @State private var reportID = UUID()
-    @State private var reportError: String?
-    private let reasons = ["Sexual content", "Harassment", "Discrimination", "Incorrect content", "Other"]
-    var body: some View {
-        PageShell(title: "Report type") {
-            VStack(alignment: .leading, spacing: 12) {
-                OfflineNote(text: "Send a report about this example content, or save an unsent draft. A review service has not yet been configured.")
-                Link("Email support: Liya2026support@liya.vip", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
-                    .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                ForEach(reasons, id: \.self) { reason in
-                    Button { selected = reason; saved = false; reportID = UUID(); reportError = nil } label: {
-                        HStack { Text(reason); Spacer(); if selected == reason { Text("Selected").font(.caption.bold()).foregroundStyle(liyaAccent) } }
-                            .foregroundStyle(liyaInk).padding(16).frame(maxWidth: .infinity)
-                            .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 12))
-                    }.buttonStyle(.plain).disabled(sending)
-                }
-                PrimaryButton(title: sending ? "Sending…" : "Send report", disabled: selected == nil || saved || sending) {
-                    guard let selected else { return }
-                    sending = true; reportError = nil
-                    Task {
-                        if await session.submitReport(id: reportID, index: index, targetType: targetType, reason: selected) { saved = true }
-                        else { reportError = "The report could not be confirmed. Try again or save an unsent draft." }
-                        sending = false
-                    }
-                }
-                if let reportError { Text(reportError).font(.footnote).foregroundStyle(.red) }
-                if saved { Text("Report received · review is not yet configured").font(.footnote).foregroundStyle(liyaAccent) }
-                PrimaryButton(title: "Save unsent draft", disabled: selected == nil || saved || sending) {
-                    guard let selected else { return }
-                    store.saveReportDraft(index: index, reason: selected, targetType: targetType); reportError = "Draft saved. Your report has not been submitted."
-                }
-            }.padding(.top, 12)
+    private var draftButton: some View {
+        SafetySecondaryButton(title: "Save draft") {
+            guard let index, let reason, step == .report, !sending else { return }
+            store.saveReportDraft(index: index, reason: reason, targetType: target.kind.rawValue)
+            step = .draftSaved
+        }.disabled(reason == nil || sending)
+    }
+
+    private var supportLink: some View {
+        Link("Contact support", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
+            .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent)
+            .fixedSize(horizontal: true, vertical: false).frame(minHeight: 44)
+    }
+
+    private func sendReport() {
+        guard let reason, index != nil, !sending, step == .report else { return }
+        sending = true
+        failed = false
+        Task {
+            defer { sending = false }
+            guard let index else { return }
+            let received = await session.submitReport(id: reportID, index: index, targetType: target.kind.rawValue, reason: reason)
+            guard session.userID == target.ownerID else { return }
+            if received { step = .received } else { failed = true }
         }
+    }
+
+    private func setBlocked(_ block: Bool) {
+        guard let index else { return }
+        if block, let owner = target.ownerID {
+            store.queueBlockedUnfollow(target.mediaID, owner: owner)
+            Task {
+                guard session.userID == owner, store.hasCloudSpace(for: owner) else { return }
+                await session.setCuratedFollow(false, id: target.mediaID, store: store)
+            }
+        }
+        store.setBlocked(index, blocked: block)
+        dismiss()
     }
 }
 

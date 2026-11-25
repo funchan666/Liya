@@ -197,6 +197,7 @@ struct CommunityPostCard: View {
     @State private var deleting = false
     @State private var counts: CommunityPostCounts?
     @State private var countsRequest = UUID()
+    @State private var countsFailed = false
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -235,6 +236,10 @@ struct CommunityPostCard: View {
                 }.buttonStyle(.plain)
                 Spacer(minLength: 0)
             }
+            if countsFailed {
+                Button("Retry counts") { Task { await loadCounts() } }
+                    .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+            }
         }.modifier(LiyaFeedCardSurface())
             .sheet(isPresented: $deleting) {
                 LocalConfirmation(title: "Delete this post?", message: "The post and its comments will no longer be visible to the community.", action: "Delete") {
@@ -243,10 +248,25 @@ struct CommunityPostCard: View {
             }
             .task(id: post.id) { await loadCounts() }
             .onLiyaChange(of: social.syncGeneration) { _ in Task { await loadCounts() } }
-            .onAppear { Task { await loadCounts() } }
     }
 
-    private func loadCounts() async { counts = nil }
+    private func loadCounts() async {
+        let request = UUID()
+        countsRequest = request
+        countsFailed = false
+        guard let owner = session.userID else { counts = nil; return }
+        do {
+            let rows: [CommunityPostCounts] = try await session.client
+                .rpc("liya_post_counts", params: ["p_post_id": post.id.uuidString]).execute().value
+            guard countsRequest == request, session.userID == owner else { return }
+            counts = rows.first
+            countsFailed = counts == nil
+        } catch {
+            // Keep the last confirmed totals during a temporary connection failure.
+            guard countsRequest == request, !Task.isCancelled, session.userID == owner else { return }
+            countsFailed = true
+        }
+    }
 
 }
 
@@ -291,9 +311,9 @@ struct CommunityPersonView: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     @EnvironmentObject private var calls: LiyaCalls
+    @Environment(\.locale) private var locale
     @Environment(\.openURL) private var openURL
     let personID: UUID
-    @State private var busy = false
     @State private var options = false
     @State private var section = 0
     @State private var preview: SocialMediaItem?
@@ -301,6 +321,10 @@ struct CommunityPersonView: View {
     @State private var attemptedCall = false
     @State private var connectionNotice: ConnectionNotice?
     @State private var checkingConnection = false
+    @State private var followUpdateFailed = false
+    private var profileCheckNeeded: Bool {
+        !social.canFollowMembers(session) && (social.checkedMemberProfileOwner != session.userID || social.error != nil)
+    }
     private var posts: [SocialPost] { social.posts.filter { $0.ownerID == personID } }
     private var videos: [SocialMediaItem] {
         posts.flatMap { post in
@@ -317,14 +341,9 @@ struct CommunityPersonView: View {
                     SocialAvatar(personID: personID)
                 } actions: {
                     if personID != session.userID {
-                        if !social.isJoined(session) { NavigationLink("Create a community profile to follow or block") { CommunityJoinView() }.font(.footnote.bold()).foregroundStyle(liyaAccent) }
                         VStack(spacing: 10) {
                             HStack(spacing: 10) {
-                                Button {
-                                    busy = true; Task { await social.setRelation(session, target: personID, table: "liya_follows", enabled: !social.follows.contains(personID)); busy = false }
-                                } label: {
-                                    ProfileDetailActionLabel(title: social.follows.contains(personID) ? "Following" : "Follow", style: social.follows.contains(personID) ? .following : .follow)
-                                }.buttonStyle(.plain).disabled(busy || !social.isJoined(session) || social.loading)
+                                followAction
                                 NavigationLink { CommunityConversationView(personID: personID) } label: {
                                     ProfileDetailActionLabel(title: "Message", style: .message)
                                 }.buttonStyle(.plain)
@@ -333,6 +352,15 @@ struct CommunityPersonView: View {
                                 Button { startCall(kind: "audio") } label: { ProfileDetailActionLabel(title: "Voice call", style: .voice) }
                                 Button { startCall(kind: "video") } label: { ProfileDetailActionLabel(title: "Video call", style: .video) }
                             }.buttonStyle(.plain).disabled(calls.busy || calls.call != nil || checkingConnection)
+                            if social.connectionsError != nil {
+                                ConnectionRetryRow { await social.refresh(session) }
+                            } else if profileCheckNeeded && !social.loading {
+                                ConnectionRetryRow(message: "Couldn't load your profile. Please try again.") { await social.refresh(session) }
+                            }
+                            if followUpdateFailed {
+                                Text("Couldn't update your follow. Please try again.").font(.footnote).foregroundStyle(liyaInk)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
                             if let callNotice { Text(callNotice).font(.footnote).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading) }
                             if attemptedCall, let error = calls.error { Text(error).font(.footnote).foregroundStyle(.red).frame(maxWidth: .infinity, alignment: .leading) }
                             if attemptedCall && calls.permissionDenied {
@@ -348,7 +376,7 @@ struct CommunityPersonView: View {
                         }.buttonStyle(.plain)
                     }
                 } content: {
-                    if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
+                    if let error = social.error, !followUpdateFailed, !profileCheckNeeded { Text(error).font(.footnote).foregroundStyle(.secondary) }
                     if !posts.isEmpty {
                         ProfileContentTabs(selection: $section, showVideo: !videos.isEmpty)
                     }
@@ -375,10 +403,48 @@ struct CommunityPersonView: View {
                 PageShell(title: "Member") { EmptyState(title: "Member unavailable", detail: "This profile may no longer be visible to you.") }
             }
         }
+        .task(id: session.userID) {
+            followUpdateFailed = false
+            await social.refresh(session)
+        }
         .sheet(isPresented: $options) { CommunityProfileOptions(personID: personID) }
         .sheet(item: $preview) { item in SocialMediaPreview(item: item) }
         .sheet(item: $connectionNotice) { notice in
             ConnectionNoticeSheet(notice: notice) { connectionNotice = nil }.presentationDetents([.medium, .large])
+        }
+    }
+
+    @ViewBuilder private var followAction: some View {
+        let canShowState = session.userID != nil && social.connectionsOwner == session.userID && social.connectionsReady
+        let updating = social.changingFollows.contains(personID)
+        let checkingProfile = !social.canFollowMembers(session) && social.loading
+        if !canShowState || updating || checkingProfile || profileCheckNeeded {
+            Group {
+                if updating || checkingProfile || social.connectionsLoading {
+                    LiyaLoadingIndicator(size: 25)
+                } else {
+                    Text("Follow").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+                }
+            }.frame(maxWidth: .infinity, minHeight: 54)
+                .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 17))
+        } else if social.canFollowMembers(session) {
+            let following = social.follows.contains(personID)
+            Button {
+                followUpdateFailed = false
+                let owner = session.userID
+                Task {
+                    let saved = await social.setRelation(session, target: personID, table: "liya_follows", enabled: !following)
+                    if session.userID == owner { followUpdateFailed = !saved }
+                }
+            } label: {
+                ProfileDetailActionLabel(title: following ? String(localized: "Following", locale: locale) : String(localized: "Follow", locale: locale),
+                                         style: following ? .following : .follow)
+            }.buttonStyle(.plain).disabled(social.blocked.contains(personID))
+                .accessibilityLabel(following ? Text("Unfollow") : Text("Follow"))
+        } else {
+            NavigationLink { CommunityJoinView() } label: {
+                ProfileDetailActionLabel(title: String(localized: "Follow", locale: locale), style: .follow)
+            }.buttonStyle(.plain).accessibilityHint("Set up your community profile to follow members.")
         }
     }
 
@@ -401,31 +467,159 @@ struct CommunityPersonView: View {
 }
 
 private struct CommunityProfileOptions: View {
+    private enum Stage { case options, report, reportReceived, block }
+
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     @Environment(\.dismiss) private var dismiss
     let personID: UUID
-    @State private var blocking = false
+    private let startsAtReport: Bool
+    @State private var stage: Stage
+    @State private var showingEditor = false
+    @State private var submittingBlock = false
+    @State private var blockFailed = false
+    @State private var reason: String?
+    @State private var reportID = UUID()
+    @State private var submittingReport = false
+    @State private var reportFailed = false
+    @AccessibilityFocusState private var reportFeedbackFocused: Bool
+
+    init(personID: UUID, startsAtReport: Bool = false) {
+        self.personID = personID
+        self.startsAtReport = startsAtReport
+        _stage = State(initialValue: startsAtReport ? .report : .options)
+    }
+
+    private var title: String {
+        switch stage {
+        case .options: return "Profile options"
+        case .report, .reportReceived: return "Report member"
+        case .block: return "Block this member?"
+        }
+    }
+
+    private var canBlock: Bool {
+        guard session.hasSavedMemberSession, let owner = session.userID, owner != personID,
+              social.connectionsOwner == owner, social.person(personID) != nil else { return false }
+        return social.canFollowMembers(session)
+    }
+
     var body: some View {
-        NavigationStack {
-            PageShell(title: "More options") {
-                VStack(alignment: .leading, spacing: 14) {
-                    if personID != session.userID {
-                        NavigationLink("Report member") { CommunityReportView(target: personID, post: nil) }
-                            .foregroundStyle(liyaAccent).frame(minHeight: 44)
-                        Button("Block member") { blocking = true }
-                            .foregroundStyle(liyaAccent).frame(minHeight: 44).disabled(!social.isJoined(session))
-                    } else {
-                        NavigationLink("Edit community profile") { CommunityJoinView() }.foregroundStyle(liyaAccent).frame(minHeight: 44)
-                    }
-                }.frame(maxWidth: .infinity, alignment: .leading).padding(.top, 12)
+        SafetyPanel(title: title, subject: social.person(personID)?.displayName,
+                    back: (stage == .block || (stage == .report && !startsAtReport)) ? { backToOptions() } : nil,
+                    close: { dismiss() }, busy: submittingBlock || submittingReport) {
+            SocialAvatar(personID: personID)
+        } content: {
+            switch stage {
+            case .options: options
+            case .block: blockConfirmation
+            case .report: reportForm
+            case .reportReceived:
+                Text("Report received.").font(.body.weight(.semibold)).foregroundStyle(liyaInk)
+                    .accessibilityFocused($reportFeedbackFocused)
+                    .onAppear { reportFeedbackFocused = true }
+                SafetySubmitButton(title: "Done") { dismiss() }
             }
         }
-        .sheet(isPresented: $blocking) {
-            LocalConfirmation(title: "Block this member?", message: "You won't see each other's posts or messages until the block is removed.", action: "Block") {
-                blocking = false
-                Task { await social.setRelation(session, target: personID, table: "liya_blocks", enabled: true); dismiss() }
-            } cancel: { blocking = false }.presentationDetents([.medium])
+        .onLiyaChange(of: session.userID) { _ in dismiss() }
+        .onLiyaChange(of: personID) { _ in dismiss() }
+        .sheet(isPresented: $showingEditor) {
+            NavigationStack { CommunityJoinView() }
+        }
+    }
+
+    @ViewBuilder private var options: some View {
+        if personID == session.userID {
+            SafetyActionRow(title: "Edit community profile", kind: .edit) { showingEditor = true }
+        } else {
+            SafetyActionRow(title: "Report member", kind: .report) { stage = .report }
+            Divider()
+            if canBlock {
+                SafetyActionRow(title: "Block member", kind: .block) { stage = .block }
+            } else if social.loading {
+                LiyaLoadingIndicator(size: 24).frame(maxWidth: .infinity, minHeight: 44)
+            } else if session.hasSavedMemberSession, let owner = session.userID,
+                      social.checkedMemberProfileOwner == owner, social.error == nil,
+                      social.person(personID) != nil, !social.canFollowMembers(session) {
+                SafetyActionRow(title: "Create a community profile to block", kind: .edit) { showingEditor = true }
+            } else {
+                ConnectionRetryRow(message: "Couldn't load your profile. Please try again.") { await social.refresh(session) }
+            }
+        }
+    }
+
+    private var blockConfirmation: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Their comments and other community content will no longer be visible to you.")
+                .font(.subheadline).foregroundStyle(liyaInk.opacity(0.77)).fixedSize(horizontal: false, vertical: true)
+            if blockFailed {
+                Text("Couldn't block this profile. Please try again.").font(.footnote).foregroundStyle(liyaInk)
+            }
+            SafetySubmitButton(title: submittingBlock ? "Blocking…" : "Block member",
+                               destructive: true, busy: submittingBlock) { submitBlock() }
+            SafetySecondaryButton(title: "Cancel") { backToOptions() }
+                .disabled(submittingBlock)
+        }
+    }
+
+    private var reportForm: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Choose a reason")
+                .font(.subheadline).foregroundStyle(liyaInk.opacity(0.77)).fixedSize(horizontal: false, vertical: true)
+            SafetyReasonList(selected: reason) { selected in
+                guard selected != reason else { return }
+                reason = selected
+                reportID = UUID()
+                reportFailed = false
+            }
+            .disabled(submittingReport)
+            if reportFailed {
+                Text("Couldn't confirm the report. Please try again.").font(.footnote).foregroundStyle(liyaInk)
+                    .fixedSize(horizontal: false, vertical: true).accessibilityFocused($reportFeedbackFocused)
+                    .onAppear { reportFeedbackFocused = true }
+            }
+            SafetySubmitButton(title: submittingReport ? "Sending…" : "Send report",
+                               busy: submittingReport, disabled: reason == nil) { submitReport() }
+        }
+    }
+
+    private func submitReport() {
+        guard stage == .report, !submittingReport, let reason else { return }
+        guard session.hasSavedMemberSession, let owner = session.userID, owner != personID else {
+            reportFailed = true
+            return
+        }
+        let requestID = reportID
+        let target = personID
+        submittingReport = true
+        reportFailed = false
+        reportFeedbackFocused = false
+        Task {
+            guard session.userID == owner else { submittingReport = false; return }
+            let received = await social.report(session, id: requestID, target: target, post: nil, reason: reason)
+            submittingReport = false
+            guard session.userID == owner, requestID == reportID else { return }
+            if received { stage = .reportReceived } else { reportFailed = true }
+        }
+    }
+
+    private func backToOptions() {
+        guard !submittingBlock, !submittingReport else { return }
+        stage = .options
+        blockFailed = false
+        reportFailed = false
+    }
+
+    private func submitBlock() {
+        guard !submittingBlock else { return }
+        guard let owner = session.userID, canBlock else { blockFailed = true; return }
+        submittingBlock = true
+        blockFailed = false
+        Task {
+            let saved = await social.setRelation(session, target: personID, table: "liya_blocks", enabled: true)
+            submittingBlock = false
+            guard session.userID == owner else { return }
+            if saved { dismiss() } else { blockFailed = true }
         }
     }
 }
@@ -1054,33 +1248,200 @@ struct CommunityConversationView: View {
     }
 }
 
+private struct ConnectionRetryRow: View {
+    var message: LocalizedStringKey = "Couldn't refresh your connections."
+    let retry: () async -> Void
+    @State private var retrying = false
+
+    var body: some View {
+        Button {
+            guard !retrying else { return }
+            retrying = true
+            Task { await retry(); retrying = false }
+        } label: {
+            HStack(spacing: 12) {
+                Text(message).font(.footnote).foregroundStyle(liyaInk)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                if retrying {
+                    LiyaLoadingIndicator(size: 22)
+                } else {
+                    Text("Try again").font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent)
+                }
+            }
+            .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 48)
+            .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 15))
+        }.buttonStyle(.plain).disabled(retrying)
+    }
+}
+
 struct CommunityRelationList: View {
+    private struct ReportTarget: Identifiable { let id: UUID }
+
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
+    @EnvironmentObject private var store: LocalStore
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.locale) private var locale
     let title: String
     let relation: String
-    private var ids: [UUID] { relation == "blocked" ? social.blocked : relation == "followers" ? social.followers : social.follows }
+    @State private var mutationFailed = false
+    @State private var reportTarget: ReportTarget?
+    private var isFollowing: Bool { relation == "following" }
+    private var onlyCreators: Bool { relation == "creators" }
+    private var showsCreators: Bool { isFollowing || onlyCreators }
+    private var memberIDs: [UUID] {
+        guard !onlyCreators, session.userID != nil, social.connectionsOwner == session.userID else { return [] }
+        return isFollowing ? social.follows : social.followers
+    }
+    private var creators: [CuratedFollowedProfile] { showsCreators ? session.curatedFollowing(in: store) : [] }
+    private var ready: Bool {
+        guard session.userID != nil else { return false }
+        let membersReady = onlyCreators || (social.connectionsOwner == session.userID && social.connectionsReady)
+        return membersReady && (!showsCreators || session.curatedFollowsReady)
+    }
+    private var readFailed: Bool {
+        let memberError = !onlyCreators && social.connectionsOwner == session.userID && social.connectionsError != nil
+        return memberError || (showsCreators && (session.catalogError != nil || session.curatedFollowsError != nil))
+    }
+    private var emptyTitle: LocalizedStringKey {
+        if onlyCreators { return "You haven’t followed any creators yet." }
+        return isFollowing ? "You haven’t followed anyone yet." : "No followers yet"
+    }
+
     var body: some View {
         PageShell(title: title) {
-            VStack(spacing: 12) {
-                if let error = social.error { Text(error).foregroundStyle(.red); Button("Refresh") { Task { await social.refresh(session) } }.foregroundStyle(liyaAccent) }
-                if ids.isEmpty && !social.loading && social.error == nil { EmptyState(title: "Nothing here yet", detail: "Members will appear here when available.") }
-                ForEach(ids, id: \.self) { id in
-                    HStack {
-                        if let person = social.person(id) {
-                            NavigationLink(person.displayName) { CommunityPersonView(personID: id) }.foregroundStyle(liyaInk)
-                        } else { Text("Blocked member · \(id.uuidString.prefix(8))").foregroundStyle(liyaInk) }
-                        Spacer()
-                        if relation == "blocked" {
-                            NavigationLink("Report") { CommunityReportView(target: id, post: nil) }.foregroundStyle(liyaAccent)
-                            Button("Unblock") { Task { await social.setRelation(session, target: id, table: "liya_blocks", enabled: false) } }.foregroundStyle(liyaAccent)
-                        } else if relation == "following" {
-                            Button("Unfollow") { Task { await social.setRelation(session, target: id, table: "liya_follows", enabled: false) } }.foregroundStyle(liyaAccent)
+            if relation == "blocked" {
+                blockedList
+            } else {
+                LazyVStack(alignment: .leading, spacing: 8) {
+                    if mutationFailed {
+                        Text("Couldn't update your follow. Please try again.").font(.footnote).foregroundStyle(liyaInk)
+                    } else if readFailed {
+                        ConnectionRetryRow { await refresh() }
+                    } else if !ready {
+                        LiyaLoadingIndicator().frame(maxWidth: .infinity).padding(.vertical, 24)
+                    }
+                    if ready && !readFailed && memberIDs.isEmpty && creators.isEmpty {
+                        VStack(spacing: 10) {
+                            Image("profile-home-people").resizable().scaledToFit().frame(width: 76, height: 76)
+                                .accessibilityHidden(true)
+                            Text(emptyTitle).font(.headline).foregroundStyle(liyaInk)
+                            if showsCreators {
+                                Text("Tap Follow on a profile to add it here.").font(.subheadline).foregroundStyle(.secondary)
+                            }
+                        }.multilineTextAlignment(.center).frame(maxWidth: .infinity).padding(.vertical, 36)
+                    }
+                    ForEach(memberIDs, id: \.self) { id in
+                        relationRow {
+                            if let person = social.person(id) {
+                                NavigationLink { CommunityPersonView(personID: id) } label: {
+                                    memberLabel(name: person.displayName, bio: person.signature) { SocialAvatar(personID: id) }
+                                }.buttonStyle(.plain)
+                            } else {
+                                memberLabel(name: String(localized: "Liya member", locale: locale), bio: "") { Image("app-mark").resizable().scaledToFit() }
+                            }
+                        } accessory: {
+                            if isFollowing {
+                                unfollowButton(pending: social.changingFollows.contains(id)) {
+                                    await social.setRelation(session, target: id, table: "liya_follows", enabled: false)
+                                }
+                            }
                         }
-                    }.padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
+                    }
+                    ForEach(creators, id: \.id) { creator in
+                        relationRow {
+                            NavigationLink { ExampleProfileView(index: creator.index, displayName: creator.displayName, mediaID: creator.id) } label: {
+                                memberLabel(name: creator.displayName, bio: "") { ExampleAvatar(index: creator.index, size: 46) }
+                            }.buttonStyle(.plain)
+                        } accessory: {
+                            unfollowButton(pending: session.curatedFollowPending.contains(creator.id)) {
+                                await session.setCuratedFollow(false, id: creator.id, store: store)
+                            }
+                        }
+                    }
                 }
-            }.padding(.top, 12)
-        }.task { await social.refresh(session) }
+                .padding(.top, 12)
+            }
+        }
+        .task(id: session.userID) { await refresh() }
+        .refreshable { await refresh() }
+        .sheet(item: $reportTarget) { target in
+            CommunityProfileOptions(personID: target.id, startsAtReport: true)
+        }
+    }
+
+    private var blockedList: some View {
+        VStack(spacing: 12) {
+            if let error = social.error {
+                Text(error).foregroundStyle(.red)
+                Button("Refresh") { Task { await social.refresh(session) } }.foregroundStyle(liyaAccent)
+            }
+            if social.blocked.isEmpty && !social.loading && social.error == nil {
+                EmptyState(title: "Nothing here yet", detail: "Members will appear here when available.")
+            }
+            ForEach(social.blocked, id: \.self) { id in
+                HStack {
+                    if let person = social.person(id) {
+                        NavigationLink(person.displayName) { CommunityPersonView(personID: id) }.foregroundStyle(liyaInk)
+                    } else { Text("Blocked member · \(id.uuidString.prefix(8))").foregroundStyle(liyaInk) }
+                    Spacer()
+                    Button("Report") { reportTarget = ReportTarget(id: id) }
+                        .foregroundStyle(liyaAccent).frame(minHeight: 44)
+                    Button("Unblock") { Task { await social.setRelation(session, target: id, table: "liya_blocks", enabled: false) } }.foregroundStyle(liyaAccent)
+                }.padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
+            }
+        }.padding(.top, 12)
+    }
+
+    private func memberLabel<Avatar: View>(name: String, bio: String, @ViewBuilder avatar: () -> Avatar) -> some View {
+        HStack(spacing: 12) {
+            avatar().frame(width: 46, height: 46).clipShape(Circle()).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(verbatim: name).font(.headline).foregroundStyle(liyaInk).lineLimit(2)
+                if !bio.isEmpty { Text(verbatim: bio).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+        }.contentShape(Rectangle())
+    }
+
+    private func relationRow<Label: View, Accessory: View>(@ViewBuilder label: () -> Label,
+                                                            @ViewBuilder accessory: () -> Accessory) -> some View {
+        let layout = dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6)) : AnyLayout(HStackLayout(spacing: 12))
+        return layout { label(); accessory() }
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func unfollowButton(pending: Bool, action: @escaping () async -> Bool) -> some View {
+        Button {
+            mutationFailed = false
+            let owner = session.userID
+            Task {
+                let saved = await action()
+                if session.userID == owner { mutationFailed = !saved }
+            }
+        } label: {
+            if pending {
+                LiyaLoadingIndicator(size: 21).frame(minWidth: 64, minHeight: 44)
+            } else {
+                Text("Unfollow").font(.caption.weight(.semibold)).foregroundStyle(liyaInk)
+                    .padding(.horizontal, 12).frame(minHeight: 44)
+                    .background(liyaAccent.opacity(0.07), in: Capsule())
+            }
+        }.buttonStyle(.plain).disabled(pending)
+    }
+
+    private func refresh() async {
+        mutationFailed = false
+        guard relation != "blocked" else { await social.refresh(session); return }
+        if onlyCreators { await refreshCreators(); return }
+        async let members: Void = social.refreshConnections(session)
+        if isFollowing { await refreshCreators() }
+        await members
+    }
+
+    private func refreshCreators() async {
+        if session.catalogError != nil { await session.refreshCatalog() }
+        await session.refreshCuratedFollows(store: store)
     }
 }
 

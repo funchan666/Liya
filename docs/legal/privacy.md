@@ -1,30 +1,50 @@
 # Liya Privacy Policy
 
-Last updated 11 November 2026.
+Last updated 25 November 2026.
 
-## Scope
+## About this policy
 
-This policy describes information handled by the local edition of Liya and the choices available to you.
+Liya helps you explore media, record your mood and keep personal thoughts. This policy describes how Liya handles information when you use its features. The features available to you may depend on your app version and account configuration.
 
-## Local access and information
+## Account and information you provide
 
-The email and password entry opens a local session without verifying the email or password against an online account. Liya does not store or send the password entered there. The app uses a locally generated identifier to keep the local session and its data separate from earlier online accounts. Existing data from an earlier account is not automatically combined with this local identity.
+When you create or use an account with email, Liya's authentication provider processes your email address and password to authenticate you and help you recover access. If Apple sign-in is available and you choose it, Apple provides the information needed to authenticate your account, which may include a name or email address you choose to share.
 
-Your mood entries, profile details, likes, private thoughts, drafts and media you select may be stored on your device. The app uses these records to show your content and retain your choices. They can be lost if you delete the app, clear its data or lose the device. Your device or backup settings may also affect copies of that information.
+You may provide a profile name, introduction, tags, a profile picture, mood entries, private thoughts and likes. Liya uses these details to provide your account, save your choices and show your content. Account records and the media collection are hosted by Supabase, a service provider that operates our authentication, database and storage services. See the [Supabase privacy policy](https://supabase.com/privacy).
+
+Drafts and selected attachments that have not been uploaded may remain on your device. Earlier versions may also have saved information on your device without an authenticated online account; that material is not automatically assigned to a new account. Device backups may contain copies according to your settings.
+
+## Likes, comments and reports
+
+When you like a photo or video, Liya records your account and the item you liked. Other members can see the total number of likes. You can remove your like by tapping the heart again.
+
+Posting a comment shares its text, your community name and any profile photo you choose to share with other signed-in members who can view the discussion. You can delete your own comments. Blocking a member hides their comments from you and yours from them.
+
+When you report a comment, Liya records your account, the reason you selected, the photo or video involved, and a copy of the reported comment. That copy can remain in the report if the author later deletes the comment.
+
+When you report a member through their profile, Liya saves your account ID, the reported member’s account ID, the reason you chose and the time you submitted the report.
+
+## Following and followers
+
+When you follow another member, Liya records the connection between your accounts. You can see the member in your Following list, and they can see you in their Followers list. Blocking a member removes the connection in both directions.
+
+Your Following list also includes any profiles you follow from the media collection. Liya saves those choices to your account so you can find them across devices. Only you can see which collection profiles you follow.
 
 ## Photos and camera
 
-When you choose photos or videos, the system picker gives the app access to the items you select. When you choose to take a photo, Liya requests camera access. The app may copy selected items into its own storage. You can manage permissions in device settings.
+When you choose a photo or video, the system picker provides access to the items you select. If you choose to take a photo, Liya requests camera access. Your selected profile image may be uploaded to provide your profile. You can manage device permissions in Settings.
 
-## Online services and Apple
+## Coin purchases and Apple services
 
-Online messaging, calls, AI replies, account services and coin purchases are unavailable in this edition. No message, report or transaction is represented as delivered merely because it was saved locally. Apple may process information when you use its system services, such as an Apple authorization sheet or App Store functionality; Liya does not complete Apple sign-in without a supporting authentication service. Apple handles its services under its own privacy policy.
+Apple processes App Store payments and provides Liya with transaction information. Liya uses the purchase record on your device to credit your wallet and avoid crediting the same transaction twice. Liya stores these purchase records and your coin balance on your device, separately from the account data hosted by Supabase. The wallet does not sync between devices. Apple handles its own services, including Apple sign-in and App Store purchases, under its [privacy policy](https://www.apple.com/legal/privacy/).
 
-Earlier versions could have stored account data with online providers. Switching to this local edition does not delete that earlier data. If you need help with a previous account or transaction, use the contact address below.
+## Feature availability
+
+Messaging, calls and AI replies are currently unavailable in this edition. A draft does not mean a message or report was sent.
 
 ## Your choices and security
 
-You can edit or remove content where the app provides those controls and change permissions in device settings. Removing the app may remove information stored only on the device. No method of storage is completely secure; consider whether sensitive details are appropriate to keep on a shared device.
+You can edit or remove content where the app provides those controls, sign out, and request account deletion through the account settings when available. You can contact us for help with access, correction or deletion. Some records may need to be retained where required by law or to handle a transaction or security issue. No storage or transmission method can be guaranteed completely secure.
 
 ## Children and changes
 

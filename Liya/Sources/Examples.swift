@@ -1,18 +1,24 @@
 import SwiftUI
-import UIKit
 
-/// Display supplied content directly from the app bundle.
+/// Content images are fetched using a short-lived URL for the signed-in user.
 struct CloudPhoto: View {
     @EnvironmentObject private var session: LiyaSession
     let index: Int
     var contentMode: ContentMode = .fit
-    @State private var image: UIImage?
+    @State private var url: URL?
     @State private var failed = false
 
     var body: some View {
         Group {
-            if let image {
-                Image(uiImage: image).resizable().aspectRatio(contentMode: contentMode)
+            if let url {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image): image.resizable().aspectRatio(contentMode: contentMode)
+                    case .failure: unavailable
+                    case .empty: Color.clear
+                    @unknown default: unavailable
+                    }
+                }
             } else if failed {
                 unavailable
             } else {
@@ -20,12 +26,11 @@ struct CloudPhoto: View {
             }
         }
         .task(id: "\(session.imageGeneration)-\(index)") {
-            image = nil; failed = false
+            url = nil; failed = false
             do {
-                let url = try await session.mediaURL(kind: "photo", index: index)
+                let signedURL = try await session.mediaURL(kind: "photo", index: index)
                 guard !Task.isCancelled else { return }
-                image = UIImage(contentsOfFile: url.path)
-                failed = image == nil
+                url = signedURL
             } catch { if !Task.isCancelled { failed = true } }
         }
     }

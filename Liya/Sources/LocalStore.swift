@@ -64,7 +64,7 @@ final class LocalStore: ObservableObject {
     @Published var likedPhotos: Set<Int> = []
     @Published var likedVideos: Set<Int> = []
     @Published var videoNotes: [LocalVideoNote] = []
-    @Published var followedExamples: Set<Int> = []
+    @Published private(set) var followedExamples: Set<Int> = []
     @Published var blockedExamples: Set<Int> = []
     @Published var messageDrafts: [String: String] = [:]
     @Published var reports: [LocalReport] = []
@@ -74,6 +74,15 @@ final class LocalStore: ObservableObject {
     @Published var profileTags: [String] = []
     private let defaults = UserDefaults.standard
     private var detachedOwner: UUID?
+    private var activeCloudOwner: UUID? {
+        defaults.string(forKey: "liya.activeCloudSpaceOwner").flatMap(UUID.init(uuidString:))
+    }
+    private let accountMaterialKeys = ["liya.nickname", "liya.signature", "liya.profileTags", "liya.moods", "liya.pendingMoods",
+                    "liya.composeText", "liya.composeTags", "liya.composeAttachments", "liya.drafts", "liya.comments",
+                    "liya.likedPhotos", "liya.likedVideos", "liya.videoNotes", "liya.followedExamples", "liya.blockedExamples", "liya.pendingCuratedUnfollows",
+                    "liya.messageDrafts", "liya.reportDrafts", "liya.avatar", "liya.aiDraft", "liya.autoAttempt", "liya.autoFingerprint",
+                    "liya.postAttempt", "liya.postFingerprint", "liya.treeDraft", "liya.treeDraftMood", "liya.treeHiddenSuggestions",
+                    "liya.treePublicAttempt", "liya.treePublicFingerprint", "liya.treeSubmissionID"]
 
     init() {
         nickname = defaults.string(forKey: "liya.nickname") ?? ""
@@ -107,23 +116,64 @@ final class LocalStore: ObservableObject {
         restoreAccountMaterial(owner)
     }
 
+    /// Older versions kept the active drafts outside of the owner's archive.
+    func identifyPreviousCloudSpace(_ savedOwner: UUID?) {
+        guard activeCloudOwner == nil, !defaults.bool(forKey: "liya.local.signedIn"),
+              accountMaterialKeys.contains(where: { defaults.object(forKey: $0) != nil }) else { return }
+        if let savedOwner, defaults.bool(forKey: "liya.hasSupabaseAccount"),
+           defaults.dictionary(forKey: "liya.archivedAccount.\(savedOwner.uuidString.lowercased())") == nil {
+            defaults.set(savedOwner.uuidString, forKey: "liya.activeCloudSpaceOwner")
+        } else {
+            archiveAccountMaterial(UUID())
+        }
+    }
+
+    /// The former offline identity did not verify an email address. Preserve
+    /// its material separately rather than assigning it to a cloud account.
+    func prepareCloudSpace(_ owner: UUID) {
+        identifyPreviousCloudSpace(nil)
+        if let previous = activeCloudOwner, previous != owner {
+            archiveAccountMaterial(previous)
+        }
+        if defaults.bool(forKey: "liya.local.signedIn"),
+           let rawID = defaults.string(forKey: "liya.local.identity"),
+           let localID = UUID(uuidString: rawID) {
+            archiveAccountMaterial(localID)
+            defaults.set(false, forKey: "liya.local.signedIn")
+        }
+        restoreAccountMaterial(owner)
+        defaults.set(owner.uuidString, forKey: "liya.activeCloudSpaceOwner")
+    }
+
+    /// A restored credential can be switched before its local space is ever opened.
+    func archiveCloudSpace(leaving owner: UUID) {
+        if defaults.bool(forKey: "liya.local.signedIn"),
+           let raw = defaults.string(forKey: "liya.local.identity"),
+           let offlineOwner = UUID(uuidString: raw) {
+            archiveAccountMaterial(offlineOwner)
+            defaults.set(false, forKey: "liya.local.signedIn")
+        } else {
+            archiveAccountMaterial(activeCloudOwner ?? owner)
+        }
+    }
+
     /// Keep unsent material separate from the next account without deleting it.
     func archiveAccountMaterial(_ owner: UUID) {
         detachedOwner = owner
-        let keys = ["liya.nickname", "liya.signature", "liya.profileTags", "liya.moods", "liya.pendingMoods",
-                    "liya.composeText", "liya.composeTags", "liya.composeAttachments", "liya.drafts", "liya.comments",
-                    "liya.likedPhotos", "liya.likedVideos", "liya.videoNotes", "liya.followedExamples", "liya.blockedExamples",
-                    "liya.messageDrafts", "liya.reportDrafts", "liya.avatar", "liya.aiDraft", "liya.autoAttempt", "liya.autoFingerprint",
-                    "liya.postAttempt", "liya.postFingerprint", "liya.treeDraft", "liya.treeDraftMood", "liya.treeHiddenSuggestions",
-                    "liya.treePublicAttempt", "liya.treePublicFingerprint", "liya.treeSubmissionID"]
-        let snapshot = keys.reduce(into: [String: Any]()) { result, key in
+        let snapshot = accountMaterialKeys.reduce(into: [String: Any]()) { result, key in
             if let value = defaults.object(forKey: key) { result[key] = value }
         }
-        defaults.set(snapshot, forKey: "liya.archivedAccount.\(owner.uuidString.lowercased())")
+        let archiveKey = "liya.archivedAccount.\(owner.uuidString.lowercased())"
+        // Opening an account consumes its archive. A surviving archive may still
+        // contain drafts even if the restored credential has no active workspace.
+        if !snapshot.isEmpty && (activeCloudOwner == owner || defaults.dictionary(forKey: archiveKey) == nil) {
+            defaults.set(snapshot, forKey: archiveKey)
+        }
+        defaults.removeObject(forKey: "liya.activeCloudSpaceOwner")
         entries = []; pendingMoods = []; composeText = ""; composeTags = []; composeAttachments = []; composeLoading = false
         drafts = []; comments = []; likedPhotos = []; likedVideos = []; videoNotes = []; followedExamples = []; blockedExamples = []
         messageDrafts = [:]; reports = []; avatar = nil; nickname = ""; signature = ""; profileTags = []; videoRequest = nil
-        for key in keys { defaults.removeObject(forKey: key) }
+        for key in accountMaterialKeys { defaults.removeObject(forKey: key) }
     }
 
     func restoreAccountMaterial(_ owner: UUID) {
@@ -206,9 +256,29 @@ final class LocalStore: ObservableObject {
         else { defaults.removeObject(forKey: "liya.avatar") }
     }
 
-    func toggleFollow(_ index: Int) {
-        if followedExamples.contains(index) { followedExamples.remove(index) } else { followedExamples.insert(index) }
-        defaults.set(Array(followedExamples), forKey: "liya.followedExamples")
+    func hasCloudSpace(for owner: UUID) -> Bool { activeCloudOwner == owner }
+
+    func finishFollowImport(_ indexes: Set<Int>, owner: UUID) {
+        guard hasCloudSpace(for: owner), !indexes.isEmpty else { return }
+        followedExamples.subtract(indexes)
+        if followedExamples.isEmpty { defaults.removeObject(forKey: "liya.followedExamples") }
+        else { defaults.set(Array(followedExamples), forKey: "liya.followedExamples") }
+    }
+
+    var pendingCuratedUnfollows: Set<String> {
+        Set(defaults.stringArray(forKey: "liya.pendingCuratedUnfollows") ?? [])
+    }
+
+    func queueBlockedUnfollow(_ id: String, owner: UUID) {
+        guard hasCloudSpace(for: owner) else { return }
+        defaults.set(Array(pendingCuratedUnfollows.union([id])), forKey: "liya.pendingCuratedUnfollows")
+    }
+
+    func finishBlockedUnfollows(_ ids: Set<String>, owner: UUID) {
+        guard hasCloudSpace(for: owner), !ids.isEmpty else { return }
+        let pending = pendingCuratedUnfollows.subtracting(ids)
+        if pending.isEmpty { defaults.removeObject(forKey: "liya.pendingCuratedUnfollows") }
+        else { defaults.set(Array(pending), forKey: "liya.pendingCuratedUnfollows") }
     }
 
     func setBlocked(_ index: Int, blocked: Bool) {

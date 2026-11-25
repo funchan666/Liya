@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A55555555555555555555501 /* Examples in Resources */ = {isa = PBXBuildFile; fileRef = A55555555555555555555502 /* Examples */; };
+		26E2D5608ADB547C04EA2231 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 1008727600F4C756AF33B38C /* Supabase */; };
 		A44444444444444444444401 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A44444444444444444444402 /* Localizable.xcstrings */; };
 		A33333333333333333333301 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A33333333333333333333302 /* LaunchScreen.storyboard */; };
 		073D8EE7810AFCF9F9B31B86 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C1AA7E627810F1A043DB07 /* RootView.swift */; };
@@ -37,7 +37,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A55555555555555555555502 /* Examples */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Resources/Examples; sourceTree = "<group>"; };
 		A44444444444444444444402 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		A33333333333333333333302 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		07B7ED4624CF45B548E99A81 /* CoinCheckout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinCheckout.swift; sourceTree = "<group>"; };
@@ -72,6 +71,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26E2D5608ADB547C04EA2231 /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -121,7 +121,6 @@
 		6BBA48D2AE2AA016DFA0ECBE /* Liya */ = {
 			isa = PBXGroup;
 			children = (
-				A55555555555555555555502 /* Examples */,
 				A44444444444444444444402 /* Localizable.xcstrings */,
 				A33333333333333333333302 /* LaunchScreen.storyboard */,
 				C619DBBB0211BA6980C958D2 /* Assets.xcassets */,
@@ -154,6 +153,7 @@
 			);
 			name = Liya;
 			packageProductDependencies = (
+				1008727600F4C756AF33B38C /* Supabase */,
 			);
 			productName = Liya;
 			productReference = 0A49B42E539DC4B03BDB34DE /* Liya.app */;
@@ -183,6 +183,7 @@
 			mainGroup = 47E1305AB0237536E0BCB3A5;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				4169A5017835DAFD0AC3573A /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
 			projectDirPath = "";
 			projectRoot = "";
@@ -197,7 +198,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A55555555555555555555501 /* Examples in Resources */,
 				A44444444444444444444401 /* Localizable.xcstrings in Resources */,
 				A33333333333333333333301 /* LaunchScreen.storyboard in Resources */,
 				D13D7EED4D1BD097D1746957 /* Assets.xcassets in Resources */,
@@ -455,9 +455,19 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		4169A5017835DAFD0AC3573A /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift.git";
+			requirement = { kind = exactVersion; version = 2.55.5; };
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		1008727600F4C756AF33B38C /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4169A5017835DAFD0AC3573A /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
 /* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 2B7D257627435858BF94383D /* Project object */;

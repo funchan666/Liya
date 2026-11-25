@@ -1,26 +1,42 @@
 # Liya Terms of Service
 
-Last updated 11 November 2026.
+Last updated 25 November 2026.
 
 ## Welcome to Liya
 
-Liya offers a space to browse a collection of media, record moods and keep personal moments. These terms apply to the local edition of Liya. You must follow applicable laws and respect the rights and privacy of others when using the app.
+Liya offers a space to explore media, record moods and keep personal thoughts. These terms apply when you use Liya. Please follow applicable laws and respect the rights and privacy of others.
 
-## Access to your space
+## Your account
 
-The email and password entry opens a local session. It does not verify your email address, authenticate an online account or confirm ownership of an address. The password entered for this purpose is not stored or sent by Liya. Sign in with Apple and other online account services are unavailable until a supporting service is enabled. A local session is not connected automatically to a previous online account.
+When account services are available, you may use an email address and password or an available Apple sign-in option. Keep your account credentials secure and use information you are entitled to provide. Features may vary by app version and account configuration. Information saved on a device by an earlier local version is not automatically linked to an online account.
 
-## Your content and device
+## Your content
 
-You are responsible for the photos, videos, text and other material you choose to keep, and must have the rights to use it. Entries and selected media are stored on your device in this edition. Device loss, removal of the app or clearing its data may result in loss of locally stored content. Please keep copies of important material.
+You are responsible for the text, images, videos and other material you choose to provide and must have the rights to use it. Liya uses your content to provide the features you request, including saving your profile, mood entries and private thoughts. Please keep copies of important material; unsent drafts and attachments may remain on your device until uploaded.
 
-## Community and paid features
+## Community conduct and reporting
 
-Publishing to other people, messages, calls, AI responses and coin purchases are unavailable in this edition. Saved local activity does not mean content was sent, a report was received or a transaction was completed. Apple handles any App Store transactions in accordance with its own terms. A purchase left unfinished by an earlier version may require further service configuration before it can be delivered; do not assume that it has been completed.
+You can like photos and videos, add comments using your community profile, and remove your own likes and comments. Respect other members. Harassment, threats, hate speech, sexual exploitation and sharing private information about someone without their permission are prohibited.
 
-## Wellbeing and availability
+To report a member, open their profile, choose a reason and submit the report in the app. You can also use the options beside a comment to report it or block its author.
 
-Liya is not medical advice, professional care or an emergency service. If you are in immediate danger, contact your local emergency service. Features may change or be unavailable. The app is provided as available and no uninterrupted access or loss-free storage can be guaranteed.
+## Following people
+
+You choose whom to follow. You can see who follows you, review your Following list and unfollow a member or a profile from the media collection at any time. Blocking a member removes any follows between you. Unblocking lets you choose whether to follow again.
+
+## Coin purchases
+
+Coin packs are consumable in-app purchases. The App Store shows the price before you confirm and handles billing under the [Apple Media Services Terms and Conditions](https://www.apple.com/legal/internet-services/itunes/). When Liya verifies and delivers a purchase, it adds the coins to your wallet on that device.
+
+Purchased coins have no expiration date. Your balance stays on the device and does not sync through your Liya account. You may lose access to it if you remove Liya or erase the device. You can spend coins to unlock appearances for your mood diary and profile. For billing questions or refund requests, contact [Apple Support](https://support.apple.com/en-us/118223).
+
+## Feature availability
+
+Messaging, calls and AI replies are currently unavailable in this edition. A saved draft is not a delivered message or report.
+
+## Wellbeing
+
+Liya is not medical advice, professional care or an emergency service. If you are in immediate danger, contact your local emergency service. Features may change or be unavailable, and uninterrupted access or loss-free storage cannot be guaranteed.
 
 ## Changes and contact
 

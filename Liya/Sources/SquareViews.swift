@@ -33,7 +33,6 @@ struct SquareHome: View {
                     } else {
                         HStack(alignment: .top, spacing: 10) { wellbeingLinks }
                     }
-                    OfflineNote(text: "Community sharing is unavailable right now.")
                     if store.drafts.contains(where: { $0.publishedLocally == true }) {
                         Text("Unshared posts").font(.headline).foregroundStyle(liyaInk)
                         LazyVStack(spacing: 16) {
@@ -50,14 +49,22 @@ struct SquareHome: View {
                         EmptyState(title: "No photos yet", detail: "There are no photos to show right now.")
                     }
                     LazyVStack(spacing: 16) {
-                        ForEach(session.photos.indices, id: \.self) { index in
+                        ForEach(Array(session.photos.enumerated()), id: \.element.id) { index, photo in
                             if ExamplePhotoAllocation.isPost(index, in: session.photos) && !store.blockedExamples.contains(index) {
-                                ExamplePhotoRow(index: index)
+                                ExamplePhotoRow(index: index, mediaID: photo.id)
                             }
                         }
                     }
                 }.frame(maxWidth: 620).frame(maxWidth: .infinity).padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 28 + tabBarClearance)
-            }.refreshable { await social.refresh(session) }
+            }.refreshable {
+                let ids = session.photos.indices.compactMap { index in
+                    ExamplePhotoAllocation.isPost(index, in: session.photos) && !store.blockedExamples.contains(index)
+                        ? session.photos[index].id : nil
+                }
+                await session.refreshMediaEngagement(ids: ids)
+                await session.refreshLikes()
+                await social.refresh(session)
+            }
         }.navigationBarHidden(true)
     }
 
@@ -97,6 +104,7 @@ struct SquareHome: View {
 }
 
 struct MoodDiaryView: View {
+    @EnvironmentObject private var checkout: CoinCheckout
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     @State private var date: Date
@@ -114,6 +122,7 @@ struct MoodDiaryView: View {
     }
 
     var body: some View {
+        let prism = checkout.isActive(.moodPrism)
         PageShell(title: "Mood Diary") {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(alignment: .top, spacing: 12) {
@@ -132,7 +141,8 @@ struct MoodDiaryView: View {
                     }.padding(12).frame(minHeight: 56).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 16))
                 }.buttonStyle(.plain)
                 HStack(alignment: .center) {
-                    Text("Mood journal").font(.system(.title3, design: .serif).bold().italic()).foregroundStyle(liyaInk)
+                    Text("Mood journal").font(.system(.title3, design: .serif).bold().italic())
+                        .foregroundStyle(prism ? liyaAccent : liyaInk)
                     Spacer(minLength: 8)
                     yearControl
                 }
@@ -155,7 +165,8 @@ struct MoodDiaryView: View {
                         .disabled(saving || session.moodLoading)
                     TextField("Add a note (optional)", text: Binding(get: { note }, set: { note = $0; saved = false; dirty = true }), axis: .vertical)
                         .lineLimit(2...5).padding(12).font(.subheadline)
-                        .background(Color(red: 0.97, green: 0.96, blue: 0.99), in: RoundedRectangle(cornerRadius: 12))
+                        .background(prism ? Color.white.opacity(0.88) : Color(red: 0.97, green: 0.96, blue: 0.99),
+                                    in: RoundedRectangle(cornerRadius: 12))
                         .disabled(saving || session.moodLoading)
                     PrimaryButton(title: saving ? "Saving…" : "Record", disabled: saving || session.moodLoading || session.moodError != nil) {
                         let entryDate = date, entryMood = mood, entryNote = note
@@ -172,7 +183,8 @@ struct MoodDiaryView: View {
                     if saved { Text("Mood recorded").font(.footnote.weight(.medium)).foregroundStyle(liyaAccent) }
                 }
                 .padding(14)
-                .background(.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 16))
+                .background(prism ? Color(red: 0.93, green: 0.88, blue: 1) : Color.white.opacity(0.92),
+                            in: RoundedRectangle(cornerRadius: 16))
                 .shadow(color: liyaInk.opacity(0.07), radius: 8, x: 0, y: 3)
             }.padding(.top, 12).modifier(AdaptiveContainerMargins())
         }.task { await session.refreshMoods(); loadEntry() }
@@ -505,28 +517,6 @@ struct TreeHoleView: View {
     @State private var drifting = false
     @State private var showCommunitySetup = false
     private let moods = ["mood-teal", "mood-happy", "mood-yellow", "mood-calm", "mood-blue", "mood-upset"]
-    private let suggestions: [(String, String)] = [
-        ("mood-calm", "Taking a breath before a busy day."),
-        ("mood-blue", "Today was harder than I expected."),
-        ("mood-happy", "A kind message made me smile."),
-        ("mood-teal", "Trying to take things one step at a time."),
-        ("mood-yellow", "I wish I could quiet my thoughts tonight."),
-        ("mood-calm", "The little things helped today."),
-        ("mood-happy", "I finally made time for an old friend."),
-        ("mood-blue", "Missing someone a little extra today."),
-        ("mood-teal", "A slow morning was just what I needed."),
-        ("mood-upset", "That conversation is still on my mind."),
-        ("mood-yellow", "Not every day needs a perfect ending."),
-        ("mood-calm", "A walk helped me clear my head."),
-        ("mood-happy", "There was sunshine on my way home."),
-        ("mood-blue", "I am learning to ask for help."),
-        ("mood-teal", "I need a little room to rest."),
-        ("mood-upset", "Hoping tomorrow feels a bit lighter."),
-        ("mood-calm", "Letting myself pause for a moment."),
-        ("mood-happy", "Good coffee and a quiet afternoon."),
-        ("mood-yellow", "Trying to be kinder to myself."),
-        ("mood-blue", "Some feelings are hard to put into words.")
-    ]
 
     private var thoughts: [TreeThought] {
         let community = social.posts.filter { $0.tags.contains("tree-hole") && !$0.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
@@ -535,9 +525,9 @@ struct TreeHoleView: View {
                             mood: post.tags.first(where: { moods.contains($0) }) ?? "mood-calm", post: post)
             }
         let hidden = Set(hiddenSuggestions.split(separator: ",").map(String.init))
-        let ideas = suggestions.enumerated().compactMap { index, item -> TreeThought? in
-            let id = "suggestion-\(index)"
-            return hidden.contains(id) ? nil : TreeThought(id: id, body: item.1, mood: item.0, post: nil)
+        let ideas = session.curatedTreePrompts.compactMap { item -> TreeThought? in
+            let id = "suggestion-\(item.position)"
+            return hidden.contains(id) ? nil : TreeThought(id: id, body: item.body, mood: item.mood, post: nil)
         }
         return community + ideas
     }
@@ -919,52 +909,38 @@ private struct DeviceMoodHistory: View {
 }
 
 
-private struct PhotoCounts: Decodable {
-    let likeCount: Int
-    let commentCount: Int
-    enum CodingKeys: String, CodingKey { case likeCount = "like_count", commentCount = "comment_count" }
-}
-
-@MainActor private final class PhotoEngagement: ObservableObject {
-    @Published private(set) var counts: PhotoCounts?
-    private var request = UUID()
-
-    func refresh(_ session: LiyaSession, index: Int) async { counts = nil }
-
-}
-
 private struct ExamplePhotoRow: View {
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
-    @EnvironmentObject private var social: SocialStore
     let index: Int
-    @State private var options = false
-    @StateObject private var engagement = PhotoEngagement()
+    let mediaID: String
+    @State private var options: CollectionSafetyTarget?
+
     private var displayName: String {
-        let photoID = session.photos.indices.contains(index) ? session.photos[index].id : nil
-        return ExampleVideoCreator.byVideoID.values.first { $0.photoID == photoID }?.name ?? "Liya collection"
+        session.curatedDisplayName(for: mediaID)
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
-                NavigationLink { ExampleProfileView(index: index, displayName: displayName) } label: {
+                NavigationLink { ExampleProfileView(index: index, displayName: displayName, mediaID: mediaID) } label: {
                     HStack(spacing: 10) { ExampleAvatar(index: index, size: 42); VStack(alignment: .leading, spacing: 3) {
                         Text(displayName).font(.subheadline.weight(.semibold)).lineLimit(1)
                         Text("Collection").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     } }.foregroundStyle(liyaInk)
                 }.buttonStyle(.plain)
                 Spacer(minLength: 0)
-                Button { store.toggleFollow(index) } label: {
-                    Text(store.followedExamples.contains(index) ? "Following" : "Follow")
+                CuratedFollowButton(id: mediaID) { following, title in
+                    Text(LocalizedStringKey(title))
                         .font(.caption.weight(.semibold)).foregroundStyle(liyaAccent)
                         .lineLimit(1).minimumScaleFactor(0.8).padding(.horizontal, 12).frame(minHeight: 44)
-                        .background(liyaAccent.opacity(store.followedExamples.contains(index) ? 0.15 : 0.08), in: Capsule())
-                }.buttonStyle(.plain).accessibilityLabel(store.followedExamples.contains(index) ? "Unfollow example" : "Follow example")
-                    .accessibilityAddTraits(store.followedExamples.contains(index) ? .isSelected : [])
-                Button { options = true } label: { Image("more").resizable().scaledToFit().frame(width: 20, height: 20).frame(width: 44, height: 44) }
+                        .background(liyaAccent.opacity(following ? 0.15 : 0.08), in: Capsule())
+                }
+                Button {
+                    options = CollectionSafetyTarget(mediaID: mediaID, name: displayName, kind: .post, ownerID: session.userID)
+                } label: { Image("more").resizable().scaledToFit().frame(width: 20, height: 20).frame(width: 44, height: 44) }
                     .buttonStyle(.plain).accessibilityLabel("More options")
             }
-            NavigationLink { ExamplePhotoDetail(index: index) } label: {
+            NavigationLink { ExamplePhotoDetail(mediaID: mediaID) } label: {
                 GeometryReader { geometry in
                     CloudPhoto(index: index, contentMode: .fill)
                         .frame(width: geometry.size.width, height: geometry.size.height).clipped()
@@ -973,28 +949,56 @@ private struct ExamplePhotoRow: View {
                 .clipShape(RoundedRectangle(cornerRadius: 17))
                 .frame(maxWidth: .infinity)
             }.buttonStyle(.plain).accessibilityLabel("Open post")
-            HStack(spacing: 8) {
-                Button { Task { await session.toggleLike(kind: "photo", index: index); await engagement.refresh(session, index: index) } } label: {
-                    LiyaFeedActionLabel(title: session.isLiked(kind: "photo", index: index) ? "Liked" : "Like",
-                                        count: engagement.counts.map { String($0.likeCount) } ?? "—",
-                                        icon: session.isLiked(kind: "photo", index: index) ? "video-like-on" : "video-like-off",
-                                        active: session.isLiked(kind: "photo", index: index))
-                }.buttonStyle(.plain).disabled(!session.likesReady || session.likesLoading)
-                    .accessibilityAddTraits(session.isLiked(kind: "photo", index: index) ? .isSelected : [])
-                NavigationLink { ExamplePhotoDetail(index: index) } label: {
-                    LiyaFeedActionLabel(title: "Comments", count: engagement.counts.map { String($0.commentCount) } ?? "—", icon: "profile-action-message")
-                }.buttonStyle(.plain)
-                Spacer(minLength: 0)
-            }
+            PhotoEngagementBar(mediaID: mediaID)
         }.modifier(LiyaFeedCardSurface())
-            .sheet(isPresented: $options) { ExampleOptionsView(index: index, reportTarget: "post") }
-            .onLiyaChange(of: session.catalogGeneration) { _ in Task { await engagement.refresh(session, index: index) } }
-            .onLiyaChange(of: social.syncGeneration) { _ in Task { await engagement.refresh(session, index: index) } }
-            .onLiyaChange(of: session.likedMediaIDs) { _ in Task { await engagement.refresh(session, index: index) } }
-            .onAppear { Task { await engagement.refresh(session, index: index) } }
+            .sheet(item: $options) { ExampleOptionsView(target: $0) }
     }
 }
 
+private struct PhotoEngagementBar: View {
+    @EnvironmentObject private var session: LiyaSession
+    let mediaID: String
+    @State private var showsComments = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) { actions }.fixedSize(horizontal: true, vertical: false)
+                VStack(alignment: .leading, spacing: 6) { actions }
+            }
+            if session.mediaEngagementFailures.contains(mediaID) {
+                Button("Retry counts") {
+                    Task { await session.refreshMediaEngagement(ids: [mediaID]) }
+                }
+                .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .sheet(isPresented: $showsComments) {
+            NavigationStack { MediaCommentsView(mediaID: mediaID) }
+                .presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+        }
+    }
+
+    @ViewBuilder private var actions: some View {
+        let totals = session.mediaEngagement[mediaID]
+        let isLiked = session.likedMediaIDs.contains(mediaID)
+        let placeholder = session.mediaEngagementFailures.contains(mediaID) ? "—" : "…"
+        Button {
+            Task { await session.toggleMediaLike(id: mediaID) }
+        } label: {
+            LiyaFeedActionLabel(title: isLiked ? "Liked" : "Like",
+                                count: totals.map { $0.likeCount.formatted() } ?? placeholder,
+                                icon: isLiked ? "video-like-on" : "video-like-off", active: isLiked)
+        }
+        .buttonStyle(.plain).disabled(!session.likesReady || session.likesLoading)
+        .accessibilityAddTraits(isLiked ? .isSelected : [])
+        Button { showsComments = true } label: {
+            LiyaFeedActionLabel(title: "Comments", count: totals.map { $0.commentCount.formatted() } ?? placeholder,
+                                icon: "profile-action-message")
+        }.buttonStyle(.plain)
+    }
+}
 
 struct ExampleCommentsView: View {
     @EnvironmentObject private var store: LocalStore
@@ -1029,24 +1033,17 @@ struct ExampleCommentsView: View {
 
 struct ExamplePhotoDetail: View {
     @EnvironmentObject private var session: LiyaSession
-    @EnvironmentObject private var social: SocialStore
+    @EnvironmentObject private var store: LocalStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.liyaTabBarClearance) private var tabBarClearance
-    @State private var options = false
-    @State private var showProfileSetup = false
-    @State private var comments: [VideoComment] = []
-    @State private var comment = ""
-    @State private var attempt = UUID()
-    @State private var loading = false
-    @State private var sending = false
-    @State private var error: String?
-    @State private var loadID = UUID()
-    @StateObject private var engagement = PhotoEngagement()
-    let index: Int
-    private var mediaID: String? { session.photos.indices.contains(index) ? session.photos[index].id : nil }
+    @State private var options: CollectionSafetyTarget?
+    let mediaID: String
+
+    private var index: Int? { session.photos.firstIndex { $0.id == mediaID } }
     private var displayName: String {
-        ExampleVideoCreator.byVideoID.values.first { $0.photoID == mediaID }?.name ?? "Liya collection"
+        session.curatedDisplayName(for: mediaID)
     }
+
     var body: some View {
         ZStack {
             LiyaBackground()
@@ -1058,119 +1055,47 @@ struct ExamplePhotoDetail: View {
                         Spacer(minLength: 0)
                         Text("Post").font(.headline).foregroundStyle(liyaInk)
                         Spacer(minLength: 0)
-                        Button { options = true } label: { Image("more").resizable().scaledToFit().frame(width: 20, height: 20).frame(width: 44, height: 44) }
-                            .buttonStyle(.plain).accessibilityLabel("Report or block")
+                        Button {
+                            options = CollectionSafetyTarget(mediaID: mediaID, name: displayName, kind: .post, ownerID: session.userID)
+                        } label: { Image("more").resizable().scaledToFit().frame(width: 20, height: 20).frame(width: 44, height: 44) }
+                            .buttonStyle(.plain).accessibilityLabel("Report or block").disabled(index == nil)
                     }.padding(.horizontal, 12).modifier(AdaptiveContainerMargins())
                 }.frame(height: 44)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        NavigationLink { ExampleProfileView(index: index, displayName: displayName) } label: {
-                            HStack(spacing: 10) {
-                                ExampleAvatar(index: index)
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(displayName).font(.subheadline.bold()).foregroundStyle(liyaInk)
-                                    Text("Collection").font(.caption).foregroundStyle(.secondary)
+                        if let index, store.blockedExamples.contains(index) {
+                            Text("Unblock this profile to see their posts again.")
+                                .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        } else if let index, ExamplePhotoAllocation.isPost(index, in: session.photos) {
+                            NavigationLink { ExampleProfileView(index: index, displayName: displayName, mediaID: mediaID) } label: {
+                                HStack(spacing: 10) {
+                                    ExampleAvatar(index: index)
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(displayName).font(.subheadline.bold()).foregroundStyle(liyaInk)
+                                        Text("Collection").font(.caption).foregroundStyle(.secondary)
+                                    }
                                 }
-                            }
-                        }.buttonStyle(.plain)
-                        if ExamplePhotoAllocation.isPost(index, in: session.photos) {
-                            CloudPhoto(index: index).frame(maxWidth: .infinity).frame(height: 300).clipShape(RoundedRectangle(cornerRadius: 14))
+                            }.buttonStyle(.plain)
+                            CloudPhoto(index: index).frame(maxWidth: .infinity).frame(height: 300)
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                            PhotoEngagementBar(mediaID: mediaID)
+                        } else if session.catalogLoading {
+                            LiyaLoadingIndicator(size: 28).frame(maxWidth: .infinity)
                         } else {
                             Text("This post is no longer available.").font(.subheadline).foregroundStyle(.secondary)
                         }
-                        HStack(spacing: 22) {
-                            Button { Task { await session.toggleLike(kind: "photo", index: index); await engagement.refresh(session, index: index) } } label: {
-                                HStack(spacing: 6) {
-                                    Image(session.isLiked(kind: "photo", index: index) ? "video-like-on" : "video-like-off")
-                                        .resizable().scaledToFit().frame(width: 23, height: 23).accessibilityHidden(true)
-                                    Text("\(session.isLiked(kind: "photo", index: index) ? "Liked" : "Like") · \(engagement.counts.map { String($0.likeCount) } ?? "—")")
-                                }
-                            }.buttonStyle(.plain).disabled(!session.likesReady || session.likesLoading)
-                            HStack(spacing: 6) {
-                                Image("comment").resizable().scaledToFit().frame(width: 23, height: 23)
-                                Text("Comments · \(engagement.counts.map { String($0.commentCount) } ?? "—")")
-                            }
-                            Spacer(minLength: 0)
-                        }.font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                         if let likesError = session.likesError {
-                            Text(likesError).font(.footnote).foregroundStyle(.red)
-                            Button("Retry likes") { Task { await session.refreshLikes() } }.foregroundStyle(liyaAccent)
-                        }
-                        Text("Comments").font(.headline).foregroundStyle(liyaInk)
-                        if loading { LiyaLoadingIndicator(size: 24) }
-                        if !loading && error == nil && comments.isEmpty { Text("Be the first to share a thought.").font(.subheadline).foregroundStyle(.secondary) }
-                        ForEach(comments) { item in
-                            HStack(alignment: .top, spacing: 10) {
-                                NavigationLink { CommunityPersonView(personID: item.ownerID) } label: {
-                                    SocialAvatar(personID: item.ownerID).frame(width: 36, height: 36).clipShape(Circle())
-                                }.buttonStyle(.plain)
-                                VStack(alignment: .leading, spacing: 4) {
-                                    NavigationLink(item.ownerID == session.userID ? "You" : (social.person(item.ownerID)?.displayName ?? "Liya member")) { CommunityPersonView(personID: item.ownerID) }
-                                        .font(.caption.bold()).foregroundStyle(liyaAccent)
-                                    Text(item.body).font(.subheadline).foregroundStyle(liyaInk).fixedSize(horizontal: false, vertical: true)
-                                    if item.ownerID == session.userID, let status = social.moderationText(kind: "media_comment", id: item.id) {
-                                        Text(status).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                                    }
-                                }.frame(maxWidth: .infinity, alignment: .leading)
-                                if item.ownerID == session.userID {
-                                    Button("Delete") { Task { if await social.deleteVideoComment(session, id: item.id) { await refresh() } else { error = "Couldn't delete this comment. Please try again." } } }
-                                        .font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                                } else {
-                                    NavigationLink("Report") { CommunityReportView(target: item.ownerID, post: nil, mediaComment: item) }
-                                        .font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                                }
-                            }
-                        }
-                        if let error {
-                            Text(error).font(.footnote).foregroundStyle(.red)
-                            Button("Try again") { Task { await refresh() } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
-                        }
-                        HStack(alignment: .bottom, spacing: 10) {
-                            TextField("Write a comment…", text: Binding(get: { comment }, set: { comment = $0; attempt = UUID() }), axis: .vertical)
-                                .lineLimit(1...4).padding(12).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 16)).disabled(sending)
-                            Button(sending ? "Sending…" : "Send") { send() }
-                                .font(.subheadline.bold()).foregroundStyle(.white).padding(.horizontal, 16).frame(minHeight: 44)
-                                .background(liyaGradient.opacity(sending || comment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || comment.count > 2000 ? 0.45 : 1), in: Capsule())
-                                .disabled(sending || comment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || comment.count > 2000)
+                            Text(likesError).font(.footnote).foregroundStyle(.secondary)
+                            Button("Retry likes") { Task { await session.refreshLikes() } }
+                                .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                         }
                     }.frame(maxWidth: 620, alignment: .leading).frame(maxWidth: .infinity)
                         .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 30 + tabBarClearance)
                         .modifier(AdaptiveContainerMargins())
-                }.scrollDismissesKeyboard(.interactively)
+                }
             }
-        }.navigationBarHidden(true)
-            .navigationDestination(isPresented: $showProfileSetup) { CommunityJoinView() }
-            .sheet(isPresented: $options) { ExampleOptionsView(index: index, reportTarget: "post") }
-            .task(id: mediaID) { await refresh() }
-            .onLiyaChange(of: social.syncGeneration) { _ in Task { await refresh() } }
-            .onLiyaChange(of: session.likedMediaIDs) { _ in Task { await engagement.refresh(session, index: index) } }
-    }
-
-    private func refresh() async {
-        guard let mediaID, let owner = session.userID else { comments = []; return }
-        let current = UUID(); loadID = current; loading = true; error = nil
-        do {
-            let rows = try await social.videoComments(session, mediaID: mediaID)
-            guard loadID == current, self.mediaID == mediaID, session.userID == owner else { return }
-            comments = rows; loading = false
-        } catch {
-            guard loadID == current else { return }
-            loading = false; self.error = "Couldn't load comments. Please try again."
         }
-        await engagement.refresh(session, index: index)
-    }
-
-    private func send() {
-        let body = comment.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !sending, !body.isEmpty, body.count <= 2000, let mediaID else { return }
-        guard !social.loading, social.error == nil else { error = "Couldn't load your profile. Please try again."; return }
-        guard social.isJoined(session) else { showProfileSetup = true; return }
-        sending = true; error = nil
-        Task {
-            if await social.sendVideoComment(session, id: attempt, mediaID: mediaID, body: body) {
-                comment = ""; attempt = UUID(); await refresh()
-            } else { error = "Couldn't send your comment. Your text is still here." }
-            sending = false
-        }
+        .navigationBarHidden(true)
+        .sheet(item: $options) { ExampleOptionsView(target: $0) }
     }
 }

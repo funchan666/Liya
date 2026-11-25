@@ -291,7 +291,7 @@ struct MessagesHome: View {
     private func collectionName(_ index: Int) -> String {
         guard session.photos.indices.contains(index) else { return "Liya collection" }
         let id = session.photos[index].id
-        return ExampleVideoCreator.byVideoID.values.first { $0.photoID == id }?.name ?? "Liya collection"
+        return session.curatedDisplayName(for: id)
     }
 
     private func photoActivity(index: Int, title: String, note: String?) -> some View {
@@ -304,7 +304,7 @@ struct MessagesHome: View {
                     Text(collectionName(index)).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk).lineLimit(1)
                 }.buttonStyle(.plain)
                 NavigationLink {
-                    if note == nil { ExamplePhotoDetail(index: index) } else { ExampleCommentsView(index: index) }
+                    photoActivityDestination(index: index, note: note)
                 } label: {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(title).font(.caption.weight(.medium)).foregroundStyle(.secondary)
@@ -313,7 +313,7 @@ struct MessagesHome: View {
                 }.buttonStyle(.plain)
             }.frame(maxWidth: .infinity, alignment: .leading)
             NavigationLink {
-                if note == nil { ExamplePhotoDetail(index: index) } else { ExampleCommentsView(index: index) }
+                photoActivityDestination(index: index, note: note)
             } label: {
                 if ExamplePhotoAllocation.isPost(index, in: session.photos) {
                     CloudPhoto(index: index, contentMode: .fill).frame(width: 52, height: 52).clipped().clipShape(RoundedRectangle(cornerRadius: 10))
@@ -322,12 +322,23 @@ struct MessagesHome: View {
         }.padding(12).background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 16))
     }
 
+    @ViewBuilder private func photoActivityDestination(index: Int, note: String?) -> some View {
+        if note != nil {
+            ExampleCommentsView(index: index)
+        } else if session.photos.indices.contains(index) {
+            ExamplePhotoDetail(mediaID: session.photos[index].id)
+        } else {
+            PageShell(title: "Post") { Text("This post is no longer available.") }
+        }
+    }
+
     private func videoActivity(index: Int, title: String, note: String?) -> some View {
-        let creator = session.videos.indices.contains(index) ? ExampleVideoCreator.byVideoID[session.videos[index].id] : nil
+        let creator = session.videos.indices.contains(index) ? session.curatedVideoCreators[session.videos[index].id] : nil
+        let authorName = creator.map { session.curatedDisplayName(for: $0.photoID) } ?? "Liya collection"
         let avatarIndex = creator.flatMap { creator in session.photos.firstIndex(where: { $0.id == creator.photoID }) }
         return HStack(spacing: 12) {
             if let avatarIndex {
-                NavigationLink { ExampleProfileView(index: avatarIndex, displayName: creator?.name) } label: {
+                NavigationLink { ExampleProfileView(index: avatarIndex, displayName: authorName, mediaID: creator?.photoID) } label: {
                     ExampleAvatar(index: avatarIndex, size: 44)
                 }.buttonStyle(.plain).accessibilityLabel("View profile")
             } else {
@@ -335,8 +346,8 @@ struct MessagesHome: View {
             }
             VStack(alignment: .leading, spacing: 4) {
                 if let avatarIndex {
-                    NavigationLink { ExampleProfileView(index: avatarIndex, displayName: creator?.name) } label: {
-                        Text(creator?.name ?? "Liya collection").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk).lineLimit(1)
+                    NavigationLink { ExampleProfileView(index: avatarIndex, displayName: authorName, mediaID: creator?.photoID) } label: {
+                        Text(authorName).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk).lineLimit(1)
                     }.buttonStyle(.plain)
                 } else {
                     Text("Liya collection").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk).lineLimit(1)

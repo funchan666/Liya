@@ -3,17 +3,23 @@ options:
   bundleIdPrefix: com.liyalumora
   deploymentTarget:
     iOS: "16.0"
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift.git
+    exactVersion: 2.55.5
 targets:
   Liya:
     type: application
     platform: iOS
+    dependencies:
+      - package: Supabase
+        product: Supabase
     sources:
       - path: Liya/Sources
       - path: Liya/Assets.xcassets
-      - path: Liya/LaunchScreen.storyboard
+      - path: Liya/Localizable.xcstrings
         buildPhase: resources
-      - path: Liya/Resources/Examples
-        type: folder
+      - path: Liya/LaunchScreen.storyboard
         buildPhase: resources
     settings:
       base:

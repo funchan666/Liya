@@ -3,13 +3,10 @@ import PhotosUI
 import UserNotifications
 import UIKit
 
-private struct ProfileRelationRow: Decodable {
-    let ownerID: UUID
-    let targetID: UUID
-    enum CodingKeys: String, CodingKey { case ownerID = "owner_id", targetID = "target_id" }
-}
-
 struct ProfileHome: View {
+    @Environment(\.liyaTabActive) private var tabActive
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @EnvironmentObject private var checkout: CoinCheckout
     @Environment(\.liyaTabBarClearance) private var tabBarClearance
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
@@ -18,13 +15,10 @@ struct ProfileHome: View {
     @State private var previewVideo: DraftAttachment?
     @State private var previewCommunityVideo: SocialMediaItem?
     @State private var profileOwner: UUID?
-    @State private var profileLoadID = UUID()
     @State private var ownPosts: [SocialPost] = []
     @State private var postsReady = false
     @State private var postsLoading = false
     @State private var postsUnavailable = false
-    @State private var relationCounts: (followers: Int, following: Int)?
-    @State private var relationsUnavailable = false
     private var posts: [LocalDraft] { store.drafts.filter { $0.publishedLocally == true } }
     private var videos: [DraftAttachment] { posts.flatMap { $0.attachments ?? [] }.filter { $0.isVideo } }
     private var communityPosts: [SocialPost] { profileOwner == session.userID ? ownPosts : [] }
@@ -45,11 +39,9 @@ struct ProfileHome: View {
                 VStack(alignment: .leading, spacing: 0) {
                     profileHero(width: geometry.size.width, height: heroHeight, topInset: geometry.safeAreaInsets.top)
                     VStack(alignment: .leading, spacing: 12) {
-                    Text(session.profile.flatMap { $0.displayName.isEmpty ? nil : $0.displayName } ?? "Your profile").font(.title2.bold()).foregroundStyle(liyaInk)
+                    Text(session.profile.flatMap { $0.displayName.isEmpty ? nil : $0.displayName } ?? "Your profile")
+                        .font(.title2.bold()).foregroundStyle(checkout.isActive(.profileGlow) ? liyaAccent : liyaInk)
                     profileRelations
-                    if relationsUnavailable {
-                        Text("Connections are unavailable right now.").font(.footnote).foregroundStyle(.secondary)
-                    }
                     Text(session.profile.flatMap { $0.signature.isEmpty ? nil : $0.signature } ?? "Add a little about yourself.")
                         .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     if let tags = session.profile?.tags, !tags.isEmpty { Text(tags.map { "# " + $0 }.joined(separator: "   ")).font(.caption).foregroundStyle(liyaAccent) }
@@ -95,32 +87,53 @@ struct ProfileHome: View {
             }.refreshable { await refreshProfileContent() }.ignoresSafeArea(.container, edges: .top)
             }
         }.navigationBarHidden(true)
-            .task(id: session.userID) { await refreshProfileContent() }
-            .onLiyaChange(of: social.syncGeneration) { _ in Task { await refreshProfileContent() } }
-            .onLiyaChange(of: social.loading) { loading in
-                if !loading { Task { await refreshProfileContent() } }
+            .task(id: tabActive ? session.userID : nil) {
+                guard tabActive, session.userID != nil else { return }
+                await refreshProfileContent()
             }
             .sheet(item: $previewVideo) { item in DraftVideoPreview(item: item) }
             .sheet(item: $previewCommunityVideo) { item in SocialMediaPreview(item: item) }
     }
 
     private var profileRelations: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 10) { followersLink; followingLink }.fixedSize(horizontal: true, vertical: false)
-            VStack(alignment: .leading, spacing: 6) { followersLink; followingLink }
-        }.frame(maxWidth: .infinity, alignment: .leading).buttonStyle(.plain)
+        Group {
+            if typeSize.isAccessibilitySize {
+                VStack(spacing: 0) { followersLink; Divider(); followingLink }
+            } else {
+                HStack(spacing: 0) {
+                    followersLink
+                    Divider().frame(height: 32)
+                    followingLink
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .padding(4)
+        .background(.white.opacity(0.82), in: RoundedRectangle(cornerRadius: 18))
+    }
+
+    private var memberCountsReady: Bool {
+        session.userID != nil && social.connectionsOwner == session.userID && social.connectionsReady
     }
 
     private var followersLink: some View {
         NavigationLink { CommunityRelationList(title: "Followers", relation: "followers") } label: {
-            ProfileHomeRelationLabel(title: "Followers", count: profileOwner == session.userID ? relationCounts.map { String($0.followers) } : nil, unavailable: relationsUnavailable)
+            ProfileHomeRelationLabel(title: "Followers", icon: "profile-home-people",
+                                    count: memberCountsReady ? social.followers.count : nil,
+                                    loading: social.connectionsLoading)
         }
     }
 
     private var followingLink: some View {
-        NavigationLink { CommunityRelationList(title: "Following", relation: "following") } label: {
-            ProfileHomeRelationLabel(title: "Following", count: profileOwner == session.userID ? relationCounts.map { String($0.following) } : nil, unavailable: relationsUnavailable)
+        NavigationLink { CommunityRelationList(title: "profile.following", relation: "following") } label: {
+            ProfileHomeRelationLabel(title: "profile.following", icon: "profile-action-follow",
+                                    count: followingCount, loading: social.connectionsLoading || session.catalogLoading || session.curatedFollowsLoading)
         }
+    }
+
+    private var followingCount: Int? {
+        guard memberCountsReady, session.curatedFollowsReady else { return nil }
+        return social.follows.count + session.curatedFollowing(in: store).count
     }
 
     private func profileEmpty(title: String, detail: String) -> some View {
@@ -148,16 +161,21 @@ struct ProfileHome: View {
     private func refreshProfileContent() async {
         profileOwner = session.userID
         ownPosts = []; postsReady = true; postsLoading = false; postsUnavailable = false
-        relationCounts = nil; relationsUnavailable = true
+        async let members: Void = social.refreshConnections(session)
+        if session.catalogError != nil { await session.refreshCatalog() }
+        await session.refreshCuratedFollows(store: store)
+        await members
     }
 
     private func profileHero(width: CGFloat, height: CGFloat, topInset: CGFloat) -> some View {
         ZStack {
             Group {
-                if let url = session.profileAvatarURL, let image = UIImage(contentsOfFile: url.path) {
-                    Image(uiImage: image).resizable().scaledToFill()
+                if let url = session.profileAvatarURL {
+                    AsyncImage(url: url) { image in image.resizable().scaledToFill() } placeholder: { Color.clear }
+                } else if let index = session.photos.firstIndex(where: { $0.id == "example-photo-012" }) {
+                    CloudPhoto(index: index, contentMode: .fill)
                 } else {
-                    Image("profile-default-photo").resizable().scaledToFill()
+                    Color.clear
                 }
             }.frame(width: width, height: height).clipped()
                 .mask {
@@ -178,12 +196,18 @@ struct ProfileHome: View {
                         NavigationLink { WalletView() } label: {
                             HStack(spacing: 6) {
                                 Image("wallet-coin").resizable().scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
-                                Text(session.coinBalance.map { $0.formatted() } ?? "—")
+                                Text(checkout.balance.map { $0.formatted() } ?? "—")
                                     .font(.subheadline.weight(.bold)).monospacedDigit().foregroundStyle(.white).lineLimit(1)
                             }.padding(.leading, 7).padding(.trailing, 14).frame(minHeight: 46)
-                                .background(Color.black.opacity(0.48), in: Capsule())
+                                .background {
+                                    if checkout.isActive(.profileGlow) {
+                                        Capsule().fill(liyaGradient)
+                                    } else {
+                                        Capsule().fill(Color.black.opacity(0.48))
+                                    }
+                                }
                                 .overlay(Capsule().stroke(.white.opacity(0.35), lineWidth: 1))
-                        }.buttonStyle(.plain).accessibilityLabel("Wallet, \(session.coinBalance.map { $0.formatted() } ?? "balance unavailable") coins")
+                        }.buttonStyle(.plain).accessibilityLabel("Wallet, \(checkout.balance.map { $0.formatted() } ?? "balance unavailable") coins")
                     }.padding(.horizontal, 20).modifier(AdaptiveContainerMargins())
                 }.frame(height: 48).padding(.top, topInset + 4)
             }
@@ -191,20 +215,34 @@ struct ProfileHome: View {
 }
 
 private struct ProfileHomeRelationLabel: View {
-    let title: String
-    let count: String?
-    let unavailable: Bool
+    @Environment(\.locale) private var locale
+    let title: LocalizedStringKey
+    let icon: String
+    let count: Int?
+    let loading: Bool
+
     var body: some View {
-        HStack(spacing: 6) {
-            Image("profile-home-people").resizable().scaledToFit().frame(width: 25, height: 25).accessibilityHidden(true)
-            if let count { Text(count).font(.caption.weight(.bold)).monospacedDigit().foregroundStyle(liyaInk) }
-            else if unavailable { Text("Unavailable").font(.caption2.weight(.medium)).foregroundStyle(.secondary) }
-            else { LiyaLoadingIndicator(size: 16) }
-            Text(title).font(.caption.weight(.medium)).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+        HStack(spacing: 9) {
+            Image(icon).resizable().scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                if let count {
+                    Text(count, format: .number)
+                        .font(.system(.title3, design: .rounded).weight(.bold)).monospacedDigit()
+                        .foregroundStyle(liyaInk)
+                } else if loading {
+                    LiyaLoadingIndicator(size: 16).accessibilityHidden(true)
+                }
+                Text(title).font(.subheadline.weight(.medium))
+                    .foregroundStyle(count == nil ? liyaInk : liyaInk.opacity(0.72))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .padding(.horizontal, 10).frame(minHeight: 44)
-        .background(.white.opacity(0.74), in: Capsule())
-        .accessibilityElement(children: .combine)
+        .padding(.horizontal, 10).padding(.vertical, 6)
+        .frame(maxWidth: .infinity, minHeight: 50, alignment: .leading)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(title))
+        .accessibilityValue(Text(verbatim: count.map { $0.formatted(.number.locale(locale)) } ?? ""))
     }
 }
 
@@ -379,9 +417,11 @@ struct EditProfileView: View {
 
     @ViewBuilder private var profilePhoto: some View {
         if let avatar { MediaThumbnail(item: avatar) }
-        else if let url = session.profileAvatarURL, let image = UIImage(contentsOfFile: url.path) {
-            Image(uiImage: image).resizable().scaledToFill()
-        } else { Image("profile-default-photo").resizable().scaledToFill() }
+        else if let url = session.profileAvatarURL {
+            AsyncImage(url: url) { image in image.resizable().scaledToFill() } placeholder: { Color.clear }
+        } else if let index = session.photos.firstIndex(where: { $0.id == "example-photo-012" }) {
+            CloudPhoto(index: index, contentMode: .fill)
+        } else { Color.clear }
     }
 
     private func addTag() {
@@ -414,11 +454,8 @@ struct SettingsView: View {
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
-    @EnvironmentObject private var checkout: CoinCheckout
     @EnvironmentObject private var calls: LiyaCalls
     @State private var confirmSignOut = false
-    @State private var signingOut = false
-    @State private var signOutError: String?
     var body: some View {
         PageShell(title: "Settings") {
             VStack(alignment: .leading, spacing: 22) {
@@ -441,43 +478,27 @@ struct SettingsView: View {
                     SettingsDivider()
                     NavigationLink { SettingsSupportView() } label: { SettingsRow("Help & legal", image: "setting-help") }
                 }
-                if let error = signOutError ?? session.signOutError { Text(LocalizedStringKey(error)).font(.footnote).foregroundStyle(.red) }
+                if let error = session.signOutError { Text(LocalizedStringKey(error)).font(.footnote).foregroundStyle(.red) }
                 Button { confirmSignOut = true } label: {
                     HStack(spacing: 8) {
-                        if signingOut { LiyaLoadingIndicator(size: 24).accessibilityHidden(true) }
-                        Text(LocalizedStringKey(signingOut ? "Signing out…" : "Sign out")).font(.subheadline.weight(.semibold))
+                        if session.isSigningOut { LiyaLoadingIndicator(size: 24).accessibilityHidden(true) }
+                        Text(LocalizedStringKey(session.isSigningOut ? "Signing out…" : "Sign out")).font(.subheadline.weight(.semibold))
                     }.foregroundStyle(liyaAccent).frame(maxWidth: .infinity, minHeight: 50)
                         .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 16))
-                }.disabled(signingOut || session.isDeletingAccount)
+                }.disabled(session.isSigningOut || session.isDeletingAccount)
                 NavigationLink { AccountView() } label: {
                     Text("Delete account").font(.subheadline.weight(.semibold)).foregroundStyle(.red.opacity(0.85))
                         .frame(maxWidth: .infinity, minHeight: 50).background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 16))
-                }.disabled(signingOut || session.isDeletingAccount)
+                }.disabled(session.isSigningOut || session.isDeletingAccount)
             }.buttonStyle(.plain).padding(.top, 16).modifier(AdaptiveContainerMargins())
         }.sheet(isPresented: $confirmSignOut) {
             LocalConfirmation(title: "Sign out?", message: "Your local space will be available when you return on this device.", action: "Sign out") {
-                confirmSignOut = false; signingOut = true; signOutError = nil
-                Task { await signOut() }
+                confirmSignOut = false
+                Task { _ = await session.signOutForAccountChange(store: store, social: social, calls: calls) }
             } cancel: { confirmSignOut = false }.presentationDetents([.medium, .large])
         }
     }
 
-    private func signOut() async {
-        defer { signingOut = false }
-        guard let owner = session.userID else { return }
-        guard calls.call == nil else { signOutError = "End your call before signing out."; return }
-        guard !(await checkout.hasUnfinishedPurchase(for: owner)) else {
-            signOutError = "A purchase is still pending. Resolve it before signing out."; return
-        }
-        guard await LiyaVoIP.shared.unregisterForSignOut() else {
-            signOutError = "Couldn't disconnect call notifications. Please try again."; return
-        }
-        if await session.signOut() {
-            await calls.reset(); social.clearAccount(); store.inPreview = false; store.archiveAccountMaterial(owner)
-        } else {
-            await LiyaVoIP.shared.updateRegistration()
-        }
-    }
 }
 
 private struct LanguageSettingsView: View {
@@ -578,7 +599,7 @@ private struct SettingsYourSpaceView: View {
                 SettingsDivider()
                 NavigationLink { DeviceProfileView() } label: { SettingsRow("Previous profile", image: "nav-soft-profile") }
                 SettingsDivider()
-                NavigationLink { ExampleListView(title: "Saved examples", blocked: false) } label: { SettingsRow("Saved collection", image: "video-like-on") }
+                NavigationLink { CommunityRelationList(title: "Followed creators", relation: "creators") } label: { SettingsRow("Followed creators", image: "profile-action-follow") }
             }.buttonStyle(.plain).padding(.top, 16).modifier(AdaptiveContainerMargins())
         }
     }
@@ -649,11 +670,10 @@ struct AccountView: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var social: SocialStore
-    @EnvironmentObject private var checkout: CoinCheckout
     @EnvironmentObject private var calls: LiyaCalls
     @State private var confirming = false
     @State private var checking = false
-    @State private var purchaseError: String?
+    @State private var accountActionError: String?
     var body: some View {
         PageShell(title: "Account & Security") {
             VStack(alignment: .leading, spacing: 20) {
@@ -677,7 +697,7 @@ struct AccountView: View {
                         HStack(spacing: 12) {
                             Image("setting-privacy").resizable().scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(LocalizedStringKey(session.isDeletingAccount ? "Deleting account…" : (checking ? "Checking purchases…" : "Delete account")))
+                                Text(LocalizedStringKey(session.isDeletingAccount ? "Deleting account…" : (checking ? "Preparing…" : "Delete account")))
                                     .font(.subheadline.weight(.semibold)).foregroundStyle(.red.opacity(0.85))
                                 Text("Online account deletion is unavailable right now.")
                                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -687,34 +707,21 @@ struct AccountView: View {
                             .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 18))
                     }.buttonStyle(.plain).disabled(session.isDeletingAccount || checking || session.userID == nil)
                 }
-                if let error = session.deletionError ?? purchaseError { Text(LocalizedStringKey(error)).font(.footnote).foregroundStyle(.red) }
+                if let error = session.deletionError ?? accountActionError { Text(LocalizedStringKey(error)).font(.footnote).foregroundStyle(.red) }
             }.padding(.top, 16).modifier(AdaptiveContainerMargins())
         }.sheet(isPresented: $confirming) {
             LocalConfirmation(title: "Delete this account?", message: "Online account deletion is unavailable. Your earlier online account will not be deleted.", action: "Delete account") {
-                confirming = false; checking = true; purchaseError = nil
+                confirming = false; checking = true; accountActionError = nil
                 Task {
                     guard let owner = session.userID else { checking = false; return }
                     if calls.call != nil {
-                        purchaseError = "End your call before deleting your account."
-                    } else if await checkout.hasUnfinishedPurchase(for: owner) {
-                        purchaseError = "An Apple purchase is still pending or cannot be matched. Resolve it before deleting this account."
+                        accountActionError = "End your call before deleting your account."
                     } else if await session.deleteAccount() {
                         await calls.reset(); social.clearAccount(); store.inPreview = false; store.archiveAccountMaterial(owner)
                     }
                     checking = false
                 }
             } cancel: { confirming = false }.presentationDetents([.medium])
-        }
-    }
-}
-
-struct FollowersView: View {
-    var body: some View {
-        PageShell(title: "Followers") {
-            VStack(spacing: 14) {
-                OfflineNote(text: "Following between real accounts is not connected yet. No followers are simulated.")
-                EmptyState(title: "Followers unavailable", detail: "Your followers will appear when the service is connected.")
-            }.padding(.top, 12)
         }
     }
 }
@@ -731,7 +738,7 @@ struct PrivacyView: View {
                         SettingsRow("Blocked members", image: "setting-privacy")
                     }
                     SettingsDivider()
-                    NavigationLink { ExampleListView(title: "Blocked examples", blocked: true) } label: {
+                    NavigationLink { HiddenCollectionProfilesView() } label: {
                         SettingsRow("Hidden collection profiles", image: "nav-soft-profile")
                     }
                     SettingsDivider()
@@ -799,7 +806,9 @@ private struct SubmittedReportsView: View {
             reports = result; loading = false
         } catch {
             guard session.userID == owner, requestID == request, !Task.isCancelled else { return }
-            reports = []; loading = false; error = "Couldn't load your reports. Please try again."
+            reports = []
+            loading = false
+            self.error = "Couldn't load your reports. Please try again."
         }
     }
 
@@ -832,25 +841,32 @@ private struct SubmittedReportsView: View {
     }
 }
 
-struct ExampleListView: View {
+private struct HiddenCollectionProfilesView: View {
     @EnvironmentObject private var store: LocalStore
-    let title: String
-    let blocked: Bool
-    private var indexes: [Int] { (blocked ? store.blockedExamples : store.followedExamples).sorted() }
+    @EnvironmentObject private var session: LiyaSession
+    @Environment(\.locale) private var locale
+
     var body: some View {
-        PageShell(title: title) {
+        PageShell(title: "Hidden collection profiles") {
             VStack(spacing: 12) {
-                OfflineNote(text: "Example relationships are not synced to your account.")
-                if indexes.isEmpty { EmptyState(title: "No examples", detail: "There is nothing to show here yet.") }
-                ForEach(indexes, id: \.self) { index in
-                    HStack {
-                        NavigationLink { ExampleProfileView(index: index) } label: {
-                            HStack { ExampleAvatar(index: index); Text("Example profile \(index + 1)").foregroundStyle(liyaInk) }
+                if store.blockedExamples.isEmpty {
+                    EmptyState(title: String(localized: "No hidden profiles", locale: locale),
+                               detail: String(localized: "Profiles you hide will appear here.", locale: locale))
+                }
+                ForEach(store.blockedExamples.sorted(), id: \.self) { index in
+                    let photoID = session.photos.indices.contains(index) ? session.photos[index].id : nil
+                    let name = photoID.map { session.curatedDisplayName(for: $0) }
+                        ?? String(localized: "Liya collection", locale: locale)
+                    HStack(spacing: 12) {
+                        NavigationLink { ExampleProfileView(index: index, displayName: name, mediaID: photoID) } label: {
+                            HStack { ExampleAvatar(index: index); Text(verbatim: name).foregroundStyle(liyaInk) }
                         }.buttonStyle(.plain)
                         Spacer()
-                        Button(blocked ? "Unblock" : "Unfollow") {
-                            if blocked { store.setBlocked(index, blocked: false) } else { store.toggleFollow(index) }
-                        }.font(.footnote.bold()).foregroundStyle(liyaAccent)
+                        Button { store.setBlocked(index, blocked: false) } label: {
+                            Text("Unblock").font(.footnote.bold()).foregroundStyle(liyaAccent)
+                                .padding(.horizontal, 12).frame(minHeight: 44)
+                                .background(liyaAccent.opacity(0.08), in: Capsule())
+                        }.buttonStyle(.plain)
                     }.padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                 }
             }.padding(.top, 12)
