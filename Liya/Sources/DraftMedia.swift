@@ -111,7 +111,7 @@ struct CameraPhotoButton: View {
         case .denied:
             showingSettings = true
         case .restricted:
-            onError(String(localized: "Camera use is restricted on this device. You can choose a photo from your library.", locale: locale))
+            onError(String(localized: "Camera use is restricted. You can choose a photo from your library.", locale: locale))
         @unknown default:
             onError(String(localized: "No camera is available. You can choose a photo from your library.", locale: locale))
         }

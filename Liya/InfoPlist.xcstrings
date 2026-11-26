@@ -31,31 +31,31 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Take photos for your profile, posts, or messages, and see yourself while waiting for a video call."
+            "value" : "You can take photos for your profile, posts, and messages or check your framing while waiting for a video call."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Haz fotos para tu perfil, publicaciones o mensajes y mira tu imagen mientras esperas una videollamada."
+            "value" : "Puedes hacer fotos para tu perfil, tus publicaciones o tus mensajes y comprobar el encuadre mientras esperas una videollamada."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prenez des photos pour votre profil, vos publications ou vos messages et voyez votre image en attendant un appel vidéo."
+            "value" : "Vous pouvez prendre des photos pour votre profil, vos publications ou vos messages et vérifier votre cadrage en attendant un appel vidéo."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "プロフィール、投稿、メッセージ用の写真を撮影したり、ビデオ通話の待機中に自分の映像を確認したりできます。"
+            "value" : "プロフィールや投稿、メッセージに使う写真を撮ったり、ビデオ通話の待機中に自分の映り方を確認したりできます。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "用于拍摄头像、动态或私信中的照片，也让你在等待视频通话时看到自己的画面。"
+            "value" : "你可以拍头像、为动态或私信拍照，也可以在等待视频通话时预览自己的画面。"
           }
         }
       }
@@ -66,31 +66,31 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The microphone shows your sound level while you wait for a voice or video call. The audio stays on your device."
+            "value" : "The sound meter lets you check your microphone while you wait for a voice or video call."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El micrófono muestra el nivel de sonido mientras esperas una llamada de voz o vídeo. El audio permanece en tu dispositivo."
+            "value" : "Mientras esperas una llamada de voz o vídeo, el indicador de volumen te permite comprobar si el micrófono capta tu voz."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le micro indique le niveau sonore pendant l’attente d’un appel audio ou vidéo. Le son reste sur votre appareil."
+            "value" : "En attendant un appel audio ou vidéo, vous pouvez vérifier que le micro capte votre voix grâce à l’indicateur de volume."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "音声通話やビデオ通話の待機中に、マイクが拾う音の大きさを表示します。音声は端末内でのみ処理されます。"
+            "value" : "音声通話やビデオ通話の待機中に、音量メーターでマイクが声を拾っているか確認できます。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "等待语音或视频通话时，麦克风会显示你当前的音量。声音仅在你的设备上处理。"
+            "value" : "等待语音或视频通话时，你可以通过音量条确认麦克风能收到你的声音。"
           }
         }
       }

@@ -49,6 +49,10 @@ struct WalletView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 packageGrid
+                Button("Check purchases") { checkout.recover(showIssues: true) }
+                    .font(LiyaType.text(.footnote, weight: .semibold))
+                    .foregroundStyle(liyaAccent).frame(minHeight: 44)
+                    .disabled(checkout.busy)
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Personalize Liya").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
                     VStack(spacing: 8) {
@@ -98,7 +102,7 @@ struct WalletView: View {
                     .font(LiyaType.text(.subheadline, weight: .semibold))
                     .foregroundStyle(liyaInk.opacity(0.72))
                 if let balance = checkout.balance {
-                    Text("\(balance.formatted()) coins")
+                    Text("\(balance.formatted(.number.locale(locale))) coins")
                         .font(LiyaType.text(.title, weight: .bold)).monospacedDigit()
                         .fixedSize(horizontal: false, vertical: true)
                 } else if checkout.walletError == nil {
@@ -185,9 +189,10 @@ private struct AppleCoinPackSheet: View {
     @Environment(\.locale) private var locale
     @EnvironmentObject private var checkout: CoinCheckout
     let pack: CoinPackage
+    @State private var submitted = false
 
     var body: some View {
-        SafetyPanel(title: "Your coin pack", subject: nil, back: nil, close: { dismiss() }, busy: checkout.busy) {
+        SafetyPanel(title: "Your coin pack", subject: nil, back: nil, close: { dismiss() }) {
             Image("wallet-coin").resizable().scaledToFit()
         } content: {
             VStack(alignment: .leading, spacing: 14) {
@@ -199,6 +204,16 @@ private struct AppleCoinPackSheet: View {
             .padding(.vertical, 6)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .onLiyaChange(of: checkout.busy) { busy in
+            guard submitted, !busy else { return }
+            submitted = false
+            if checkout.walletError == nil && !checkout.isAwaitingDelivery(pack) && !checkout.isAwaitingApproval(pack) {
+                dismiss()
+            }
+        }
+        .onLiyaChange(of: checkout.isAwaitingDelivery(pack)) { pending in
+            if !pending && checkout.walletError == nil { dismiss() }
+        }
         .onDisappear { checkout.cancelProductRequest(for: pack) }
     }
 
@@ -206,6 +221,9 @@ private struct AppleCoinPackSheet: View {
         if let issue = checkout.walletError {
             note(LocalizedStringKey(issue))
             actionButton("Refresh balance") { checkout.recover(showIssues: true) }
+        } else if checkout.isAwaitingDelivery(pack) {
+            note("Your purchase is pending delivery.")
+            actionButton("Check purchases") { checkout.recover(showIssues: true) }
         } else if checkout.isAwaitingApproval(pack) {
             note("Purchase pending")
         } else if !SKPaymentQueue.canMakePayments() {
@@ -225,6 +243,7 @@ private struct AppleCoinPackSheet: View {
             if let message = checkout.message { note(LocalizedStringKey(message)) }
             actionButton(checkout.busy ? "Processing…" : "Buy with Apple",
                          disabled: !checkout.canPurchase(pack)) {
+                submitted = true
                 checkout.purchase(pack)
             }
         } else {

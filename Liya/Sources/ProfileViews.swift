@@ -195,8 +195,15 @@ struct ProfileHome: View {
                         NavigationLink { WalletView() } label: {
                             HStack(spacing: 6) {
                                 Image("wallet-coin").resizable().scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
-                                Text(checkout.balance.map { $0.formatted() } ?? "—")
-                                    .font(LiyaType.text(.subheadline, weight: .bold)).monospacedDigit().foregroundStyle(.white).lineLimit(1)
+                                Group {
+                                    if let balance = checkout.balance {
+                                        Text(balance, format: .number)
+                                    } else {
+                                        Text("My wallet")
+                                    }
+                                }
+                                .font(LiyaType.text(.subheadline, weight: .bold))
+                                .monospacedDigit().foregroundStyle(.white).lineLimit(1)
                             }.padding(.leading, 7).padding(.trailing, 14).frame(minHeight: 46)
                                 .background {
                                     if checkout.isActive(.profileGlow) {
@@ -206,7 +213,9 @@ struct ProfileHome: View {
                                     }
                                 }
                                 .overlay(Capsule().stroke(.white.opacity(0.35), lineWidth: 1))
-                        }.buttonStyle(.plain).accessibilityLabel("Wallet, \(checkout.balance.map { $0.formatted() } ?? "balance unavailable") coins")
+                        }.buttonStyle(.plain)
+                        .accessibilityLabel(Text("My wallet"))
+                        .accessibilityValue(checkout.balance.map { Text("\($0.formatted()) coins") } ?? Text(verbatim: ""))
                     }.padding(.horizontal, 20).modifier(AdaptiveContainerMargins())
                 }.frame(height: 48).padding(.top, topInset + 4)
             }

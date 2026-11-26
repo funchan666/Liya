@@ -38,8 +38,8 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Liya/Liya.entitlements
         INFOPLIST_FILE: Liya/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Liya
-        INFOPLIST_KEY_NSCameraUsageDescription: Take photos for your profile, posts, or messages, and see yourself while waiting for a video call.
-        INFOPLIST_KEY_NSMicrophoneUsageDescription: The microphone shows your sound level while you wait for a voice or video call. The audio stays on your device.
+        INFOPLIST_KEY_NSCameraUsageDescription: You can take photos for your profile, posts, and messages or check your framing while waiting for a video call.
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: The sound meter lets you check your microphone while you wait for a voice or video call.
         INFOPLIST_KEY_UILaunchScreen_Generation: NO
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         TARGETED_DEVICE_FAMILY: "1,2"

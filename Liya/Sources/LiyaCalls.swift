@@ -26,7 +26,7 @@ private enum WaitingRoomInput {
     var media: AVMediaType { self == .frontCamera ? .video : .audio }
 
     var unavailableReason: String {
-        self == .frontCamera ? "The front camera is unavailable on this device." : "The microphone is unavailable on this device."
+        self == .frontCamera ? "The front camera is unavailable." : "The microphone is unavailable."
     }
 
     var previousDenialReason: String {

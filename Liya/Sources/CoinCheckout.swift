@@ -3,7 +3,7 @@ import Combine
 import StoreKit
 
 @MainActor
-final class CoinCheckout: ObservableObject {
+final class CoinCheckout: NSObject, ObservableObject {
     struct WelcomeGift: Identifiable {
         let id = UUID()
         static let coins = 600
@@ -29,226 +29,300 @@ final class CoinCheckout: ObservableObject {
         }
     }
 
-    private struct CoinLedger: Codable {
-        var token = UUID()
-        var transactions: [String: [String: Int64]] = [:]
-        var welcomePending = true
-        var appearances: [String: [String: Bool]] = [:]
-
-        func credits(in environment: String) -> Int64 {
-            guard let transactions = transactions[environment] else { return Int64(WelcomeGift.coins) }
-            return transactions.values.reduce(Int64(WelcomeGift.coins), +)
-        }
-
-        func balance(in environment: String) -> Int64 {
-            let purchased = appearances[environment]?.keys.compactMap(Appearance.init(rawValue:)) ?? []
-            let spent = purchased.reduce(Int64(0)) { $0 + $1.cost }
-            return max(0, credits(in: environment) - spent)
-        }
-    }
-
-    @Published private(set) var busy = false
+    @Published private(set) var loadingProductID: String?
+    @Published private(set) var productLoadFailed = false
     @Published private(set) var message: String?
     @Published private(set) var walletError: String?
-    @Published private(set) var products: [String: Product] = [:]
-    @Published private(set) var loadingProducts = false
-    @Published private(set) var productLoadFailed = false
-    @Published var welcomeGift: WelcomeGift?
-    @Published private var wallet: CoinLedger?
-    @Published private var environment: String?
+    @Published private(set) var welcomeGift: WelcomeGift?
+    @Published private var wallet: CoinWalletLedger?
+    @Published private var store = CoinWalletLedger.currentStore
+    @Published private var products: [String: SKProduct] = [:]
+    @Published private var submittedPack: String?
+    @Published private var purchasing: Set<String> = []
+    @Published private var deferred: Set<String> = []
+    @Published private var undelivered: Set<String> = []
 
-    private var updatesTask: Task<Void, Never>?
-    private var recovering = false
-    private var resolvingEnvironment = false
-    private var finishing = Set<String>()
+    private let queue = SKPaymentQueue.default()
+    private var productRequest: SKProductsRequest?
+    private var receiptRequest: SKReceiptRefreshRequest?
+    private var walletNeedsReceipt = false
+    private var selectedPack: CoinPackage?
+    private var finishing: Set<ObjectIdentifier> = []
 
-    var balance: Int64? {
-        guard let environment else { return nil }
-        return wallet?.balance(in: environment)
-    }
-    var canPurchase: Bool { wallet != nil && walletError == nil && !busy && AppStore.canMakePayments }
+    var balance: Int64? { wallet?.balance(in: store) }
+    var busy: Bool { submittedPack != nil || !purchasing.isEmpty }
 
-    init() {
+    override init() {
+        super.init()
         loadWallet()
-        updatesTask = Task { [weak self] in
-            for await result in Transaction.updates {
-                guard let self else { return }
-                await self.deliver(result)
-            }
-        }
+        queue.delegate = self
+        queue.add(self)
     }
 
-    deinit { updatesTask?.cancel() }
+    deinit {
+        queue.remove(self)
+        productRequest?.cancel()
+        receiptRequest?.cancel()
+    }
 
-    func loadProducts() async {
-        guard !loadingProducts else { return }
-        loadingProducts = true
+    func loadProduct(_ pack: CoinPackage) {
+        selectedPack = pack
+        productRequest?.cancel()
+        products[pack.id] = nil
         productLoadFailed = false
-        defer { loadingProducts = false }
-        do {
-            let available = try await Product.products(for: CoinPackage.all.map(\.id))
-            guard !Task.isCancelled else { return }
-            products = Dictionary(uniqueKeysWithValues: available.filter { $0.type == .consumable }.map { ($0.id, $0) })
-        } catch {
-            guard !Task.isCancelled else { return }
-            products = [:]
-            productLoadFailed = true
+        loadingProductID = pack.id
+        let request = SKProductsRequest(productIdentifiers: [pack.id])
+        request.delegate = self
+        productRequest = request
+        request.start()
+    }
+
+    func cancelProductRequest(for pack: CoinPackage) {
+        guard selectedPack?.id == pack.id else { return }
+        selectedPack = nil
+        productRequest?.cancel()
+        productRequest = nil
+        loadingProductID = nil
+        productLoadFailed = false
+    }
+
+    func displayPrice(for pack: CoinPackage) -> String? {
+        guard let product = products[pack.id] else { return nil }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = product.priceLocale
+        return formatter.string(from: product.price)
+    }
+
+    func isAwaitingApproval(_ pack: CoinPackage) -> Bool { deferred.contains(pack.id) }
+
+    func isAwaitingDelivery(_ pack: CoinPackage) -> Bool { undelivered.contains(pack.id) }
+
+    func canPurchase(_ pack: CoinPackage) -> Bool {
+        wallet != nil && walletError == nil && !busy && SKPaymentQueue.canMakePayments()
+            && selectedPack?.id == pack.id && loadingProductID == nil && !productLoadFailed
+            && products[pack.id] != nil && !deferred.contains(pack.id) && !undelivered.contains(pack.id)
+    }
+
+    func purchase(_ pack: CoinPackage) {
+        guard canPurchase(pack), let wallet, let product = products[pack.id] else { return }
+        let payment = SKMutablePayment(product: product)
+        payment.applicationUsername = wallet.token.uuidString
+        submittedPack = pack.id
+        message = nil
+        queue.add(payment)
+    }
+
+    func recover(showIssues: Bool = false) {
+        if showIssues { clearMessage() }
+        store = CoinWalletLedger.currentStore
+        if wallet == nil || walletError != nil { loadWallet() }
+        let outstanding = queue.transactions
+        handle(outstanding)
+        if showIssues && receiptRequest == nil && (walletNeedsReceipt || (CoinWalletLedger.transactionStore == nil && !undelivered.isEmpty)) {
+            let request = SKReceiptRefreshRequest(receiptProperties: nil)
+            receiptRequest = request
+            request.delegate = self
+            request.start()
+        }
+        if showIssues, walletError == nil, message == nil, !busy {
+            if !undelivered.isEmpty {
+                message = "Your purchase is pending delivery."
+            } else if !deferred.isEmpty {
+                message = "Awaiting approval."
+            } else {
+                message = "Your balance is up to date."
+            }
         }
     }
 
     func clearMessage() {
-        guard !busy else { return }
-        message = nil
+        if !busy { message = nil }
     }
 
-    func purchase(_ pack: CoinPackage) async {
-        guard canPurchase, let wallet, let product = products[pack.id] else { return }
-        busy = true
-        message = nil
-        defer { busy = false }
-        do {
-            switch try await product.purchase(options: [.appAccountToken(wallet.token)]) {
-            case .success(let result):
-                if case .verified(let purchase) = result, purchase.productID == pack.id,
-                   purchase.appBundleID == Bundle.main.bundleIdentifier, purchase.appAccountToken == wallet.token {
-                    environment = purchase.environment.rawValue
-                }
-                await deliver(result, showUnmatched: true)
-            case .pending:
-                message = "Your purchase is awaiting Apple approval."
-            case .userCancelled:
-                break
-            @unknown default:
-                message = "The purchase status is unavailable. Check your wallet later."
-            }
-        } catch {
-            message = "The purchase could not be started. Please try again."
-        }
-    }
+    func owns(_ appearance: Appearance) -> Bool { wallet?.owns(appearance, in: store) == true }
 
-    func recover(showIssues: Bool = false) async {
-        guard !recovering else { return }
-        recovering = true
-        defer { recovering = false }
-        if showIssues { clearMessage(); await identifyStore() }
-        if wallet == nil || walletError != nil { loadWallet() }
-        guard wallet != nil else { return }
-        for await result in Transaction.unfinished {
-            await deliver(result, showUnmatched: showIssues)
-        }
-    }
-
-    func identifyStore() async {
-        guard !resolvingEnvironment else { return }
-        resolvingEnvironment = true
-        defer { resolvingEnvironment = false }
-        if let result = try? await AppTransaction.shared, case .verified(let app) = result,
-           app.bundleID == Bundle.main.bundleIdentifier {
-            environment = app.environment.rawValue
-        }
-    }
-
-    func owns(_ appearance: Appearance) -> Bool {
-        guard let environment else { return false }
-        return wallet?.appearances[environment]?[appearance.rawValue] != nil
-    }
-
-    func isActive(_ appearance: Appearance) -> Bool {
-        guard let environment else { return false }
-        return wallet?.appearances[environment]?[appearance.rawValue] == true
-    }
+    func isActive(_ appearance: Appearance) -> Bool { wallet?.isActive(appearance, in: store) == true }
 
     func select(_ appearance: Appearance) {
-        guard let environment, var wallet, walletError == nil, !busy else { return }
-        let current = wallet.appearances[environment]?[appearance.rawValue]
-        if current == nil && wallet.balance(in: environment) < appearance.cost {
+        guard var updated = wallet, walletError == nil, !busy else { return }
+        let wasActive = updated.isActive(appearance, in: store)
+        do {
+            try updated.select(appearance, in: store)
+            if save(updated) { message = wasActive ? "Appearance turned off." : "Appearance applied." }
+        } catch CoinWalletLedger.Failure.insufficientFunds {
             message = "You don't have enough coins for this appearance."
-            return
-        }
-        wallet.appearances[environment, default: [:]][appearance.rawValue] = current != true
-        if save(wallet) {
-            message = current == true ? "Appearance turned off." : "Appearance applied."
+        } catch {
+            walletError = "Your balance couldn’t be saved."
         }
     }
 
     func acknowledgeWelcome() -> Bool {
-        guard var wallet else { return false }
-        wallet.welcomePending = false
-        guard save(wallet) else { return false }
+        guard var updated = wallet else { return false }
+        updated.welcomePending = false
+        guard save(updated) else { return false }
         welcomeGift = nil
         return true
     }
 
-    private func deliver(_ result: VerificationResult<Transaction>, showUnmatched: Bool = false) async {
-        guard case .verified(let transaction) = result else {
-            if showUnmatched { message = "Apple could not verify this purchase." }
-            return
-        }
-        guard transaction.appBundleID == Bundle.main.bundleIdentifier,
-              transaction.productType == .consumable,
-              let pack = CoinPackage.all.first(where: { $0.id == transaction.productID }) else { return }
-        guard var wallet, transaction.appAccountToken == wallet.token else {
-            if showUnmatched { message = "This purchase could not be matched to your wallet. Contact Liya support for help." }
-            return
-        }
-        let store = transaction.environment.rawValue
-        let id = String(transaction.id)
-        let previous = wallet.transactions[store]?[id]
-
-        if transaction.revocationDate != nil {
-            if previous != 0 {
-                wallet.transactions[store, default: [:]][id] = 0
-                guard save(wallet) else { return }
-                if previous != nil { message = "Apple reversed a coin purchase. Your balance has been updated." }
-            }
-        } else if previous == nil {
-            let (coins, overflow) = Int64(pack.coins).multipliedReportingOverflow(by: Int64(transaction.purchasedQuantity))
-            guard !overflow, coins > 0, coins <= Int64.max - wallet.credits(in: store) else {
-                message = "This purchase could not be added to your wallet."
-                return
-            }
-            wallet.transactions[store, default: [:]][id] = coins
-            guard save(wallet) else { return }
-            message = "Coins added to your wallet."
-        }
-        let pendingKey = "\(store):\(id)"
-        guard finishing.insert(pendingKey).inserted else { return }
-        defer { finishing.remove(pendingKey) }
-        await transaction.finish()
-    }
-
-    private func walletURL() throws -> URL {
-        let directory = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
-                                                    appropriateFor: nil, create: true)
-        return directory.appendingPathComponent("LiyaCoinWallet.json")
-    }
-
     private func loadWallet() {
+        walletNeedsReceipt = false
         do {
-            let data = try Data(contentsOf: walletURL())
-            let saved = try JSONDecoder().decode(CoinLedger.self, from: data)
+            let saved = try CoinWalletLedger.load()
             wallet = saved
             walletError = nil
             if saved.welcomePending && welcomeGift == nil { welcomeGift = WelcomeGift() }
-        } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
-            if save(wallet ?? CoinLedger()), wallet?.welcomePending == true, welcomeGift == nil {
-                welcomeGift = WelcomeGift()
-            }
+        } catch CoinWalletLedger.Failure.storeNotIdentified {
+            walletNeedsReceipt = true
+            wallet = nil
+            walletError = "Please try opening your wallet again."
         } catch {
-            walletError = "Your wallet could not be opened. Try again or contact Liya support."
+            wallet = nil
+            walletError = "Please try opening your wallet again."
         }
     }
 
-    private func save(_ value: CoinLedger) -> Bool {
+    private func save(_ updated: CoinWalletLedger) -> Bool {
         do {
-            let data = try JSONEncoder().encode(value)
-            try data.write(to: walletURL(), options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
-            wallet = value
+            try updated.save()
+            wallet = updated
             walletError = nil
             return true
         } catch {
-            walletError = "Your wallet could not be saved. Use Check purchases to try again."
+            walletError = "Your balance couldn’t be saved."
             return false
         }
     }
+
+    private func handle(_ transactions: [SKPaymentTransaction]) {
+        for transaction in transactions {
+            guard let pack = CoinPackage.all.first(where: { $0.id == transaction.payment.productIdentifier }) else { continue }
+            switch transaction.transactionState {
+            case .purchasing:
+                break
+            case .deferred:
+                if !deferred.contains(pack.id) { message = "Awaiting approval." }
+                if submittedPack == pack.id { submittedPack = nil }
+            case .purchased:
+                if submittedPack == pack.id { submittedPack = nil }
+                guard !finishing.contains(ObjectIdentifier(transaction)) else { continue }
+                if deliver(transaction, pack: pack) { finish(transaction) }
+            case .failed:
+                if submittedPack == pack.id { submittedPack = nil }
+                let error = transaction.error as NSError?
+                if error?.domain != SKErrorDomain || error?.code != SKError.Code.paymentCancelled.rawValue {
+                    message = "Please try your purchase again."
+                }
+                finish(transaction)
+            case .restored:
+                finish(transaction)
+            @unknown default:
+                break
+            }
+        }
+        updateQueueState()
+    }
+
+    private func deliver(_ transaction: SKPaymentTransaction, pack: CoinPackage) -> Bool {
+        guard var updated = wallet else { return false }
+        guard let purchaseStore = CoinWalletLedger.transactionStore,
+              let id = transaction.transactionIdentifier, !id.isEmpty else {
+            message = "Your purchase is pending delivery."
+            return false
+        }
+        store = purchaseStore
+        if updated.credited(id, in: purchaseStore) { return true }
+        if let username = transaction.payment.applicationUsername, !username.isEmpty,
+           UUID(uuidString: username) != updated.token {
+            message = "This purchase belongs to a different wallet."
+            return false
+        }
+        let (coins, overflow) = Int64(pack.coins).multipliedReportingOverflow(by: Int64(transaction.payment.quantity))
+        guard coins > 0, !overflow else {
+            message = "Your purchase is pending delivery."
+            return false
+        }
+        do {
+            try updated.credit(coins, transactionID: id, in: purchaseStore)
+        } catch {
+            message = "Your purchase is pending delivery."
+            return false
+        }
+        guard save(updated) else { return false }
+        message = "Coins added to your wallet."
+        return true
+    }
+
+    private func finish(_ transaction: SKPaymentTransaction) {
+        if finishing.insert(ObjectIdentifier(transaction)).inserted { queue.finishTransaction(transaction) }
+    }
+
+    private func updateQueueState() {
+        let transactions = queue.transactions
+        purchasing = Set(transactions.filter { $0.transactionState == .purchasing }.map { $0.payment.productIdentifier })
+        deferred = Set(transactions.filter { $0.transactionState == .deferred }.map { $0.payment.productIdentifier })
+        undelivered = Set(transactions.filter { $0.transactionState == .purchased && !finishing.contains(ObjectIdentifier($0)) }
+            .map { $0.payment.productIdentifier })
+    }
+}
+
+extension CoinCheckout: SKProductsRequestDelegate {
+    nonisolated func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.productRequest === request, let pack = self.selectedPack else { return }
+            self.productRequest = nil
+            self.loadingProductID = nil
+            let product = response.products.first { $0.productIdentifier == pack.id }
+            self.products[pack.id] = product
+            self.productLoadFailed = product == nil
+        }
+    }
+
+    nonisolated func request(_ request: SKRequest, didFailWithError error: Error) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            if self.productRequest === request {
+                self.productRequest = nil
+                self.loadingProductID = nil
+                self.productLoadFailed = true
+            } else if self.receiptRequest === request {
+                self.receiptRequest = nil
+                if !self.undelivered.isEmpty { self.message = "Your purchase is pending delivery." }
+            }
+        }
+    }
+
+    nonisolated func requestDidFinish(_ request: SKRequest) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.receiptRequest === request else { return }
+            self.receiptRequest = nil
+            self.loadWallet()
+            self.recover()
+        }
+    }
+}
+
+extension CoinCheckout: SKPaymentTransactionObserver, SKPaymentQueueDelegate {
+    nonisolated func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+        DispatchQueue.main.async { [weak self] in self?.handle(transactions) }
+    }
+
+    nonisolated func paymentQueue(_ queue: SKPaymentQueue, removedTransactions transactions: [SKPaymentTransaction]) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            for transaction in transactions { self.finishing.remove(ObjectIdentifier(transaction)) }
+            self.updateQueueState()
+        }
+    }
+
+    nonisolated func paymentQueueDidChangeStorefront(_ queue: SKPaymentQueue) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.products.removeAll()
+            if let pack = self.selectedPack { self.loadProduct(pack) }
+        }
+    }
+
+    nonisolated func paymentQueue(_ paymentQueue: SKPaymentQueue, shouldContinue transaction: SKPaymentTransaction,
+                                 in newStorefront: SKStorefront) -> Bool { false }
 }
