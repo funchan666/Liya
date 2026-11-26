@@ -220,7 +220,18 @@ final class SocialStore: ObservableObject {
          moderationStatuses = [:]; moderationAvailable = false
      }
  }
- func submittedReports(_ session: LiyaSession) async throws -> [SubmittedReport] { throw OfflineError.unavailable }
+ func submittedReports(_ session: LiyaSession) async throws -> [SubmittedReport] {
+     guard let owner = session.userID else { throw OfflineError.unavailable }
+     let results: [SubmittedReport] = try await pages { offset in
+         guard session.userID == owner else { throw CancellationError() }
+         return try await session.client.rpc("liya_my_report_status")
+             .order("created_at", ascending: false).order("kind").order("report_id")
+             .range(from: offset, to: offset + 499).execute().value
+     }
+     guard session.userID == owner else { throw CancellationError() }
+     var seen = Set<String>()
+     return results.filter { seen.insert($0.id).inserted }
+ }
  func pendingProfile(_ session: LiyaSession) async throws -> SocialPerson? {
      guard let owner = session.userID else { throw OfflineError.unavailable }
      if moderationEndpointMissing { return nil }

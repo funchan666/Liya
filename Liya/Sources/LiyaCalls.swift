@@ -10,7 +10,6 @@ final class LiyaCalls: ObservableObject {
     @Published private(set) var call: LiyaCall?
     @Published private(set) var busy = false
     @Published var error: String?
-    @Published var permissionDenied = false
 
     func watch(_ session: LiyaSession) async { }
     func refresh(_ session: LiyaSession) async { }
@@ -18,5 +17,5 @@ final class LiyaCalls: ObservableObject {
         error = "Calls are unavailable right now."
     }
     func end(_ session: LiyaSession) async { call = nil }
-    func reset() async { call = nil; error = nil; permissionDenied = false }
+    func reset() async { call = nil; error = nil }
 }

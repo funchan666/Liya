@@ -37,57 +37,84 @@ enum DraftFiles {
 
 struct CameraPhotoButton: View {
     @Environment(\.openURL) private var openURL
+    @Environment(\.locale) private var locale
     var compact: Bool = false
     let onPhoto: (DraftAttachment) -> Void
     let onError: (String) -> Void
-    @State private var requesting = false
+    @State private var cameraRequest: Task<Void, Never>?
     @State private var showingCamera = false
     @State private var showingSettings = false
     var body: some View {
-        Button {
-            guard !requesting else { return }
-            guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
-                onError("The camera is unavailable on this device."); return
-            }
-            requesting = true
-            Task { @MainActor in
-                let status = AVCaptureDevice.authorizationStatus(for: .video)
-                let allowed: Bool
-                switch status {
-                case .authorized: allowed = true
-                case .notDetermined: allowed = await AVCaptureDevice.requestAccess(for: .video)
-                default: allowed = false
-                }
-                requesting = false
-                if allowed { showingCamera = true }
-                else if AVCaptureDevice.authorizationStatus(for: .video) == .restricted {
-                    onError("Camera access is restricted on this device.")
-                } else { showingSettings = true }
-            }
-        } label: {
+        Button(action: takePhoto) {
             if compact {
-                ComposeMediaActionLabel(title: requesting ? "Opening…" : "Take photo", subtitle: "Camera", image: "avatar-camera")
+                ComposeMediaActionLabel(title: cameraRequest != nil ? "Opening…" : "Take photo", subtitle: "Camera", image: "avatar-camera")
             } else {
-                Text(requesting ? "Opening…" : "Take photo")
+                Text(cameraRequest != nil ? "Opening…" : "Take photo")
                     .font(.caption.bold()).foregroundStyle(liyaAccent)
                     .frame(minWidth: 100, minHeight: 44)
                     .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
             }
-        }.buttonStyle(.plain).disabled(requesting)
+        }.buttonStyle(.plain).disabled(cameraRequest != nil)
+            .onDisappear {
+                cameraRequest?.cancel()
+                cameraRequest = nil
+            }
             .fullScreenCover(isPresented: $showingCamera) {
                 SystemCameraPicker { image in
                     showingCamera = false
                     guard let image else { return }
                     do { onPhoto(try DraftFiles.savePhoto(image)) }
-                    catch { onError("The photo could not be saved. Please try again.") }
+                    catch { onError(String(localized: "The photo could not be saved. Please try again.", locale: locale)) }
                 }.ignoresSafeArea()
             }
             .sheet(isPresented: $showingSettings) {
-                LocalConfirmation(title: "Camera access is off", message: "Allow camera access in Settings to take a photo. You can still choose an existing photo.", action: "Open Settings") {
-                    showingSettings = false
-                    if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-                } cancel: { showingSettings = false }
+                SafetyPanel(title: "Camera access is off", subject: nil, back: nil, close: { showingSettings = false }) {
+                    Image("avatar-camera").resizable().scaledToFit().padding(4)
+                } content: {
+                    Text("You can still choose a photo from your library.")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button { showingSettings = false } label: {
+                        Text("Done").font(.headline).foregroundStyle(liyaInk)
+                            .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
+                    }
+                    Button {
+                        showingSettings = false
+                        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                    } label: {
+                        Text("Open Settings").font(.subheadline).foregroundStyle(liyaAccent)
+                            .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
+                    }
+                }.buttonStyle(.plain)
             }
+    }
+
+    private func takePhoto() {
+        guard cameraRequest == nil else { return }
+        let authorization = AVCaptureDevice.authorizationStatus(for: .video)
+        switch authorization {
+        case .authorized, .notDetermined:
+            guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+                onError(String(localized: "The camera is unavailable on this device.", locale: locale))
+                return
+            }
+            if authorization == .authorized {
+                showingCamera = true
+                return
+            }
+            cameraRequest = Task { @MainActor in
+                let granted = await AVCaptureDevice.requestAccess(for: .video)
+                guard !Task.isCancelled else { return }
+                cameraRequest = nil
+                if granted { showingCamera = true }
+            }
+        case .denied:
+            showingSettings = true
+        case .restricted:
+            onError(String(localized: "Camera access is restricted on this device.", locale: locale))
+        @unknown default:
+            onError(String(localized: "The camera is unavailable on this device.", locale: locale))
+        }
     }
 }
 
@@ -225,7 +252,7 @@ struct DraftMediaPicker: View {
     private var compactLibraryButton: some View {
         PhotosPicker(selection: $selection, maxSelectionCount: 9 - attachments.count,
                      matching: .any(of: [.images, .videos])) {
-            ComposeMediaActionLabel(title: "Add media", subtitle: "Photos & videos", image: "nav-v2-create")
+            ComposeMediaActionLabel(title: "Add media", subtitle: "Photos & videos", image: "navigation-compose")
         }.buttonStyle(.plain).disabled(loading).accessibilityLabel("Add photos or videos")
     }
 

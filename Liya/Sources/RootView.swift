@@ -42,11 +42,11 @@ private enum LiyaTab: Int, CaseIterable {
     }
     var image: String {
         switch self {
-        case .discover: return "nav-v2-video"
-        case .square: return "nav-v2-square"
-        case .compose: return "nav-v2-create"
-        case .messages: return "nav-v2-messages"
-        case .profile: return "nav-v2-profile"
+        case .discover: return "navigation-media-feed"
+        case .square: return "navigation-community"
+        case .compose: return "navigation-compose"
+        case .messages: return "navigation-inbox"
+        case .profile: return "navigation-profile"
         }
     }
 }
@@ -224,10 +224,10 @@ private struct WelcomeView: View {
                         Spacer().frame(height: max(180, size.height * 0.38))
                         VStack(spacing: 6) {
                             Text("Share how you feel")
-                                .font(.system(.title3, design: .rounded).weight(.semibold))
+                                .font(LiyaType.journalTitle)
                                 .foregroundStyle(.white)
                             Text("Every mood belongs here.")
-                                .font(.system(.subheadline, design: .rounded).weight(.medium))
+                                .font(LiyaType.detail)
                                 .foregroundStyle(.white.opacity(0.9))
                         }
                         .multilineTextAlignment(.center)
@@ -240,7 +240,7 @@ private struct WelcomeView: View {
                                 accountChoice = WelcomeAccountChoice(name: name, action: .resume)
                             } label: {
                                 HStack(spacing: 8) {
-                                    Image(decorative: "nav-v2-profile").resizable().scaledToFit().frame(width: 26, height: 26)
+                                    Image(decorative: "navigation-profile").resizable().scaledToFit().frame(width: 26, height: 26)
                                     Text("Saved account").font(.footnote.weight(.semibold))
                                     if name != String(localized: "Saved account", locale: locale) {
                                         Text(verbatim: name).font(.footnote).lineLimit(1).truncationMode(.middle)
@@ -670,7 +670,7 @@ private struct WelcomeAccountSheet: View {
     var body: some View {
         PageShell(title: title) {
             VStack(spacing: 16) {
-                Image(decorative: "nav-v2-profile").resizable().scaledToFit().frame(width: 48, height: 48)
+                Image(decorative: "navigation-profile").resizable().scaledToFit().frame(width: 48, height: 48)
                 switch choice.action {
                 case .resume: Text("Keep using \(choice.name)?")
                 case .replace: Text("Sign out of \(choice.name) to continue?")
@@ -762,7 +762,7 @@ struct WelcomeAction: View {
         HStack(spacing: 8) {
             if isLoading { LiyaLoadingIndicator(size: 30).accessibilityHidden(true) }
             Text(LocalizedStringKey(title))
-                .font(fullArtwork ? .system(.headline, design: .rounded) : .system(size: 16, weight: .semibold))
+                .font(LiyaType.action)
                 .foregroundStyle(foreground)
         }
         .padding(.horizontal, 16)

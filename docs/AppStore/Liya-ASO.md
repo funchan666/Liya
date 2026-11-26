@@ -11,7 +11,7 @@ com.liyastudio.moodhaven
 com.liyaliving.moodcircle
 com.liyaliving.soulspace
 
-Availability and Apple Developer registration have not been checked. Changing the Bundle ID requires updating signing, App Store Connect, purchase configuration, backend validation, and push configuration together.
+Availability and Apple Developer registration have not been checked. Changing the Bundle ID requires updating signing, App Store Connect, purchase configuration and any affected authentication settings together.
 
 ## App Name
 
@@ -19,23 +19,15 @@ Liya
 
 ## App Description
 
-Liya is a space for the moments that make up your day. Share what is on your mind, discover thoughtful stories, and enjoy conversations at your own pace.
+What made Tuesday different from Friday? Liya is a mood diary for the details you might otherwise forget. Pick a feeling, write a few lines, and come back to that day on your calendar. Your week and month views let you revisit those entries at your own pace.
 
-Create a mood diary that feels personal to you. Choose how you are feeling, add a note, and return to your entries whenever you want to reflect. Explore your recent moods across a week or a month and notice the little changes along the way.
+With Between days, turn a single entry into a postcard or put two dates side by side. See how the moods look together, decide whether to include a few words from your notes, then keep the image or share it with someone you choose. Daybreak paper is included. Tideglass paper is available for a one-time coin unlock.
 
-When you need a pause, take a quiet moment to reconnect with your surroundings. A simple guided activity invites you to slow down and notice what you can see, hear, and feel.
-
-Visit the mood tree to share a thought and discover what others have expressed. Browse photos and short videos, share a post of your own, and take part in the community through comments, likes, and follows.
-
-Get to know other members through their profiles. When you both follow each other, you can exchange messages and start a voice or video call. You can also use the reporting and blocking tools to manage your experience.
-
-For another way to reflect, talk with the Liya AI companion. Share a thought or ask for a little encouragement, and receive a response at a pace that feels comfortable. You choose whether to enable AI conversation after reviewing how your information is handled. AI responses are automated and are not professional support.
-
-Liya brings your feelings, your moments, and your connections together in one welcoming place. Whether you are recording a small detail or sharing it with someone else, there is room to make the experience your own.
+Spend a quiet minute noticing your surroundings, or leave a thought in your private notebook. When you feel like exploring, browse the photo and short video collection. Follow profiles you want to revisit, like a moment, or add a comment with your community profile. Reporting and blocking are available from the discussion and member profiles.
 
 ## In App Purchases
 
-All are consumable coin packs. Prices shown are the intended US dollar reference prices; configure the actual prices and territories in App Store Connect. The identifiers and quantities match WalletView.swift. The two additional identifiers are proposed and have not been confirmed in App Store Connect.
+All are consumable coin packs. Prices shown are the intended US dollar reference prices; configure the actual prices and territories in App Store Connect. The identifiers and quantities follow the app’s coin pack catalogue. The two additional identifiers are proposed and have not been confirmed in App Store Connect.
 
 | Display name | Description | Product ID | Coins | USD |
 | --- | --- | --- | ---: | ---: |

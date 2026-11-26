@@ -10,11 +10,23 @@ final class CoinCheckout: ObservableObject {
     }
 
     enum Appearance: String, Identifiable {
-        case moodPrism, profileGlow
+        case moodPrism, profileGlow, tideglassPaper
 
         var id: String { rawValue }
-        var title: String { self == .moodPrism ? "Mood Prism" : "Profile Glow" }
-        var cost: Int64 { self == .moodPrism ? 120 : 180 }
+        var title: String {
+            switch self {
+            case .moodPrism: return "Mood Prism"
+            case .profileGlow: return "Profile Glow"
+            case .tideglassPaper: return "Tideglass paper"
+            }
+        }
+        var cost: Int64 {
+            switch self {
+            case .moodPrism: return 120
+            case .profileGlow: return 180
+            case .tideglassPaper: return 90
+            }
+        }
     }
 
     private struct Wallet: Codable {

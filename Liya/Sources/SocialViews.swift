@@ -9,7 +9,7 @@ struct SocialAttempt {
         let data = (try? encoder.encode(Snapshot(owner: owner, target: target, text: text, tags: tags, files: files.map(\.id)))) ?? Data()
         return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
     }
-    static func draftPostID(owner: UUID, draft: LocalDraft) -> UUID {
+    static func draftPostID(owner: UUID, draft: MomentDraft) -> UUID {
         let hash = fingerprint(owner: owner, target: draft.id, text: draft.text, tags: draft.tags ?? [], files: draft.attachments ?? [])
         let chars = Array(hash.prefix(32))
         let raw = String(chars[0..<8]) + "-" + String(chars[8..<12]) + "-" + String(chars[12..<16]) + "-" + String(chars[16..<20]) + "-" + String(chars[20..<32])
@@ -310,17 +310,11 @@ struct CommunityEditPostView: View {
 struct CommunityPersonView: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
-    @EnvironmentObject private var calls: LiyaCalls
     @Environment(\.locale) private var locale
-    @Environment(\.openURL) private var openURL
     let personID: UUID
     @State private var options = false
     @State private var section = 0
     @State private var preview: SocialMediaItem?
-    @State private var callNotice: String?
-    @State private var attemptedCall = false
-    @State private var connectionNotice: ConnectionNotice?
-    @State private var checkingConnection = false
     @State private var followUpdateFailed = false
     private var profileCheckNeeded: Bool {
         !social.canFollowMembers(session) && (social.checkedMemberProfileOwner != session.userID || social.error != nil)
@@ -342,16 +336,7 @@ struct CommunityPersonView: View {
                 } actions: {
                     if personID != session.userID {
                         VStack(spacing: 10) {
-                            HStack(spacing: 10) {
-                                followAction
-                                NavigationLink { CommunityConversationView(personID: personID) } label: {
-                                    ProfileDetailActionLabel(title: "Message", style: .message)
-                                }.buttonStyle(.plain)
-                            }
-                            HStack(spacing: 10) {
-                                Button { startCall(kind: "audio") } label: { ProfileDetailActionLabel(title: "Voice call", style: .voice) }
-                                Button { startCall(kind: "video") } label: { ProfileDetailActionLabel(title: "Video call", style: .video) }
-                            }.buttonStyle(.plain).disabled(calls.busy || calls.call != nil || checkingConnection)
+                            followAction
                             if social.connectionsError != nil {
                                 ConnectionRetryRow { await social.refresh(session) }
                             } else if profileCheckNeeded && !social.loading {
@@ -359,13 +344,6 @@ struct CommunityPersonView: View {
                             }
                             if followUpdateFailed {
                                 Text("Couldn't update your follow. Please try again.").font(.footnote).foregroundStyle(liyaInk)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            if let callNotice { Text(callNotice).font(.footnote).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading) }
-                            if attemptedCall, let error = calls.error { Text(error).font(.footnote).foregroundStyle(.red).frame(maxWidth: .infinity, alignment: .leading) }
-                            if attemptedCall && calls.permissionDenied {
-                                Button("Open Settings") { if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) } }
-                                    .font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }
@@ -409,9 +387,6 @@ struct CommunityPersonView: View {
         }
         .sheet(isPresented: $options) { CommunityProfileOptions(personID: personID) }
         .sheet(item: $preview) { item in SocialMediaPreview(item: item) }
-        .sheet(item: $connectionNotice) { notice in
-            ConnectionNoticeSheet(notice: notice) { connectionNotice = nil }.presentationDetents([.medium, .large])
-        }
     }
 
     @ViewBuilder private var followAction: some View {
@@ -448,22 +423,6 @@ struct CommunityPersonView: View {
         }
     }
 
-    private func startCall(kind: String) {
-        calls.error = nil
-        calls.permissionDenied = false
-        callNotice = nil
-        attemptedCall = true
-        guard social.isJoined(session) else { callNotice = "Create a community profile before calling."; return }
-        guard !checkingConnection else { return }
-        checkingConnection = true
-        Task {
-            defer { checkingConnection = false }
-            do {
-                guard try await social.isMutualFollow(session, target: personID) else { connectionNotice = .mutual; return }
-                await calls.start(session, peer: personID, kind: kind)
-            } catch { connectionNotice = .unavailable }
-        }
-    }
 }
 
 private struct CommunityProfileOptions: View {
@@ -641,7 +600,6 @@ struct CommunityReportView: View {
     var body: some View {
         PageShell(title: "Report") {
             VStack(alignment: .leading, spacing: 12) {
-                OfflineNote(text: "Reports are stored for review. A review team has not yet been configured.")
                 if message != nil {
                     Text("Sending this report shares this message and its attachments with Liya for review. Other messages are not included.")
                         .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -655,7 +613,7 @@ struct CommunityReportView: View {
                     }.buttonStyle(.plain).disabled(sending || sent)
                 }
                 if failed { Text("Could not confirm your report. Please try again.").font(.footnote).foregroundStyle(.red) }
-                if sent { Text("Report received. Review is not yet configured.").font(.footnote).foregroundStyle(liyaAccent) }
+                if sent { Text("Report received.").font(.footnote).foregroundStyle(liyaAccent) }
                 PrimaryButton(title: sending ? "Sending…" : "Send report", disabled: selected == nil || sending || sent) {
                     guard let selected else { return }; sending = true
                     Task {
@@ -998,7 +956,6 @@ struct CommunityConversationView: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     @EnvironmentObject private var calls: LiyaCalls
-    @Environment(\.openURL) private var openURL
     @Environment(\.dismiss) private var dismiss
     let personID: UUID
     @State private var text = ""
@@ -1046,10 +1003,6 @@ struct CommunityConversationView: View {
                                     .font(.caption.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                             }
                             if let error = calls.error { Text(error).font(.footnote).foregroundStyle(.red) }
-                            if calls.permissionDenied {
-                                Button("Open Settings") { if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) } }
-                                    .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                            }
                             if social.messagesLoading && conversation.isEmpty { LiyaLoadingIndicator(size: 28) }
                             if social.messagesReady && !social.messagesLoading && social.messageLoadError == nil && conversation.isEmpty {
                                 VStack(spacing: 10) {
@@ -1350,8 +1303,8 @@ struct CommunityRelationList: View {
                     }
                     ForEach(creators, id: \.id) { creator in
                         relationRow {
-                            NavigationLink { ExampleProfileView(index: creator.index, displayName: creator.displayName, mediaID: creator.id) } label: {
-                                memberLabel(name: creator.displayName, bio: "") { ExampleAvatar(index: creator.index, size: 46) }
+                            NavigationLink { CollectionAuthorView(index: creator.index, displayName: creator.displayName, mediaID: creator.id) } label: {
+                                memberLabel(name: creator.displayName, bio: "") { CollectionPortrait(index: creator.index, size: 46) }
                             }.buttonStyle(.plain)
                         } accessory: {
                             unfollowButton(pending: session.curatedFollowPending.contains(creator.id)) {

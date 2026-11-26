@@ -1,6 +1,5 @@
 import SwiftUI
 import PhotosUI
-import UserNotifications
 import UIKit
 
 struct ProfileHome: View {
@@ -19,7 +18,7 @@ struct ProfileHome: View {
     @State private var postsReady = false
     @State private var postsLoading = false
     @State private var postsUnavailable = false
-    private var posts: [LocalDraft] { store.drafts.filter { $0.publishedLocally == true } }
+    private var posts: [MomentDraft] { store.drafts.filter { $0.publishedLocally == true } }
     private var videos: [DraftAttachment] { posts.flatMap { $0.attachments ?? [] }.filter { $0.isVideo } }
     private var communityPosts: [SocialPost] { profileOwner == session.userID ? ownPosts : [] }
     private var communityVideos: [SocialMediaItem] {
@@ -173,7 +172,7 @@ struct ProfileHome: View {
                 if let url = session.profileAvatarURL {
                     AsyncImage(url: url) { image in image.resizable().scaledToFill() } placeholder: { Color.clear }
                 } else if let index = session.photos.firstIndex(where: { $0.id == "example-photo-012" }) {
-                    CloudPhoto(index: index, contentMode: .fill)
+                    CollectionPhoto(catalogIndex: index, contentMode: .fill)
                 } else {
                     Color.clear
                 }
@@ -420,7 +419,7 @@ struct EditProfileView: View {
         else if let url = session.profileAvatarURL {
             AsyncImage(url: url) { image in image.resizable().scaledToFill() } placeholder: { Color.clear }
         } else if let index = session.photos.firstIndex(where: { $0.id == "example-photo-012" }) {
-            CloudPhoto(index: index, contentMode: .fill)
+            CollectionPhoto(catalogIndex: index, contentMode: .fill)
         } else { Color.clear }
     }
 
@@ -465,10 +464,6 @@ struct SettingsView: View {
                     NavigationLink { PrivacyView() } label: { SettingsRow("Privacy", image: "setting-privacy") }
                 }
                 SettingsGroup(title: "Preferences") {
-                    NavigationLink { NotificationSettingsView() } label: {
-                        SettingsRow("Notifications", image: "setting-notification")
-                    }
-                    SettingsDivider()
                     NavigationLink { LanguageSettingsView() } label: {
                         SettingsRow("Language", image: "setting-language")
                     }
@@ -539,56 +534,6 @@ private struct LanguageSettingsView: View {
             }.padding(.top, 16).modifier(AdaptiveContainerMargins())
         }
     }
-}
-
-private struct NotificationSettingsView: View {
-    @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.openURL) private var openURL
-    @State private var status: UNAuthorizationStatus?
-    @State private var busy = false
-    @State private var error: String?
-    var body: some View {
-        PageShell(title: "Notifications") {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(spacing: 14) {
-                    Image("setting-notification").resizable().scaledToFit().frame(width: 46, height: 46).accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Device alerts").font(.headline).foregroundStyle(liyaInk)
-                        Text(LocalizedStringKey(statusText)).font(.subheadline).foregroundStyle(.secondary)
-                    }.frame(maxWidth: .infinity, alignment: .leading)
-                }.padding(16).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 18))
-                Text("Push delivery for messages and activity is not available yet. Call notifications have separate settings.")
-                    .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                if let error { Text(LocalizedStringKey(error)).font(.footnote).foregroundStyle(.red) }
-                if status == .notDetermined {
-                    PrimaryButton(title: busy ? "Checking…" : "Allow notifications", disabled: busy) {
-                        busy = true; error = nil
-                        Task {
-                            do { _ = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) }
-                            catch { self.error = "Couldn't update notification access. Please try again." }
-                            await refresh(); busy = false
-                        }
-                    }
-                } else if status != nil {
-                    PrimaryButton(title: "Open system settings") {
-                        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-                    }
-                } else {
-                    LiyaLoadingIndicator(size: 24)
-                }
-            }.padding(.top, 16).modifier(AdaptiveContainerMargins())
-        }.task { await refresh() }
-            .onLiyaChange(of: scenePhase) { phase in if phase == .active { Task { await refresh() } } }
-    }
-    private var statusText: String {
-        switch status {
-        case .notDetermined: return "Not requested"
-        case .denied: return "Notifications off"
-        case .authorized, .provisional, .ephemeral: return "Notifications allowed"
-        default: return "Checking access…"
-        }
-    }
-    private func refresh() async { status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus }
 }
 
 private struct SettingsYourSpaceView: View {
@@ -849,17 +794,17 @@ private struct HiddenCollectionProfilesView: View {
     var body: some View {
         PageShell(title: "Hidden collection profiles") {
             VStack(spacing: 12) {
-                if store.blockedExamples.isEmpty {
+                if store.hiddenCollectionProfiles.isEmpty {
                     EmptyState(title: String(localized: "No hidden profiles", locale: locale),
                                detail: String(localized: "Profiles you hide will appear here.", locale: locale))
                 }
-                ForEach(store.blockedExamples.sorted(), id: \.self) { index in
+                ForEach(store.hiddenCollectionProfiles.sorted(), id: \.self) { index in
                     let photoID = session.photos.indices.contains(index) ? session.photos[index].id : nil
                     let name = photoID.map { session.curatedDisplayName(for: $0) }
                         ?? String(localized: "Liya collection", locale: locale)
                     HStack(spacing: 12) {
-                        NavigationLink { ExampleProfileView(index: index, displayName: name, mediaID: photoID) } label: {
-                            HStack { ExampleAvatar(index: index); Text(verbatim: name).foregroundStyle(liyaInk) }
+                        NavigationLink { CollectionAuthorView(index: index, displayName: name, mediaID: photoID) } label: {
+                            HStack { CollectionPortrait(index: index); Text(verbatim: name).foregroundStyle(liyaInk) }
                         }.buttonStyle(.plain)
                         Spacer()
                         Button { store.setBlocked(index, blocked: false) } label: {

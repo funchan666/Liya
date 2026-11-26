@@ -18,6 +18,10 @@ final class LiyaSession: ObservableObject {
     @Published private(set) var userID: UUID? {
         didSet {
             guard userID != oldValue else { return }
+            moodGeneration = UUID()
+            moodLoading = false
+            moodEntries = []
+            moodError = nil
             catalogRequest = nil
             catalogLoading = false
             catalogHasLoaded = false
@@ -27,18 +31,18 @@ final class LiyaSession: ObservableObject {
             resetCuratedFollows()
         }
     }
-    @Published private(set) var photos: [LiyaMedia] = []
-    @Published private(set) var videos: [LiyaMedia] = []
-    @Published private(set) var curatedVideoCreators: [String: ExampleVideoCreator] = [:]
-    @Published private(set) var curatedVideoPrompts: [CloudVideoPrompt] = []
-    @Published private(set) var curatedTreePrompts: [CloudTreePrompt] = []
+    @Published private(set) var photos: [CatalogMediaAsset] = []
+    @Published private(set) var videos: [CatalogMediaAsset] = []
+    @Published private(set) var curatedVideoCreators: [String: CollectionVideoAuthor] = [:]
+    @Published private(set) var curatedVideoPrompts: [VideoReplySuggestion] = []
+    @Published private(set) var curatedTreePrompts: [ReflectionPrompt] = []
     @Published private(set) var catalogError: String?
     @Published private(set) var catalogLoading = false
     private var catalogHasLoaded = false
     private var catalogRequest: UUID?
     @Published private(set) var catalogGeneration = UUID()
     @Published private(set) var imageGeneration = UUID()
-    @Published private(set) var moodEntries: [CloudMood] = []
+    @Published private(set) var moodEntries: [JournalDayEntry] = []
     @Published private(set) var moodError: String?
     @Published private(set) var moodLoading = false
     @Published private(set) var profile: CloudProfile?
@@ -380,25 +384,25 @@ final class LiyaSession: ObservableObject {
             }
         }
         do {
-            var rows: [LiyaMedia] = []
+            var rows: [CatalogMediaAsset] = []
             var offset = 0
             while true {
-                let page: [LiyaMedia] = try await client.from("liya_example_media")
+                let page: [CatalogMediaAsset] = try await client.from("liya_example_media")
                     .select("id,kind,sort_order,object_key")
                     .order("sort_order").order("id").range(from: offset, to: offset + 499).execute().value
                 rows.append(contentsOf: page)
                 if page.count < 500 { break }
                 offset += 500
             }
-            let creators: [ExampleVideoCreator] = try await client.from("liya_curated_video_creators")
+            let creators: [CollectionVideoAuthor] = try await client.from("liya_curated_video_creators")
                 .select("video_id,photo_id,display_name,caption").order("video_id").execute().value
-            let prompts: [CloudVideoPrompt] = try await client.from("liya_curated_video_prompts")
-                .select("video_id,position,display_name,body").order("video_id").order("position").execute().value
-            let treePrompts: [CloudTreePrompt] = try await client.from("liya_curated_tree_prompts")
+            let prompts: [VideoReplySuggestion] = try await client.from("liya_curated_video_prompts")
+                .select("video_id,position,body").order("video_id").order("position").execute().value
+            let treePrompts: [ReflectionPrompt] = try await client.from("liya_curated_tree_prompts")
                 .select("position,mood,body").order("position").execute().value
             guard userID == owner, catalogRequest == request else { return }
-            photos = rows.filter { $0.kind == "photo" }
-            videos = rows.filter { $0.kind == "video" }
+            photos = rows.filter { $0.mediaKind == "photo" }
+            videos = rows.filter { $0.mediaKind == "video" }
             curatedVideoCreators = Dictionary(uniqueKeysWithValues: creators.map { ($0.videoID, $0) })
             curatedVideoPrompts = prompts
             curatedTreePrompts = treePrompts
@@ -418,7 +422,7 @@ final class LiyaSession: ObservableObject {
         let media = kind == "photo" ? photos : videos
         guard media.indices.contains(index) else { throw SessionError.mediaUnavailable }
         return try await client.storage.from("liya-example-media")
-            .createSignedURL(path: media[index].objectKey, expiresIn: 3600)
+            .createSignedURL(path: media[index].storageObjectPath, expiresIn: 3600)
     }
 
     func resumeAccount() async {
@@ -529,13 +533,13 @@ final class LiyaSession: ObservableObject {
     func refreshMoods() async {
         guard let owner = userID, !moodLoading else { return }
         let generation = UUID(); moodGeneration = generation
-        moodLoading = true; moodError = nil; moodEntries = []
-        defer { moodLoading = false }
+        moodLoading = true; moodError = nil
+        defer { if moodGeneration == generation { moodLoading = false } }
         do {
-            var rows: [CloudMood] = []
+            var rows: [JournalDayEntry] = []
             var offset = 0
             while true {
-                let page: [CloudMood] = try await client.from("liya_moods")
+                let page: [JournalDayEntry] = try await client.from("liya_moods")
                     .select("owner_id,day,state,mood,note")
                     .eq("owner_id", value: owner.uuidString).eq("state", value: "saved")
                     .order("day", ascending: false).range(from: offset, to: offset + 499).execute().value
@@ -553,20 +557,22 @@ final class LiyaSession: ObservableObject {
     func saveMood(_ mood: String, note: String, date: Date) async -> Bool {
         guard let owner = userID else { moodError = "Connect your account to save."; return false }
         moodGeneration = UUID()
-        let row = CloudMood(ownerID: owner, day: CloudMood.dayKey(date), state: "saved", mood: mood, note: note)
+        moodLoading = false
+        let row = JournalDayEntry(journalOwnerID: owner, dayStamp: JournalDayEntry.dayKey(date), entryStatus: "saved", feelingKey: mood, reflectionText: note)
         do {
-            let saved: [CloudMood] = try await client.from("liya_moods")
+            let saved: [JournalDayEntry] = try await client.from("liya_moods")
                 .upsert(row, onConflict: "owner_id,day,state").execute().value
             guard userID == owner, let confirmed = saved.first,
-                  confirmed.day == row.day, confirmed.mood == mood, confirmed.note == note else {
+                  confirmed.dayStamp == row.dayStamp, confirmed.feelingKey == mood, confirmed.reflectionText == note else {
                 throw SessionError.moodUnavailable
             }
-            moodEntries.removeAll { $0.day == row.day }
+            moodEntries.removeAll { $0.dayStamp == row.dayStamp }
             moodEntries.append(confirmed)
-            moodEntries.sort { $0.day > $1.day }
+            moodEntries.sort { $0.dayStamp > $1.dayStamp }
             moodError = nil
             return true
         } catch {
+            guard userID == owner else { return false }
             moodError = "Couldn't save your journal entry. Your draft is still available; please try again."
             return false
         }
@@ -649,7 +655,7 @@ final class LiyaSession: ObservableObject {
         curatedFollowsError = nil
     }
 
-    func curatedCreator(for photoID: String) -> ExampleVideoCreator? {
+    func curatedCreator(for photoID: String) -> CollectionVideoAuthor? {
         curatedVideoCreators.values.filter { $0.photoID == photoID }.min { $0.videoID < $1.videoID }
     }
 
@@ -661,7 +667,7 @@ final class LiyaSession: ObservableObject {
         guard let owner = userID, store.hasCloudSpace(for: owner) else { return [] }
         let hidden = store.pendingCuratedUnfollows
         return photos.enumerated().compactMap { index, photo in
-            guard curatedFollowIDs.contains(photo.id), !store.blockedExamples.contains(index),
+            guard curatedFollowIDs.contains(photo.id), !store.hiddenCollectionProfiles.contains(index),
                   !hidden.contains(photo.id) else { return nil }
             return CuratedFollowedProfile(id: photo.id, index: index, displayName: curatedDisplayName(for: photo.id))
         }
@@ -670,7 +676,7 @@ final class LiyaSession: ObservableObject {
     func isFollowingCurated(_ id: String, store: LocalStore) -> Bool {
         guard let owner = userID, store.hasCloudSpace(for: owner), curatedFollowIDs.contains(id),
               let index = photos.firstIndex(where: { $0.id == id }) else { return false }
-        return !store.blockedExamples.contains(index) && !store.pendingCuratedUnfollows.contains(id)
+        return !store.hiddenCollectionProfiles.contains(index) && !store.pendingCuratedUnfollows.contains(id)
     }
 
     func refreshCuratedFollows(store: LocalStore) async {
@@ -702,7 +708,7 @@ final class LiyaSession: ObservableObject {
         guard generation == curatedFollowGeneration, store.hasCloudSpace(for: owner) else { return }
         let catalog = Set(photos.map(\.id))
         // Historical indices refer to the numbered photo manifest, even if the catalog is reordered.
-        let legacy = store.followedExamples.compactMap { index -> (Int, String)? in
+        let legacy = store.previousCollectionFollows.compactMap { index -> (Int, String)? in
             guard (0..<40).contains(index) else { return nil }
             let id = String(format: "example-photo-%03d", index + 1)
             return catalog.contains(id) ? (index, id) : nil
@@ -724,7 +730,7 @@ final class LiyaSession: ObservableObject {
                 offset += 500
             }
             guard generation == curatedFollowGeneration, store.hasCloudSpace(for: owner) else { return }
-            let blocked = Set(store.blockedExamples.compactMap { photos.indices.contains($0) ? photos[$0].id : nil })
+            let blocked = Set(store.hiddenCollectionProfiles.compactMap { photos.indices.contains($0) ? photos[$0].id : nil })
             let removals = ids.intersection(blocked).union(store.pendingCuratedUnfollows.intersection(catalog))
             if !removals.isEmpty {
                 let rows = removals.map { CuratedFollowWrite(owner_id: owner, media_id: $0, is_following: false) }
@@ -749,7 +755,7 @@ final class LiyaSession: ObservableObject {
         if !curatedFollowsReady || curatedFollowsLoading { await refreshCuratedFollows(store: store) }
         guard generation == curatedFollowGeneration, store.hasCloudSpace(for: owner),
               curatedFollowsReady, let index = photos.firstIndex(where: { $0.id == id }),
-              !following || !store.blockedExamples.contains(index),
+              !following || !store.hiddenCollectionProfiles.contains(index),
               curatedFollowPending.insert(id).inserted else { return false }
         defer {
             if generation == curatedFollowGeneration {
@@ -769,7 +775,7 @@ final class LiyaSession: ObservableObject {
             if following {
                 curatedFollowIDs.insert(id)
                 // A block may have been requested while this write was in flight.
-                if !store.blockedExamples.contains(index) {
+                if !store.hiddenCollectionProfiles.contains(index) {
                     store.finishBlockedUnfollows([id], owner: owner)
                 }
             } else {
@@ -945,46 +951,68 @@ struct MediaEngagement: Decodable, Equatable {
     }
 }
 
-struct LiyaMedia: Decodable, Identifiable {
+struct CatalogMediaAsset: Decodable, Identifiable {
     let id: String
-    let kind: String
-    let sortOrder: Int
-    let objectKey: String
+    let mediaKind: String
+    let storageObjectPath: String
     enum CodingKeys: String, CodingKey {
-        case id, kind
-        case sortOrder = "sort_order", objectKey = "object_key"
+        case id, mediaKind = "kind", storageObjectPath = "object_key"
     }
 }
 
-struct CloudVideoPrompt: Decodable, Identifiable {
+struct VideoReplySuggestion: Decodable, Identifiable {
     let videoID: String
-    let position: Int
-    let name: String
-    let body: String
-    var id: String { "\(videoID):\(position)" }
+    let suggestionOrder: Int
+    let suggestedReply: String
+    var id: String { "\(videoID):\(suggestionOrder)" }
     enum CodingKeys: String, CodingKey {
-        case videoID = "video_id", name = "display_name", position, body
+        case videoID = "video_id", suggestionOrder = "position", suggestedReply = "body"
     }
 }
 
-struct CloudTreePrompt: Decodable, Identifiable {
-    let position: Int
-    let mood: String
-    let body: String
-    var id: Int { position }
+struct ReflectionPrompt: Decodable, Identifiable {
+    let promptOrder: Int
+    let feelingKey: String
+    let writingPrompt: String
+    var id: Int { promptOrder }
+    enum CodingKeys: String, CodingKey {
+        case promptOrder = "position", feelingKey = "mood", writingPrompt = "body"
+    }
 }
 
-struct CloudMood: Codable, Identifiable, Equatable {
-    let ownerID: UUID
-    let day: String
-    let state: String
-    let mood: String
-    let note: String
-    var id: String { day }
+struct JournalDayEntry: Codable, Identifiable, Equatable {
+    let journalOwnerID: UUID
+    let dayStamp: String
+    let entryStatus: String
+    let feelingKey: String
+    let reflectionText: String
+    var id: String { dayStamp }
+
     enum CodingKeys: String, CodingKey {
-        case ownerID = "owner_id"
-        case day, state, mood, note
+        case journalOwnerID = "owner_id", dayStamp = "day", entryStatus = "state"
+        case feelingKey = "mood", reflectionText = "note"
     }
+
+    var recordedDate: Date? {
+        let parts = dayStamp.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return nil }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        return calendar.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2], hour: 12))
+    }
+
+    var feelingName: String {
+        switch feelingKey {
+        case "mood-happy": return "Happy"
+        case "mood-calm": return "Calm"
+        case "mood-yellow": return "Thoughtful"
+        case "mood-teal": return "Tired"
+        case "mood-blue": return "Blue"
+        case "mood-upset": return "Upset"
+        default: return "Mood"
+        }
+    }
+
     static func dayKey(_ date: Date) -> String {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = .current

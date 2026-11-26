@@ -15,6 +15,14 @@ let liyaInk = Color(red: 0.13, green: 0.13, blue: 0.23)
 let liyaAccent = Color(red: 0.44, green: 0.22, blue: 0.95)
 let liyaGradient = LinearGradient(colors: [Color(red: 0.05, green: 0.52, blue: 0.99), Color(red: 0.64, green: 0.14, blue: 0.96)], startPoint: .leading, endPoint: .trailing)
 
+enum LiyaType {
+    static let reading = Font.custom("Nunito-Regular", size: 17, relativeTo: .body)
+    static let detail = Font.custom("Nunito-Regular", size: 15, relativeTo: .subheadline)
+    static let action = Font.custom("Nunito-Bold", size: 16, relativeTo: .headline)
+    static let sectionHeading = Font.custom("Nunito-Bold", size: 18, relativeTo: .headline)
+    static let journalTitle = Font.custom("InstrumentSerif-Regular", size: 32, relativeTo: .title)
+}
+
 struct LiyaFeedActionLabel: View {
     let title: String
     let count: String
@@ -73,7 +81,7 @@ struct PrimaryButton: View {
     let action: () -> Void
     var body: some View {
         Button(action: action) {
-            Text(LocalizedStringKey(title)).font(.system(size: 16, weight: .semibold))
+            Text(LocalizedStringKey(title)).font(LiyaType.action)
                 .foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 48)
                 .background(liyaGradient.opacity(disabled ? 0.45 : 1), in: Capsule())
         }.buttonStyle(.plain).disabled(disabled)
@@ -82,8 +90,15 @@ struct PrimaryButton: View {
 
 struct PageHeader: View {
     @Environment(\.dismiss) private var dismiss
+    @ScaledMetric(relativeTo: .headline) private var headerHeight: CGFloat = 44
     let title: String
-    var light = false
+    let light: Bool
+
+    init(title: String, light: Bool = false) {
+        self.title = title
+        self.light = light
+    }
+
     var body: some View {
         DuoControlRegion { _ in
             HStack {
@@ -91,11 +106,12 @@ struct PageHeader: View {
                     Image("back").renderingMode(light ? .template : .original).resizable().scaledToFit().foregroundStyle(.white).frame(width: 20, height: 20).frame(width: 44, height: 44)
                 }.buttonStyle(.plain).accessibilityLabel("Back")
                 Spacer(minLength: 0)
-                Text(LocalizedStringKey(title)).font(.headline).lineLimit(1).foregroundStyle(light ? .white : liyaInk)
+                Text(LocalizedStringKey(title)).font(LiyaType.sectionHeading)
+                    .lineLimit(2).multilineTextAlignment(.center).foregroundStyle(light ? .white : liyaInk)
                 Spacer(minLength: 0)
                 Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
             }.modifier(AdaptiveContainerMargins())
-        }.frame(height: 44)
+        }.frame(height: max(44, headerHeight))
     }
 }
 
@@ -115,8 +131,8 @@ struct EmptyState: View {
     var body: some View {
         VStack(spacing: 12) {
             Image("empty-art").resizable().scaledToFit().frame(width: 78, height: 72).accessibilityHidden(true)
-            Text(title).font(.headline).foregroundStyle(liyaInk)
-            Text(detail).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            Text(title).font(LiyaType.sectionHeading).foregroundStyle(liyaInk).multilineTextAlignment(.center)
+            Text(detail).font(LiyaType.detail).foregroundStyle(.secondary).multilineTextAlignment(.center)
         }.frame(maxWidth: .infinity).padding(24)
     }
 }

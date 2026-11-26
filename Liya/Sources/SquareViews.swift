@@ -24,10 +24,10 @@ struct SquareHome: View {
                         Image("square-prompt").resizable().scaledToFit().frame(maxWidth: .infinity)
                     }.buttonStyle(.plain).accessibilityLabel("Write a draft")
                     HStack(alignment: .top, spacing: 10) {
-                        feature("ai-card", label: "AI chat") { AutomaticChatView() }
                         feature("diary-card", label: "Mood diary") { MoodDiaryView() }
                         feature("tree-card", label: "Mood tree hole") { TreeHoleView() }
                     }
+                    JournalPostcardLink()
                     if dynamicTypeSize.isAccessibilitySize {
                         VStack(spacing: 10) { wellbeingLinks }
                     } else {
@@ -50,15 +50,15 @@ struct SquareHome: View {
                     }
                     LazyVStack(spacing: 16) {
                         ForEach(Array(session.photos.enumerated()), id: \.element.id) { index, photo in
-                            if ExamplePhotoAllocation.isPost(index, in: session.photos) && !store.blockedExamples.contains(index) {
-                                ExamplePhotoRow(index: index, mediaID: photo.id)
+                            if CollectionPhotoRoles.isPost(index, in: session.photos) && !store.hiddenCollectionProfiles.contains(index) {
+                                CollectionPhotoCard(index: index, mediaID: photo.id)
                             }
                         }
                     }
                 }.frame(maxWidth: 620).frame(maxWidth: .infinity).padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 28 + tabBarClearance)
             }.refreshable {
                 let ids = session.photos.indices.compactMap { index in
-                    ExamplePhotoAllocation.isPost(index, in: session.photos) && !store.blockedExamples.contains(index)
+                    CollectionPhotoRoles.isPost(index, in: session.photos) && !store.hiddenCollectionProfiles.contains(index)
                         ? session.photos[index].id : nil
                 }
                 await session.refreshMediaEngagement(ids: ids)
@@ -127,8 +127,9 @@ struct MoodDiaryView: View {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(alignment: .top, spacing: 12) {
                     diaryStat("diary-count", label: "Total record days", value: session.moodEntries.count)
-                    diaryStat("diary-happy", label: "Happy days", value: session.moodEntries.filter { $0.mood == "mood-happy" }.count)
+                    diaryStat("diary-happy", label: "Happy days", value: session.moodEntries.filter { $0.feelingKey == "mood-happy" }.count)
                 }
+                JournalPostcardLink()
                 NavigationLink { MoodReflectionsView() } label: {
                     HStack(spacing: 10) {
                         Image("mood-calm").resizable().scaledToFit().frame(width: 32, height: 32).accessibilityHidden(true)
@@ -280,10 +281,10 @@ struct MoodDiaryView: View {
     }
 
     private func loadEntry() {
-        let entry = session.moodEntries.first { $0.day == CloudMood.dayKey(date) }
+        let entry = session.moodEntries.first { $0.dayStamp == JournalDayEntry.dayKey(date) }
         let unsaved = store.pendingMoods.first { Calendar.current.isDate($0.date, inSameDayAs: date) }
-        mood = unsaved?.mood ?? entry?.mood ?? "mood-happy"
-        note = unsaved?.note ?? entry?.note ?? ""
+        mood = unsaved?.mood ?? entry?.feelingKey ?? "mood-happy"
+        note = unsaved?.note ?? entry?.reflectionText ?? ""
         dirty = unsaved != nil
         saved = false
     }
@@ -306,12 +307,12 @@ private struct MoodReflectionsView: View {
     @State private var days = 7
     private let moods = [("mood-happy", "Happy"), ("mood-calm", "Calm"), ("mood-yellow", "Thoughtful"), ("mood-teal", "Tired"), ("mood-blue", "Blue"), ("mood-upset", "Upset")]
 
-    private var recentEntries: [CloudMood] {
+    private var recentEntries: [JournalDayEntry] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         guard let first = calendar.date(byAdding: .day, value: 1 - days, to: today) else { return [] }
-        let lower = CloudMood.dayKey(first), upper = CloudMood.dayKey(today)
-        return session.moodEntries.filter { $0.day >= lower && $0.day <= upper }.sorted { $0.day > $1.day }
+        let lower = JournalDayEntry.dayKey(first), upper = JournalDayEntry.dayKey(today)
+        return session.moodEntries.filter { $0.dayStamp >= lower && $0.dayStamp <= upper }.sorted { $0.dayStamp > $1.dayStamp }
     }
 
     var body: some View {
@@ -353,7 +354,7 @@ private struct MoodReflectionsView: View {
                         }.font(.subheadline).foregroundStyle(.secondary)
                         ForEach(moods.indices, id: \.self) { index in
                             let item = moods[index]
-                            let count = recentEntries.filter { $0.mood == item.0 }.count
+                            let count = recentEntries.filter { $0.feelingKey == item.0 }.count
                             if count > 0 {
                                 HStack(spacing: 10) {
                                     Image(item.0).resizable().scaledToFit().frame(width: 32, height: 32).accessibilityHidden(true)
@@ -368,16 +369,16 @@ private struct MoodReflectionsView: View {
                     Text("Recent entries").font(.headline).foregroundStyle(liyaInk)
                     LazyVStack(spacing: 10) {
                         ForEach(recentEntries) { entry in
-                            if let day = date(for: entry.day) {
+                            if let day = entry.recordedDate {
                                 NavigationLink { MoodDiaryView(initialDate: day) } label: {
                                     HStack(alignment: .top, spacing: 12) {
-                                        Image(entry.mood).resizable().scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
+                                        Image(entry.feelingKey).resizable().scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text(day, format: .dateTime.weekday(.wide).month(.abbreviated).day()).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
-                                            if entry.note.isEmpty {
-                                                Text(LocalizedStringKey(moodName(entry.mood))).font(.subheadline).foregroundStyle(.secondary)
+                                            if entry.reflectionText.isEmpty {
+                                                Text(LocalizedStringKey(entry.feelingName)).font(.subheadline).foregroundStyle(.secondary)
                                             } else {
-                                                Text(entry.note).font(.subheadline).foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.leading)
+                                                Text(entry.reflectionText).font(.subheadline).foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.leading)
                                             }
                                         }
                                         Spacer(minLength: 4)
@@ -401,17 +402,6 @@ private struct MoodReflectionsView: View {
         }.buttonStyle(.plain).accessibilityAddTraits(days == count ? .isSelected : [])
     }
 
-    private func date(for key: String) -> Date? {
-        let values = key.split(separator: "-").compactMap { Int($0) }
-        guard values.count == 3 else { return nil }
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = .current
-        return calendar.date(from: DateComponents(year: values[0], month: values[1], day: values[2]))
-    }
-
-    private func moodName(_ mood: String) -> String {
-        moods.first(where: { $0.0 == mood })?.1 ?? "Mood"
-    }
 }
 
 private struct QuietMomentView: View {
@@ -526,8 +516,8 @@ struct TreeHoleView: View {
             }
         let hidden = Set(hiddenSuggestions.split(separator: ",").map(String.init))
         let ideas = session.curatedTreePrompts.compactMap { item -> TreeThought? in
-            let id = "suggestion-\(item.position)"
-            return hidden.contains(id) ? nil : TreeThought(id: id, body: item.body, mood: item.mood, post: nil)
+            let id = "suggestion-\(item.promptOrder)"
+            return hidden.contains(id) ? nil : TreeThought(id: id, body: item.writingPrompt, mood: item.feelingKey, post: nil)
         }
         return community + ideas
     }
@@ -704,7 +694,6 @@ private struct TreeThoughtOptions: View {
                         if mode == 1 && !sent {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Why are you reporting this thought?").font(.headline).foregroundStyle(liyaInk)
-                                Text("Reports are stored; review is not yet configured.").font(.footnote).foregroundStyle(.secondary)
                                 Link("Email support: Liya2026support@liya.vip", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
                                     .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                                 ForEach(reasons, id: \.self) { item in
@@ -867,7 +856,7 @@ private struct MoodCalendar: View {
                     if let day = days[index] {
                         let selected = Calendar.current.isDate(day, inSameDayAs: selection)
                         let future = Calendar.current.startOfDay(for: day) > Calendar.current.startOfDay(for: Date())
-                        let entry = session.moodEntries.first { $0.day == CloudMood.dayKey(day) }
+                        let entry = session.moodEntries.first { $0.dayStamp == JournalDayEntry.dayKey(day) }
                         Button { selection = day } label: {
                             ZStack {
                                 Circle().fill(selected ? liyaAccent : (future ? Color.gray.opacity(0.08) : liyaAccent.opacity(0.10)))
@@ -876,7 +865,7 @@ private struct MoodCalendar: View {
                                     Text("\(Calendar.current.component(.day, from: day))").font(.caption.weight(.medium))
                                         .foregroundStyle(selected ? .white : (future ? liyaInk.opacity(0.3) : liyaAccent))
                                     if let entry {
-                                        Image(entry.mood).resizable().scaledToFit().frame(width: 19, height: 19).accessibilityHidden(true)
+                                        Image(entry.feelingKey).resizable().scaledToFit().frame(width: 19, height: 19).accessibilityHidden(true)
                                     }
                                 }
                             }.frame(maxWidth: .infinity).frame(minHeight: 44)
@@ -909,7 +898,7 @@ private struct DeviceMoodHistory: View {
 }
 
 
-private struct ExamplePhotoRow: View {
+private struct CollectionPhotoCard: View {
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     let index: Int
@@ -922,8 +911,8 @@ private struct ExamplePhotoRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
-                NavigationLink { ExampleProfileView(index: index, displayName: displayName, mediaID: mediaID) } label: {
-                    HStack(spacing: 10) { ExampleAvatar(index: index, size: 42); VStack(alignment: .leading, spacing: 3) {
+                NavigationLink { CollectionAuthorView(index: index, displayName: displayName, mediaID: mediaID) } label: {
+                    HStack(spacing: 10) { CollectionPortrait(index: index, size: 42); VStack(alignment: .leading, spacing: 3) {
                         Text(displayName).font(.subheadline.weight(.semibold)).lineLimit(1)
                         Text("Collection").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     } }.foregroundStyle(liyaInk)
@@ -940,9 +929,9 @@ private struct ExamplePhotoRow: View {
                 } label: { Image("more").resizable().scaledToFit().frame(width: 20, height: 20).frame(width: 44, height: 44) }
                     .buttonStyle(.plain).accessibilityLabel("More options")
             }
-            NavigationLink { ExamplePhotoDetail(mediaID: mediaID) } label: {
+            NavigationLink { CollectionPhotoDetail(mediaID: mediaID) } label: {
                 GeometryReader { geometry in
-                    CloudPhoto(index: index, contentMode: .fill)
+                    CollectionPhoto(catalogIndex: index, contentMode: .fill)
                         .frame(width: geometry.size.width, height: geometry.size.height).clipped()
                 }
                 .aspectRatio(4 / 5, contentMode: .fit).frame(maxWidth: 430)
@@ -951,7 +940,7 @@ private struct ExamplePhotoRow: View {
             }.buttonStyle(.plain).accessibilityLabel("Open post")
             PhotoEngagementBar(mediaID: mediaID)
         }.modifier(LiyaFeedCardSurface())
-            .sheet(item: $options) { ExampleOptionsView(target: $0) }
+            .sheet(item: $options) { CollectionSafetySheet(target: $0) }
     }
 }
 
@@ -1000,7 +989,7 @@ private struct PhotoEngagementBar: View {
     }
 }
 
-struct ExampleCommentsView: View {
+struct SavedPhotoNotes: View {
     @EnvironmentObject private var store: LocalStore
     let index: Int
     @State private var text = ""
@@ -1031,7 +1020,7 @@ struct ExampleCommentsView: View {
 }
 
 
-struct ExamplePhotoDetail: View {
+struct CollectionPhotoDetail: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var store: LocalStore
     @Environment(\.dismiss) private var dismiss
@@ -1063,20 +1052,20 @@ struct ExamplePhotoDetail: View {
                 }.frame(height: 44)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        if let index, store.blockedExamples.contains(index) {
+                        if let index, store.hiddenCollectionProfiles.contains(index) {
                             Text("Unblock this profile to see their posts again.")
                                 .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                        } else if let index, ExamplePhotoAllocation.isPost(index, in: session.photos) {
-                            NavigationLink { ExampleProfileView(index: index, displayName: displayName, mediaID: mediaID) } label: {
+                        } else if let index, CollectionPhotoRoles.isPost(index, in: session.photos) {
+                            NavigationLink { CollectionAuthorView(index: index, displayName: displayName, mediaID: mediaID) } label: {
                                 HStack(spacing: 10) {
-                                    ExampleAvatar(index: index)
+                                    CollectionPortrait(index: index)
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text(displayName).font(.subheadline.bold()).foregroundStyle(liyaInk)
                                         Text("Collection").font(.caption).foregroundStyle(.secondary)
                                     }
                                 }
                             }.buttonStyle(.plain)
-                            CloudPhoto(index: index).frame(maxWidth: .infinity).frame(height: 300)
+                            CollectionPhoto(catalogIndex: index).frame(maxWidth: .infinity).frame(height: 300)
                                 .clipShape(RoundedRectangle(cornerRadius: 14))
                             PhotoEngagementBar(mediaID: mediaID)
                         } else if session.catalogLoading {
@@ -1096,6 +1085,6 @@ struct ExamplePhotoDetail: View {
             }
         }
         .navigationBarHidden(true)
-        .sheet(item: $options) { ExampleOptionsView(target: $0) }
+        .sheet(item: $options) { CollectionSafetySheet(target: $0) }
     }
 }

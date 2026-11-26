@@ -105,7 +105,7 @@ private enum VideoPanel: Hashable, Identifiable {
 
 // The supplied photos and videos have no known author relationship. These
 // stable display-only pairings are examples, not real user accounts.
-struct ExampleVideoCreator: Decodable {
+struct CollectionVideoAuthor: Decodable {
     let videoID: String
     let name: String
     let photoID: String
@@ -115,14 +115,14 @@ struct ExampleVideoCreator: Decodable {
     }
 }
 
-private struct ExampleVideoAvatar: View {
+private struct VideoAuthorPortrait: View {
     @EnvironmentObject private var session: LiyaSession
     let photoID: String?
 
     var body: some View {
         Group {
             if let photoID, let index = session.photos.firstIndex(where: { $0.id == photoID }) {
-                ExampleAvatar(index: index, size: 44)
+                CollectionPortrait(index: index, size: 44)
             } else {
                 Color.clear.frame(width: 44, height: 44)
             }
@@ -198,7 +198,7 @@ struct VideoHome: View {
                             HStack(alignment: .center, spacing: 8) {
                                 NavigationLink {
                                     if let creator, let photoIndex {
-                                        ExampleProfileView(index: photoIndex, displayName: authorName, introduction: creator.caption, mediaID: creator.photoID)
+                                        CollectionAuthorView(index: photoIndex, displayName: authorName, introduction: creator.caption, mediaID: creator.photoID)
                                     } else {
                                         PageShell(title: "Profile") {
                                             EmptyState(title: "Profile unavailable", detail: "Please try again when the content has loaded.")
@@ -206,7 +206,7 @@ struct VideoHome: View {
                                     }
                                 } label: {
                                     HStack(spacing: 10) {
-                                        ExampleVideoAvatar(photoID: creator?.photoID)
+                                        VideoAuthorPortrait(photoID: creator?.photoID)
                                         Text(authorName)
                                             .font(.subheadline.weight(.semibold)).lineLimit(2)
                                     }
@@ -229,8 +229,8 @@ struct VideoHome: View {
                                             }
                                             .frame(minHeight: 44)
                                     }
-                                    .disabled(store.blockedExamples.contains(photoIndex))
-                                    .opacity(store.blockedExamples.contains(photoIndex) ? 0.5 : 1)
+                                    .disabled(store.hiddenCollectionProfiles.contains(photoIndex))
+                                    .opacity(store.hiddenCollectionProfiles.contains(photoIndex) ? 0.5 : 1)
                                 }
                             }
                             if let caption = creator?.caption {
@@ -346,7 +346,7 @@ struct VideoHome: View {
         .navigationBarHidden(true)
     }
 
-    private func engagementRail(for video: LiyaMedia) -> some View {
+    private func engagementRail(for video: CatalogMediaAsset) -> some View {
         let counts = session.mediaEngagement[video.id]
         let liked = session.likedMediaIDs.contains(video.id)
         let failed = session.mediaEngagementFailures.contains(video.id)
@@ -442,14 +442,8 @@ struct MediaCommentsView: View {
         return session.mediaEngagement[mediaID]?.commentCount
     }
 
-    private var replyIdeas: [CloudVideoPrompt] {
-        guard let index = session.videos.firstIndex(where: { $0.id == mediaID }) else { return [] }
-        return session.curatedVideoPrompts.filter { prompt in
-            guard prompt.videoID == mediaID else { return false }
-            guard !session.photos.isEmpty else { return true }
-            let authorIndex = (10 + index * 2 + prompt.position) % session.photos.count
-            return !store.blockedExamples.contains(authorIndex)
-        }
+    private var replyIdeas: [VideoReplySuggestion] {
+        session.curatedVideoPrompts.filter { $0.videoID == mediaID }
     }
 
     var body: some View {
@@ -488,9 +482,9 @@ struct MediaCommentsView: View {
                                     Text("Reply ideas").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                                     ForEach(replyIdeas) { idea in
                                         Button {
-                                            text = idea.body; attempt = UUID(); persistDraft(); commentFocused = true
+                                            text = idea.suggestedReply; attempt = UUID(); persistDraft(); commentFocused = true
                                         } label: {
-                                            Text(verbatim: idea.body).font(.subheadline).foregroundStyle(liyaInk)
+                                            Text(verbatim: idea.suggestedReply).font(.subheadline).foregroundStyle(liyaInk)
                                                 .multilineTextAlignment(.leading).padding(.horizontal, 12)
                                                 .frame(minHeight: 44).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
                                         }.buttonStyle(.plain)

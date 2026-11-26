@@ -1,5 +1,7 @@
 # Liya Terms of Service
 
+> Archived backend integration reference. The current Liya policy is maintained in [release documents](../../legal/terms.md) and [published here](https://liya-emotional-space.pages.dev/terms/).
+
 Effective 4 November 2026.
 
 ## Using Liya

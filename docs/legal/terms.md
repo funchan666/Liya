@@ -1,6 +1,6 @@
 # Liya Terms of Service
 
-Last updated 25 November 2026.
+Last updated 26 November 2026.
 
 ## Welcome to Liya
 
@@ -20,15 +20,21 @@ You can like photos and videos, add comments using your community profile, and r
 
 To report a member, open their profile, choose a reason and submit the report in the app. You can also use the options beside a comment to report it or block its author.
 
+New comments, community names, introductions and shared profile photos are reviewed before they appear to other members.
+
 ## Following people
 
 You choose whom to follow. You can see who follows you, review your Following list and unfollow a member or a profile from the media collection at any time. Blocking a member removes any follows between you. Unblocking lets you choose whether to follow again.
+
+## Journal postcards
+
+Between days lets you turn one or two mood entries into a postcard. Choose the entries and whether any of their notes will be visible. You can review the image before choosing a recipient or app in the system share sheet.
 
 ## Coin purchases
 
 Coin packs are consumable in-app purchases. The App Store shows the price before you confirm and handles billing under the [Apple Media Services Terms and Conditions](https://www.apple.com/legal/internet-services/itunes/). When Liya verifies and delivers a purchase, it adds the coins to your wallet on that device.
 
-Purchased coins have no expiration date. Your balance stays on the device and does not sync through your Liya account. You may lose access to it if you remove Liya or erase the device. You can spend coins to unlock appearances for your mood diary and profile. For billing questions or refund requests, contact [Apple Support](https://support.apple.com/en-us/118223).
+Purchased coins have no expiration date. Your balance stays on the device and does not sync through your Liya account. You may lose access to it if you remove Liya or erase the device. You can spend coins to unlock appearances for your mood diary and profile. Daybreak postcard paper is free. Tideglass paper is an optional, one-time unlock for 90 coins on this device. Once unlocked, you can use it again without spending more coins. For billing questions or refund requests, contact [Apple Support](https://support.apple.com/en-us/118223).
 
 ## Feature availability
 

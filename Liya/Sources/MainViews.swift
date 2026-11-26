@@ -106,10 +106,10 @@ struct DraftsView: View {
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
-    @State private var deletingDraft: LocalDraft?
+    @State private var deletingDraft: MomentDraft?
     @State private var previewVideo: DraftAttachment?
     @State private var publishingDraft: UUID?
-    private var unpublished: [LocalDraft] { store.drafts.filter { $0.publishedLocally != true } }
+    private var unpublished: [MomentDraft] { store.drafts.filter { $0.publishedLocally != true } }
     var body: some View {
         PageShell(title: "Your drafts") {
             VStack(spacing: 12) {
@@ -155,7 +155,7 @@ struct DraftsView: View {
             .presentationDetents([.medium])
         }
     }
-    private func isShared(_ draft: LocalDraft) -> Bool {
+    private func isShared(_ draft: MomentDraft) -> Bool {
         guard let owner = session.userID else { return false }
         return social.posts.contains { $0.id == SocialAttempt.draftPostID(owner: owner, draft: draft) }
     }
@@ -164,7 +164,7 @@ struct DraftsView: View {
 struct EditDraftView: View {
     @EnvironmentObject private var store: LocalStore
     @Environment(\.dismiss) private var dismiss
-    let draft: LocalDraft
+    let draft: MomentDraft
     @State private var text = ""
     @State private var attachments: [DraftAttachment] = []
     @State private var loading = false
@@ -201,9 +201,9 @@ struct MessagesHome: View {
     @EnvironmentObject private var social: SocialStore
     @State private var section = 0
     @State private var deleteMessage: DraftMessageSelection?
-    private var messageIndexes: [Int] { store.messageDrafts.keys.compactMap(Int.init).filter { !store.blockedExamples.contains($0) }.sorted() }
-    private var visibleLikes: [Int] { store.likedPhotos.filter { !store.blockedExamples.contains($0) }.sorted() }
-    private var visibleNotes: [LocalComment] { store.comments.filter { !store.blockedExamples.contains($0.photoIndex) } }
+    private var messageIndexes: [Int] { store.messageDrafts.keys.compactMap(Int.init).filter { !store.hiddenCollectionProfiles.contains($0) }.sorted() }
+    private var visibleLikes: [Int] { store.likedPhotos.filter { !store.hiddenCollectionProfiles.contains($0) }.sorted() }
+    private var visibleNotes: [SavedPhotoNote] { store.comments.filter { !store.hiddenCollectionProfiles.contains($0.photoIndex) } }
     private var hasLocalActivity: Bool {
         !session.likedMediaIDs.isEmpty || !visibleNotes.isEmpty || !visibleLikes.isEmpty || !store.videoNotes.isEmpty || !store.likedVideos.isEmpty
     }
@@ -216,24 +216,24 @@ struct MessagesHome: View {
                     SegmentedTabs(items: ["Message", "Interaction"], selection: $section)
                     if section == 0 {
                         if messageIndexes.isEmpty {
-                            EmptyState(title: "No messages yet", detail: "Messaging is currently unavailable.")
+                            EmptyState(title: "No messages yet", detail: "")
                         }
-                        if !messageIndexes.isEmpty { OfflineNote(text: "Earlier drafts for example profiles are private and have not been sent.") }
+                        if !messageIndexes.isEmpty { Text("Private notes").font(.headline).foregroundStyle(liyaInk) }
                         ForEach(messageIndexes, id: \.self) { index in
                             HStack(spacing: 12) {
-                                NavigationLink { ExampleProfileView(index: index) } label: {
-                                        ExampleAvatar(index: index)
+                                NavigationLink { CollectionAuthorView(index: index) } label: {
+                                        CollectionPortrait(index: index)
                                 }.buttonStyle(.plain).accessibilityLabel("View profile")
                                 VStack(alignment: .leading, spacing: 4) {
-                                    NavigationLink { ExampleProfileView(index: index) } label: {
-                                            Text("Example profile \(index + 1)").font(.subheadline.bold()).foregroundStyle(liyaInk)
+                                    NavigationLink { CollectionAuthorView(index: index) } label: {
+                                            Text(verbatim: collectionName(index)).font(.subheadline.bold()).foregroundStyle(liyaInk)
                                     }.buttonStyle(.plain)
-                                    NavigationLink { ExampleChatView(index: index) } label: {
+                                    NavigationLink { CollectionProfileNote(index: index) } label: {
                                             Text("Draft · \(store.messageDrafts[String(index)] ?? "")").font(.caption).foregroundStyle(.secondary).lineLimit(2)
                                     }.buttonStyle(.plain)
                                 }
                                 Spacer()
-                                NavigationLink("Open") { ExampleChatView(index: index) }.font(.caption.bold()).foregroundStyle(liyaAccent)
+                                NavigationLink("Open") { CollectionProfileNote(index: index) }.font(.caption.bold()).foregroundStyle(liyaAccent)
                                 Button { deleteMessage = DraftMessageSelection(id: index) } label: {
                                     Image("close").resizable().scaledToFit().frame(width: 22, height: 22).frame(width: 44, height: 44)
                                 }.buttonStyle(.plain).accessibilityLabel("Delete message draft")
@@ -249,7 +249,7 @@ struct MessagesHome: View {
                             Button("Retry likes") { Task { await session.refreshLikes() } }.foregroundStyle(liyaAccent)
                         }
                         ForEach(session.photos.indices, id: \.self) { index in
-                            if session.isLiked(kind: "photo", index: index) && !store.blockedExamples.contains(index) {
+                            if session.isLiked(kind: "photo", index: index) && !store.hiddenCollectionProfiles.contains(index) {
                                 photoActivity(index: index, title: "You liked a post", note: nil)
                             }
                         }
@@ -296,11 +296,11 @@ struct MessagesHome: View {
 
     private func photoActivity(index: Int, title: String, note: String?) -> some View {
         HStack(alignment: .center, spacing: 12) {
-            NavigationLink { ExampleProfileView(index: index, displayName: collectionName(index)) } label: {
-                ExampleAvatar(index: index, size: 44)
+            NavigationLink { CollectionAuthorView(index: index, displayName: collectionName(index)) } label: {
+                CollectionPortrait(index: index, size: 44)
             }.buttonStyle(.plain).accessibilityLabel("View \(collectionName(index)) profile")
             VStack(alignment: .leading, spacing: 4) {
-                NavigationLink { ExampleProfileView(index: index, displayName: collectionName(index)) } label: {
+                NavigationLink { CollectionAuthorView(index: index, displayName: collectionName(index)) } label: {
                     Text(collectionName(index)).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk).lineLimit(1)
                 }.buttonStyle(.plain)
                 NavigationLink {
@@ -315,8 +315,8 @@ struct MessagesHome: View {
             NavigationLink {
                 photoActivityDestination(index: index, note: note)
             } label: {
-                if ExamplePhotoAllocation.isPost(index, in: session.photos) {
-                    CloudPhoto(index: index, contentMode: .fill).frame(width: 52, height: 52).clipped().clipShape(RoundedRectangle(cornerRadius: 10))
+                if CollectionPhotoRoles.isPost(index, in: session.photos) {
+                    CollectionPhoto(catalogIndex: index, contentMode: .fill).frame(width: 52, height: 52).clipped().clipShape(RoundedRectangle(cornerRadius: 10))
                 } else { Color.clear.frame(width: 52, height: 52) }
             }.buttonStyle(.plain).accessibilityLabel(note == nil ? "View post" : "View private note")
         }.padding(12).background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 16))
@@ -324,9 +324,9 @@ struct MessagesHome: View {
 
     @ViewBuilder private func photoActivityDestination(index: Int, note: String?) -> some View {
         if note != nil {
-            ExampleCommentsView(index: index)
+            SavedPhotoNotes(index: index)
         } else if session.photos.indices.contains(index) {
-            ExamplePhotoDetail(mediaID: session.photos[index].id)
+            CollectionPhotoDetail(mediaID: session.photos[index].id)
         } else {
             PageShell(title: "Post") { Text("This post is no longer available.") }
         }
@@ -338,15 +338,15 @@ struct MessagesHome: View {
         let avatarIndex = creator.flatMap { creator in session.photos.firstIndex(where: { $0.id == creator.photoID }) }
         return HStack(spacing: 12) {
             if let avatarIndex {
-                NavigationLink { ExampleProfileView(index: avatarIndex, displayName: authorName, mediaID: creator?.photoID) } label: {
-                    ExampleAvatar(index: avatarIndex, size: 44)
+                NavigationLink { CollectionAuthorView(index: avatarIndex, displayName: authorName, mediaID: creator?.photoID) } label: {
+                    CollectionPortrait(index: avatarIndex, size: 44)
                 }.buttonStyle(.plain).accessibilityLabel("View profile")
             } else {
                 Image(note == nil ? "video-like-on" : "comment").resizable().scaledToFit().frame(width: 44, height: 44).accessibilityHidden(true)
             }
             VStack(alignment: .leading, spacing: 4) {
                 if let avatarIndex {
-                    NavigationLink { ExampleProfileView(index: avatarIndex, displayName: authorName, mediaID: creator?.photoID) } label: {
+                    NavigationLink { CollectionAuthorView(index: avatarIndex, displayName: authorName, mediaID: creator?.photoID) } label: {
                         Text(authorName).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk).lineLimit(1)
                     }.buttonStyle(.plain)
                 } else {

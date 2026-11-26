@@ -17,7 +17,12 @@ targets:
     sources:
       - path: Liya/Sources
       - path: Liya/Assets.xcassets
+      - path: Liya/Resources/Typefaces
+        type: folder
+        buildPhase: resources
       - path: Liya/Localizable.xcstrings
+        buildPhase: resources
+      - path: Liya/InfoPlist.xcstrings
         buildPhase: resources
       - path: Liya/LaunchScreen.storyboard
         buildPhase: resources
@@ -31,8 +36,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Liya/Liya.entitlements
         INFOPLIST_FILE: Liya/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Liya
-        INFOPLIST_KEY_NSCameraUsageDescription: Liya uses the camera when you choose to take a photo.
-        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: Liya uses the photos and videos you choose for your profile and moments.
+        INFOPLIST_KEY_NSCameraUsageDescription: Liya uses the camera to take a profile photo or attach a photo to a moment.
         INFOPLIST_KEY_UILaunchScreen_Generation: NO
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         TARGETED_DEVICE_FAMILY: "1,2"

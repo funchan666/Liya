@@ -1,5 +1,7 @@
 # Liya Privacy Policy
 
+> Archived backend integration reference. The current Liya policy is maintained in [release documents](../../legal/privacy.md) and [published here](https://liya-emotional-space.pages.dev/privacy/).
+
 Effective 4 November 2026.
 
 ## Information handled

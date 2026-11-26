@@ -9,13 +9,13 @@ struct LiyaApp: App {
     @StateObject private var session = LiyaSession()
     @StateObject private var social = SocialStore()
     @StateObject private var calls = LiyaCalls()
-    @StateObject private var voip = LiyaVoIP.shared
     @State private var showingLaunch = true
     @AppStorage("liya.language") private var language = "en"
 
     var body: some Scene {
         WindowGroup {
             RootView().environmentObject(store).environmentObject(checkout).environmentObject(session).environmentObject(social).environmentObject(calls)
+                .font(LiyaType.reading)
                 .environment(\.locale, Locale(identifier: language))
                 .accessibilityHidden(showingLaunch)
                 .overlay {
@@ -35,11 +35,6 @@ struct LiyaApp: App {
                         }
                         _ = await session.handleAuthURL(url)
                     }
-                }
-                .sheet(isPresented: Binding(get: { voip.permissionReminder != nil && scenePhase == .active }, set: { if !$0 { voip.dismissPermissionReminder() } })) {
-                    LocalConfirmation(title: "Enable call access", message: voip.permissionReminder == "video" ? "The incoming video call couldn't be answered without microphone and camera access. Allow access, then ask the member to call again." : "The incoming call couldn't be answered without microphone access. Allow access, then ask the member to call again.", action: "Allow access") {
-                        Task { await voip.resolvePermissionReminder() }
-                    } cancel: { voip.dismissPermissionReminder() }
                 }
                 .task {
                     LiyaVoIP.shared.bind(session: session, calls: calls, store: store)

@@ -1,0 +1,41 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSCameraUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liya uses the camera to take a profile photo or attach a photo to a moment."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liya usa la cámara para tomar una foto de perfil o añadir una foto a un momento."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liya utilise la caméra pour prendre une photo de profil ou joindre une photo à un moment."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liyaは、プロフィールに使う写真や投稿に添付する写真を撮るためにカメラを使用します。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liya 使用相机拍摄头像或动态配图。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

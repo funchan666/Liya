@@ -25,7 +25,7 @@ struct LocalPostCard: View {
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
-    let post: LocalDraft
+    let post: MomentDraft
     @State private var preview: DraftAttachment?
     @State private var confirmingDelete = false
     @State private var sharing = false
