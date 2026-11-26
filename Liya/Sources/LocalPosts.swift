@@ -11,7 +11,7 @@ struct PostTagSelector: View {
                     Button {
                         if selection.contains(tag) { selection.removeAll { $0 == tag } } else { selection.append(tag) }
                     } label: {
-                        Text("# \(tag)").font(.caption).foregroundStyle(selection.contains(tag) ? liyaAccent : .secondary)
+                        Text("# \(tag)").font(LiyaType.text(.caption)).foregroundStyle(selection.contains(tag) ? liyaAccent : .secondary)
                             .padding(.horizontal, 12).frame(minHeight: 44)
                             .background(selection.contains(tag) ? liyaAccent.opacity(0.13) : .white.opacity(0.75), in: Capsule())
                     }.buttonStyle(.plain).accessibilityAddTraits(selection.contains(tag) ? .isSelected : [])
@@ -28,7 +28,6 @@ struct LocalPostCard: View {
     let post: MomentDraft
     @State private var preview: DraftAttachment?
     @State private var confirmingDelete = false
-    @State private var sharing = false
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
@@ -37,18 +36,18 @@ struct LocalPostCard: View {
                         if let avatar = store.avatar { MediaThumbnail(item: avatar).frame(width: 42, height: 42).clipShape(Circle()) }
                         else { Image("app-mark").resizable().scaledToFill().frame(width: 42, height: 42).clipShape(Circle()) }
                         VStack(alignment: .leading, spacing: 3) {
-                            Text(store.nickname.isEmpty ? "Your profile" : store.nickname).font(.subheadline.bold()).foregroundStyle(liyaInk)
-                            Text("Not shared").font(.caption).foregroundStyle(.secondary)
+                            Text(store.nickname.isEmpty ? "Your profile" : store.nickname).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(liyaInk)
+                            Text(LocalizedStringKey(isShared ? "Submitted to community" : "Private moment")).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
                         }
                     }
                 }.buttonStyle(.plain)
                 Spacer()
-                NavigationLink { EditDraftView(draft: post) } label: { Text("Edit").font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44) }
+                NavigationLink { EditDraftView(draft: post) } label: { Text("Edit").font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44) }
                     .buttonStyle(.plain)
-                Button("Delete") { confirmingDelete = true }.font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                Button("Delete") { confirmingDelete = true }.font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
             }
             if !post.text.isEmpty { Text(post.text).foregroundStyle(liyaInk).frame(maxWidth: .infinity, alignment: .leading) }
-            if let tags = post.tags, !tags.isEmpty { Text(tags.map { "# " + $0 }.joined(separator: "   ")).font(.caption).foregroundStyle(liyaAccent) }
+            if let tags = post.tags, !tags.isEmpty { Text(tags.map { "# " + $0 }.joined(separator: "   ")).font(LiyaType.text(.caption)).foregroundStyle(liyaAccent) }
             if let attachments = post.attachments, !attachments.isEmpty {
                 ScrollView(.horizontal) {
                     HStack(spacing: 8) {
@@ -60,18 +59,9 @@ struct LocalPostCard: View {
                     }
                 }
             }
-            if social.isJoined(session) {
-                Button(sharing ? "Sharing…" : (isShared ? "Submitted to community" : "Share with community")) {
-                    guard let owner = session.userID else { return }
-                    sharing = true
-                    Task { _ = await social.publish(session, id: SocialAttempt.draftPostID(owner: owner, draft: post), body: post.text, tags: post.tags ?? [], attachments: post.attachments ?? []); sharing = false }
-                }.font(.footnote.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                    .disabled(sharing || isShared)
-                if isShared, let owner = session.userID,
-                   let status = social.moderationText(kind: "post", id: SocialAttempt.draftPostID(owner: owner, draft: post)) {
-                    Text(status).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                }
-                if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
+            if isShared, let owner = session.userID,
+               let status = social.moderationText(kind: "post", id: SocialAttempt.draftPostID(owner: owner, draft: post)) {
+                Text(LocalizedStringKey(status)).font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
             }
         }.padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 16))
             .sheet(item: $preview) { item in

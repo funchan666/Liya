@@ -1,0 +1,335 @@
+{
+  "schema_version": "1.0",
+  "audit": {
+    "project_label": "Liya",
+    "audited_at": "2026-11-26",
+    "skill_version": "1.2.0",
+    "revision": "初始检出 1681c38，交付时复核 a93e805 及其后工作区变更；两份数据库迁移版本已与线上发布记录对齐。",
+    "target": "原生 iOS Liya，最低 iOS 16",
+    "configuration": "Release 工程与应用入口的静态复核",
+    "scope": "SwiftUI、Xcode 工程与依赖锁、String Catalog、网站、图片和视频清单、精选编辑内容、指定 Supabase 项目的策略、触发器与审核权限。",
+    "rule_verification": "live",
+    "rule_checked_at": "2026-11-26",
+    "summary": "本轮修补了实际生产库缺少的公开内容发布前审核，并核实用户生成内容与编辑推荐的边界。送审前仍需落实人工值守、媒体使用授权、实际产品可用性与商店资料。4.3 的判定依赖产品在商店中的实质差异。",
+    "rule_sources": [
+      {
+        "title": "Apple App Review Guidelines",
+        "url": "https://developer.apple.com/app-store/review/guidelines/",
+        "checked_at": "2026-11-26",
+        "status": "reviewed",
+        "scope": "逐项核对 1.1.4、1.2、4.3，并参考 2.1、2.3 与 5.2。"
+      }
+    ],
+    "coverage": [
+      {
+        "area": "功能和 4.3",
+        "status": "checked",
+        "detail": "核对欢迎页、邮箱与 Apple 登录、视频、精选图片、双向关注/拉黑关系、公开资料与媒体评论、日记、回看、树洞、平静练习、金币商店和辅助页。两日心情明信片使用用户自己的心情记录，可制作单日明信片，也可选两天回看并导出，默认隐藏日记摘录。基础功能免费，纸面样式可选。"
+      },
+      {
+        "area": "库、框架和资源目录",
+        "status": "checked",
+        "detail": "这是 Swift 原生工程，未发现 Flutter lib/ 目录。唯一直接 Swift 包为 supabase-swift 2.55.5，锁定文件总计八项。Xcode 源清单采用原生源目录和一个资产目录。源码检索与入口追踪未识别专门为审核员切换内容的通路。"
+      },
+      {
+        "area": "应用文案",
+        "status": "checked",
+        "detail": "核对可到达入口、占位和失败提示、举报原因、String Catalog 的西班牙语、法语、日语与简体中文译文，以及英文开发语言。性内容相关词出现在举报选项或社区条款，含义与用途匹配。部分新键或早期界面仍可能回退到英文。"
+      },
+      {
+        "area": "云端编辑内容",
+        "status": "checked",
+        "detail": "逐条浏览 10 组精选署名与标题、20 条拟回复和 20 条树洞灵感。已将 10 组栏目及 20 条拟回复改为与画面相符的编辑文案。精选作者、素材 ID、成员资料与真实评论使用不同数据表。空讨论里的建议只填入输入框，用户仍须主动提交，计数来自评论表。"
+      },
+      {
+        "area": "图片和视频",
+        "status": "checked",
+        "detail": "40 张照片逐张查看。10 段视频分别在片头、四分之一、中段、四分之三、片尾附近抽取五帧。照片是穿衣肖像、城市及旅行，视频是海岸、山路、城市、水上等画面。50 件归档素材逐一通过 SHA-256 对上线上目录。未发现以性刺激、招徕或评价外貌为目的的画面或机制。"
+      },
+      {
+        "area": "举报、拉黑和联系",
+        "status": "checked",
+        "detail": "成员主页、公开评论、精选资料和视频的举报提交到后台，查询本人回执后再提示成功。会员拉黑沿用数据库关系及双向可见性约束。线上隐私页可公开访问并列有支持邮箱，未向邮箱发送邮件。 两个公开 DNS 解析器均未返回该域名的 MX 记录；域名有 IPv4 地址，仍需用外部邮箱检查实际送达。"
+      },
+      {
+        "area": "二进制、设备、审核结果",
+        "status": "needs_evidence",
+        "detail": "未编译、未运行 App、未测试真实账户及双账号隔离、通知或交易。没有 IPA、Archive、已编译 Assets.car、其他产品对照包或商店历史。公开规则没有给出 Framework 或 Assets.car 的相似度阈值。 本地 ASO 草案已改为以日记、根据真实记录制作明信片和精选讨论为主。"
+      },
+      {
+        "area": "素材权利、音轨与运营",
+        "status": "needs_evidence",
+        "detail": "逐片抽帧未覆盖所有过场和连续音轨。库中未找到足以确认商用、肖像、配乐授权的材料。实际工单处理时限和客服邮箱收件仍应由运营验证。"
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "LY-01",
+      "severity": "P1",
+      "status": "needs_verification",
+      "confidence": "medium",
+      "title": "审核员排班及及时处置需要运营证据",
+      "area": "社区安全",
+      "release_path": "添加评论、设置社区资料或提交举报后进入私有队列",
+      "trigger": "用户提交了需要处理的内容，审核员需要检查原文或附件并作出决定。",
+      "impact": "无人处理时新材料会停在待审状态，已发布违规内容可能无法及时下架。",
+      "evidence": [
+        {
+          "kind": "service",
+          "location": "Supabase 私有审核队列与角色权限",
+          "line": null,
+          "detail": "已核对操作员可作出决定，客户端角色没有审批权限。"
+        },
+        {
+          "kind": "metadata",
+          "location": "公开隐私页与支持邮箱",
+          "line": null,
+          "detail": "公开页面返回 HTTP 200 并列出支持邮箱，实际收件和回复尚未演练。"
+        }
+      ],
+      "rules": [
+        {
+          "section": "1.2",
+          "url": "https://developer.apple.com/app-store/review/guidelines/#user-generated-content",
+          "checked_at": "2026-11-26",
+          "applicability": "同时要求过滤、举报、及时回复、拉黑和提供联系渠道。"
+        }
+      ],
+      "remediation": [
+        "明确值守人及工单升级方式，依据举报严重性处理，并记录受理和处置。"
+      ],
+      "validation": [
+        "值守人以受控数据进行一次审核、下架和问题回复，保留时间及结果。"
+      ],
+      "uncertainty": [
+        "没有读取真实用户留言或举报来证明运营成效。"
+      ],
+      "owner": "社区运营",
+      "effort": "源码与线上配置已复核，运营和设备用例需使用受控账号。"
+    },
+    {
+      "id": "LY-02",
+      "severity": "P1",
+      "status": "needs_verification",
+      "confidence": "medium",
+      "title": "旅行素材、人物肖像和视频音轨的商业授权",
+      "area": "内容权利",
+      "release_path": "首次播放精选视频、图片动态、编辑栏目封面",
+      "trigger": "App 在商店中面向公众提供含人物及音轨的精选内容。",
+      "impact": "视觉内容适合上架与有权公开发行是两项独立判断。",
+      "evidence": [
+        {
+          "kind": "resource",
+          "location": "docs/BackendAPI/media-manifest.json",
+          "line": null,
+          "detail": "40 图和 10 视频有哈希与素材归属记录，仓库内缺少可核实的商业使用、肖像或独立音轨许可。"
+        }
+      ],
+      "rules": [
+        {
+          "section": "5.2",
+          "url": "https://developer.apple.com/app-store/review/guidelines/#intellectual-property",
+          "checked_at": "2026-11-26",
+          "applicability": "开发者需要拥有或获得展示、分发相关内容的许可。"
+        },
+        {
+          "section": "1.1.4",
+          "url": "https://developer.apple.com/app-store/review/guidelines/#objectionable-content",
+          "checked_at": "2026-11-26",
+          "applicability": "按画面和用途判断显性色情、招徕等风险。"
+        }
+      ],
+      "remediation": [
+        "逐项关联授权来源、允许的平台与地域，检查连续视频和音轨。"
+      ],
+      "validation": [
+        "内容负责人可按素材 ID 找到证明并实际复核完整版本。"
+      ],
+      "uncertainty": [
+        "仓库之外可能已有授权。"
+      ],
+      "owner": "内容运营",
+      "effort": "源码与线上配置已复核，运营和设备用例需使用受控账号。"
+    },
+    {
+      "id": "LY-03",
+      "severity": "P2",
+      "status": "needs_verification",
+      "confidence": "medium",
+      "title": "商店展示需聚焦实际可体验的情绪工具",
+      "area": "功能区分与完整性",
+      "release_path": "应用首页、社区、心情日记、发布和商店资料",
+      "trigger": "如果以常见短视频社交或即时聊天宣传，或将关闭的功能写为卖点。",
+      "impact": "通用媒体流与同类产品的重叠度高。即时消息、AI 生成、通话和公开发帖的部分历史实现仍然返回不可用。独立开发者账号本身无法证明产品差异。",
+      "evidence": [
+        {
+          "kind": "code",
+          "location": "Liya/Sources/JournalPostcards.swift",
+          "line": null,
+          "detail": "个人日记两日对照、原文摘录可选、明信片导出构成可说明的核心实际用途。"
+        },
+        {
+          "kind": "code",
+          "location": "Liya/Sources/SocialStore.swift、AutomaticChat.swift、MainViews.swift",
+          "line": null,
+          "detail": "核对入口与服务方法，保存个人动态与向社区公开发布有不同效果。"
+        },
+        {
+          "kind": "config",
+          "location": "project.yml 和 Package.resolved",
+          "line": null,
+          "detail": "没有取得商店比对库、Archive 或编译产物，无法量化与其他产品相似度。"
+        }
+      ],
+      "rules": [
+        {
+          "section": "4.3",
+          "url": "https://developer.apple.com/app-store/review/guidelines/#spam",
+          "checked_at": "2026-11-26",
+          "applicability": "Apple 关注重复产品、饱和类别和实际独特体验。"
+        },
+        {
+          "section": "2.1 / 2.3",
+          "url": "https://developer.apple.com/app-store/review/guidelines/#app-completeness",
+          "checked_at": "2026-11-26",
+          "applicability": "商店描述和截图应呈现用户能实际使用的功能。"
+        }
+      ],
+      "remediation": [
+        "以心情记录、两日对照和明信片为商店演示核心；对关闭功能逐项检查商店宣传与截图。"
+      ],
+      "validation": [
+        "新账号从记录两个不同日期到预览和导出，确认成品及隐私选择与商店展示一致。"
+      ],
+      "uncertainty": [
+        "没有 App Store Connect 当前版本的元数据或其他同类产品的二进制用于对比。"
+      ],
+      "owner": "产品与商店运营",
+      "effort": "源码与线上配置已复核，运营和设备用例需使用受控账号。"
+    },
+    {
+      "id": "LY-04",
+      "severity": "P1",
+      "status": "resolved",
+      "confidence": "high",
+      "title": "公开资料及评论提交后直接对其他成员可见",
+      "area": "发布前过滤",
+      "release_path": "审核前的公开资料和照片、视频评论",
+      "trigger": "旧生产库的公开读取策略主要判断屏蔽关系，资料与媒体评论只有一般同步触发器。",
+      "impact": "未经检查的头像、签名或评论曾可能立即公开。",
+      "evidence": [
+        {
+          "kind": "config",
+          "location": "supabase/migrations/20261126090102_liya_community_review.sql",
+          "line": null,
+          "detail": "新增审核队列、限制性读策略、分权审核操作、处置历史、隐藏精选素材及处理推荐内容的策略。"
+        },
+        {
+          "kind": "service",
+          "location": "Liya 生产项目 20261126090102",
+          "line": null,
+          "detail": "上线后读回 4 个内容触发器、3 个举报队列触发器及共 6 条限制性策略。精选内容保留 50 项，0 项被批量隐藏。"
+        },
+        {
+          "kind": "code",
+          "location": "Liya/Sources/SocialStore.swift",
+          "line": null,
+          "detail": "本人举报进度已读取 liya_my_report_status；本人待审资料和评论原有状态显示继续使用。"
+        }
+      ],
+      "rules": [
+        {
+          "section": "1.2",
+          "url": "https://developer.apple.com/app-store/review/guidelines/#user-generated-content",
+          "checked_at": "2026-11-26",
+          "applicability": "覆盖发布前过滤、举报和处置手段。"
+        }
+      ],
+      "remediation": [
+        "新编辑进入私有队列，既有批准的资料保持可见，撤回头像共享立即移除公开引用。"
+      ],
+      "validation": [
+        "已进行上线后数据库目录只读复核；双账号可见性、管理员审批与实际送达仍需受控端到端演练。"
+      ],
+      "uncertainty": [
+        "签发过的媒体临时 URL 可持续至过期；设备已有的缓存不能由新策略即时撤回。"
+      ],
+      "owner": "应用和后台",
+      "effort": "源码与线上配置已复核，运营和设备用例需使用受控账号。"
+    },
+    {
+      "id": "LY-05",
+      "severity": "P2",
+      "status": "resolved",
+      "confidence": "high",
+      "title": "精选栏目署名、建议内容及失效联系按钮造成误解",
+      "area": "内容呈现",
+      "release_path": "精选图片、视频、专栏资料与空评论弹窗",
+      "trigger": "旧编辑素材使用成组的普通姓名，并提供专栏永远收不到的消息和通话动作。",
+      "impact": "编辑栏目可能被误认为真实可联系的成员。",
+      "evidence": [
+        {
+          "kind": "config",
+          "location": "supabase/migrations/20261126090305_liya_collection_copy.sql",
+          "line": null,
+          "detail": "10 个精选栏目署名和说明、20 条写作建议均按实际视频场景改写。"
+        },
+        {
+          "kind": "code",
+          "location": "Liya/Sources/CollectionAuthors.swift、VideoHome.swift",
+          "line": null,
+          "detail": "精选栏目保留关注和举报入口。空讨论的写作建议只填充输入框，计数仍来自实际评论。"
+        },
+        {
+          "kind": "service",
+          "location": "生产精选目录",
+          "line": null,
+          "detail": "改动后读回 10 个栏目、20 条署名 Liya 的建议、50 件媒体，真实媒体评论数仍为 0。"
+        }
+      ],
+      "rules": [
+        {
+          "section": "2.3",
+          "url": "https://developer.apple.com/app-store/review/guidelines/#accurate-metadata",
+          "checked_at": "2026-11-26",
+          "applicability": "呈现真实交互边界并妥善区分编辑素材与成员互动。"
+        }
+      ],
+      "remediation": [
+        "旧笔记保留，取消不存在的收件人和拨号入口，媒体 ID 和历史成员互动保持原绑定。"
+      ],
+      "validation": [
+        "已复查资料、草稿与空讨论代码路径及线上运营数据。"
+      ],
+      "uncertainty": [
+        "在 App 内的交互效果、设备无障碍和所有语言排版未运行验证。"
+      ],
+      "owner": "内容和客户端",
+      "effort": "源码与线上配置已复核，运营和设备用例需使用受控账号。"
+    }
+  ],
+  "validation_gaps": [
+    {
+      "id": "G1",
+      "priority": "P1",
+      "question": "新评论、共享头像、举报处理和拉黑能否跨实际账号完整运行？",
+      "needed_evidence": "两个受控会员和一个后台审核员完整走通发布前可见性、审批后可见性、拉黑及举报状态回读。",
+      "owner": "QA 与运营"
+    },
+    {
+      "id": "G2",
+      "priority": "P1",
+      "question": "发布资料的使用权及支持收件是否已经落实？",
+      "needed_evidence": "素材与配乐授权、值守交接、实际收件和处理工单记录。",
+      "owner": "内容和社区运营"
+    },
+    {
+      "id": "G3",
+      "priority": "P2",
+      "question": "上线版本有哪些商店承诺、权限和内购配置？",
+      "needed_evidence": "实际 Archive、设备、商店截图与说明、年龄分级、App Privacy、审核登录及沙盒商品可用性。",
+      "owner": "发布负责人"
+    }
+  ]
+}

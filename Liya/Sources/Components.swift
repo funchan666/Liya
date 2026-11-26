@@ -16,8 +16,33 @@ let liyaAccent = Color(red: 0.44, green: 0.22, blue: 0.95)
 let liyaGradient = LinearGradient(colors: [Color(red: 0.05, green: 0.52, blue: 0.99), Color(red: 0.64, green: 0.14, blue: 0.96)], startPoint: .leading, endPoint: .trailing)
 
 enum LiyaType {
-    static let reading = Font.custom("Nunito-Regular", size: 17, relativeTo: .body)
-    static let detail = Font.custom("Nunito-Regular", size: 15, relativeTo: .subheadline)
+    enum Weight: String {
+        case regular = "Nunito-Regular"
+        case medium = "Nunito-Medium"
+        case semibold = "Nunito-SemiBold"
+        case bold = "Nunito-Bold"
+    }
+
+    static func text(_ style: Font.TextStyle, weight: Weight? = nil) -> Font {
+        let points: CGFloat
+        switch style {
+        case .largeTitle: points = 34
+        case .title: points = 28
+        case .title2: points = 22
+        case .title3: points = 20
+        case .callout: points = 16
+        case .subheadline: points = 15
+        case .footnote: points = 13
+        case .caption: points = 12
+        case .caption2: points = 11
+        default: points = 17
+        }
+        let face = weight ?? (style == .headline ? .semibold : .regular)
+        return .custom(face.rawValue, size: points, relativeTo: style)
+    }
+
+    static let reading = text(.body)
+    static let detail = text(.subheadline)
     static let action = Font.custom("Nunito-Bold", size: 16, relativeTo: .headline)
     static let sectionHeading = Font.custom("Nunito-Bold", size: 18, relativeTo: .headline)
     static let journalTitle = Font.custom("InstrumentSerif-Regular", size: 32, relativeTo: .title)
@@ -32,8 +57,8 @@ struct LiyaFeedActionLabel: View {
     var body: some View {
         HStack(spacing: 7) {
             Image(icon).resizable().scaledToFit().frame(width: 25, height: 25).accessibilityHidden(true)
-            Text(LocalizedStringKey(title)).font(.caption.weight(.semibold)).lineLimit(1)
-            Text(verbatim: count).font(.subheadline.weight(.semibold)).monospacedDigit()
+            Text(LocalizedStringKey(title)).font(LiyaType.text(.caption, weight: .semibold)).lineLimit(1)
+            Text(verbatim: count).font(LiyaType.text(.subheadline, weight: .semibold)).monospacedDigit()
         }
         .foregroundStyle(active ? liyaAccent : liyaInk)
         .padding(.horizontal, 12).frame(minHeight: 44)
@@ -131,8 +156,8 @@ struct EmptyState: View {
     var body: some View {
         VStack(spacing: 12) {
             Image("empty-art").resizable().scaledToFit().frame(width: 78, height: 72).accessibilityHidden(true)
-            Text(title).font(LiyaType.sectionHeading).foregroundStyle(liyaInk).multilineTextAlignment(.center)
-            Text(detail).font(LiyaType.detail).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            Text(LocalizedStringKey(title)).font(LiyaType.sectionHeading).foregroundStyle(liyaInk).multilineTextAlignment(.center)
+            if !detail.isEmpty { Text(LocalizedStringKey(detail)).font(LiyaType.detail).foregroundStyle(.secondary).multilineTextAlignment(.center) }
         }.frame(maxWidth: .infinity).padding(24)
     }
 }
@@ -140,7 +165,7 @@ struct EmptyState: View {
 struct OfflineNote: View {
     let text: String
     var body: some View {
-        Text(text).font(.footnote).foregroundStyle(liyaInk.opacity(0.8))
+        Text(text).font(LiyaType.text(.footnote)).foregroundStyle(liyaInk.opacity(0.8))
             .frame(maxWidth: .infinity, alignment: .leading).padding(14)
             .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
     }
@@ -174,40 +199,11 @@ struct LocalConfirmation: View {
             DuoControlRegion { size in
                 ScrollView {
                     VStack(spacing: 18) {
-                        Text(LocalizedStringKey(title)).font(.title3.bold()).foregroundStyle(liyaInk)
+                        Text(LocalizedStringKey(title)).font(LiyaType.text(.title3, weight: .bold)).foregroundStyle(liyaInk)
                         Text(LocalizedStringKey(message)).multilineTextAlignment(.center).foregroundStyle(.secondary)
                         PrimaryButton(title: action, action: confirm)
-                        Button("Cancel", action: cancel).font(.subheadline.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                        Button("Cancel", action: cancel).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                     }.padding(24).frame(maxWidth: 440).frame(maxWidth: .infinity).frame(minHeight: size.height)
-                }
-            }
-        }
-    }
-}
-
-enum ConnectionNotice: String, Identifiable {
-    case mutual, unavailable
-    var id: String { rawValue }
-}
-
-struct ConnectionNoticeSheet: View {
-    let notice: ConnectionNotice
-    let dismiss: () -> Void
-    var body: some View {
-        ZStack {
-            LiyaBackground()
-            DuoControlRegion { size in
-                ScrollView {
-                    VStack(spacing: 15) {
-                        Image(notice == .mutual ? "profile-action-follow" : "profile-action-message")
-                            .resizable().scaledToFit().frame(width: 76, height: 76).accessibilityHidden(true)
-                        Text(LocalizedStringKey(notice == .mutual ? "A connection starts with both of you" : "Please try again"))
-                            .font(.title3.weight(.bold)).foregroundStyle(liyaInk).multilineTextAlignment(.center)
-                        Text(LocalizedStringKey(notice == .mutual ? "Follow each other to send messages and enjoy voice or video calls." : "This action isn't available right now. Please try again later."))
-                            .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                        PrimaryButton(title: "Got it", action: dismiss)
-                    }.padding(24).frame(maxWidth: 420).frame(maxWidth: .infinity).frame(minHeight: size.height)
                 }
             }
         }
@@ -264,10 +260,10 @@ struct SafetyPanel<Avatar: View, Content: View>: View {
                         }
                         VStack(alignment: .leading, spacing: 3) {
                             Text(LocalizedStringKey(title))
-                                .font(.system(.title3, design: .rounded).weight(.bold))
+                                .font(LiyaType.text(.title3, weight: .bold))
                                 .foregroundStyle(liyaInk).accessibilityAddTraits(.isHeader)
                             if let subject, !subject.isEmpty {
-                                Text(verbatim: subject).font(.subheadline).foregroundStyle(liyaInk.opacity(0.72))
+                                Text(verbatim: subject).font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.72))
                             }
                         }
                         .fixedSize(horizontal: false, vertical: true)
@@ -323,7 +319,7 @@ struct SafetyActionRow: View {
             HStack(spacing: 14) {
                 Image(artwork).resizable().scaledToFit().frame(width: 40, height: 40)
                     .accessibilityHidden(true)
-                Text(LocalizedStringKey(title)).font(.system(.body, design: .rounded).weight(.semibold))
+                Text(LocalizedStringKey(title)).font(LiyaType.text(.body, weight: .semibold))
                     .multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Image("back").renderingMode(.template).resizable().scaledToFit()
@@ -348,7 +344,7 @@ struct SafetyReasonList: View {
             ForEach(reasons, id: \.self) { reason in
                 Button { choose(reason) } label: {
                     HStack(spacing: 12) {
-                        Text(LocalizedStringKey(reason)).font(.body)
+                        Text(LocalizedStringKey(reason)).font(LiyaType.reading)
                             .multilineTextAlignment(.leading).frame(maxWidth: .infinity, alignment: .leading)
                         if selected == reason {
                             Image("consent-on").resizable().scaledToFit().frame(width: 21, height: 21)
@@ -382,7 +378,7 @@ struct SafetySubmitButton: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 if busy { LiyaLoadingIndicator(size: 21).accessibilityHidden(true) }
-                Text(LocalizedStringKey(title)).font(.headline).multilineTextAlignment(.center)
+                Text(LocalizedStringKey(title)).font(LiyaType.text(.headline)).multilineTextAlignment(.center)
             }
             .foregroundStyle(disabled && !busy ? liyaInk.opacity(0.67) : .white)
             .padding(.vertical, 10).padding(.horizontal, 14).frame(maxWidth: .infinity, minHeight: 48)
@@ -400,7 +396,7 @@ struct SafetySecondaryButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold))
+            Text(LocalizedStringKey(title)).font(LiyaType.text(.subheadline, weight: .semibold))
                 .foregroundStyle(isEnabled ? safetyIndigo : liyaInk.opacity(0.55))
                 .multilineTextAlignment(.center).padding(.horizontal, 12).padding(.vertical, 7)
                 .frame(maxWidth: .infinity, minHeight: 44)

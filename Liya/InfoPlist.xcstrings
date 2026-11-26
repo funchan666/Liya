@@ -1,37 +1,96 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Liya"
+          }
+        }
+      }
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Liya"
+          }
+        }
+      }
+    },
     "NSCameraUsageDescription" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Liya uses the camera to take a profile photo or attach a photo to a moment."
+            "value" : "Take photos for your profile, posts, or messages, and see yourself while waiting for a video call."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Liya usa la cámara para tomar una foto de perfil o añadir una foto a un momento."
+            "value" : "Haz fotos para tu perfil, publicaciones o mensajes y mira tu imagen mientras esperas una videollamada."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Liya utilise la caméra pour prendre une photo de profil ou joindre une photo à un moment."
+            "value" : "Prenez des photos pour votre profil, vos publications ou vos messages et voyez votre image en attendant un appel vidéo."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Liyaは、プロフィールに使う写真や投稿に添付する写真を撮るためにカメラを使用します。"
+            "value" : "プロフィール、投稿、メッセージ用の写真を撮影したり、ビデオ通話の待機中に自分の映像を確認したりできます。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Liya 使用相机拍摄头像或动态配图。"
+            "value" : "用于拍摄头像、动态或私信中的照片，也让你在等待视频通话时看到自己的画面。"
+          }
+        }
+      }
+    },
+    "NSMicrophoneUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The microphone shows your sound level while you wait for a voice or video call. The audio stays on your device."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El micrófono muestra el nivel de sonido mientras esperas una llamada de voz o vídeo. El audio permanece en tu dispositivo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le micro indique le niveau sonore pendant l’attente d’un appel audio ou vidéo. Le son reste sur votre appareil."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音声通話やビデオ通話の待機中に、マイクが拾う音の大きさを表示します。音声は端末内でのみ処理されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等待语音或视频通话时，麦克风会显示你当前的音量。声音仅在你的设备上处理。"
           }
         }
       }

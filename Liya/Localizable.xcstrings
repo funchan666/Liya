@@ -1,920 +1,11 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "Between days" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entre dos días"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entre deux jours"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ふたつの日のあいだ"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "两日之间"
-          }
-        }
-      }
-    },
-    "Pair two journal entries on a postcard." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reúne dos entradas de tu diario en una postal."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réunissez deux pages de votre journal sur une carte postale."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ふたつの日の記録を、一枚のポストカードに。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "把两天的心情放在同一张明信片上。"
-          }
-        }
-      }
-    },
-    "Save a day in your mood diary to make your first postcard." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Guarda una entrada en tu diario para crear tu primera postal."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Écrivez une page de votre journal pour créer votre première carte."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日記に今日の気持ちを残すと、最初のカードが作れます。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "先在心情日记里记下一天，就能做第一张明信片。"
-          }
-        }
-      }
-    },
-    "Open mood diary" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abrir el diario"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ouvrir le journal"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "気分の日記を開く"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "打开心情日记"
-          }
-        }
-      }
-    },
-    "Pair two days" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Combinar dos días"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Associer deux jours"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ふたつの日を並べる"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "选两天对照"
-          }
-        }
-      }
-    },
-    "Read both entries" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Leer las dos entradas"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lire les deux entrées"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "両方の日記を読む"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "对照阅读原文"
-          }
-        }
-      }
-    },
-    "Close journal entries" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cerrar las entradas"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Refermer les entrées"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日記を閉じる"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "收起原文"
-          }
-        }
-      }
-    },
-    "Include note excerpts" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Incluir fragmentos de las notas"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Inclure un extrait des notes"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "メモの抜粋を載せる"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "卡片附上笔记摘录"
-          }
-        }
-      }
-    },
-    "The postcard could not be prepared. Try sharing again." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se pudo crear la postal. Intenta compartirla de nuevo."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La carte n’a pas pu être créée. Réessayez de la partager."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "カードを作成できませんでした。もう一度お試しください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "明信片暂时生成失败，请再试一次。"
-          }
-        }
-      }
-    },
-    "Share postcard" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compartir postal"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Partager la carte"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "カードを共有"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "分享明信片"
-          }
-        }
-      }
-    },
-    "Postcard paper" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Papel de la postal"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Papier de la carte"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "カードの用紙"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "明信片画纸"
-          }
-        }
-      }
-    },
-    "Daybreak is free. Choose Tideglass in your wallet." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Amanecer es gratis. Puedes elegir Cristal de marea en tu cartera."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Le papier Aube est gratuit. Retrouvez Verre de mer dans votre portefeuille."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「朝焼け」は無料です。「潮のガラス」はウォレットで選べます。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "晨光画纸免费。也可在钱包里选用潮汐玻璃画纸。"
-          }
-        }
-      }
-    },
-    "Journal day" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Día del diario"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Date de l’entrée"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日記の日付"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "记录日期"
-          }
-        }
-      }
-    },
-    "Earlier day" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Primer día"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Premier jour"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "前の日付"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "较早的一天"
-          }
-        }
-      }
-    },
-    "Later day" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Segundo día"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Second jour"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "後の日付"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "较晚的一天"
-          }
-        }
-      }
-    },
-    "Tideglass paper" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Papel Cristal de marea"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Papier Verre de mer"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "潮のガラス"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "潮汐玻璃画纸"
-          }
-        }
-      }
-    },
-    "Sea-glass stationery for your journal postcards" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Papel en tonos de cristal marino para tus postales"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un papier aux reflets marins pour vos cartes"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日記のカードを彩る、海色の用紙"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "给心情明信片换上海玻璃色的画纸"
-          }
-        }
-      }
-    },
-    "Each style unlocks once. Comparing days and sharing postcards are free." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cada estilo se desbloquea una sola vez. Comparar días y compartir postales es gratis."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chaque style se débloque une seule fois. Comparer des jours et partager des cartes est gratuit."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "スタイルは一度の購入で使えます。日記の比較とカードの共有は無料です。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每款样式只需解锁一次。对照日记和分享明信片都免费。"
-          }
-        }
-      }
-    },
-    "Spend %lld coins to unlock this style once." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gasta %lld monedas para desbloquear este estilo una sola vez."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Débloquez ce style une fois pour %lld pièces."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lldコインでこのスタイルを一度だけ購入します。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "花费 %lld 金币解锁此样式，只需支付一次。"
-          }
-        }
-      }
-    },
-    "%lld coins" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld monedas"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld pièces"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lldコイン"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld 金币"
-          }
-        }
-      }
-    },
-    "A violet palette for your mood diary" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Una paleta violeta para tu diario"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Des tons violets pour votre journal"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日記を彩る紫のパレット"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "让心情日记换上紫罗兰配色"
-          }
-        }
-      }
-    },
-    "A colorful accent for your profile" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un toque de color para tu perfil"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Une touche de couleur sur votre profil"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プロフィールに彩りを添えます"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "为个人主页添一抹光彩"
-          }
-        }
-      }
-    },
-    "Apply" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplicar"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appliquer"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "使う"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "启用"
-          }
-        }
-      }
-    },
-    "Turn off" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desactivar"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Désactiver"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "オフにする"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "停用"
-          }
-        }
-      }
-    },
-    "Unlock" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desbloquear"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Débloquer"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "解除する"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "解锁"
-          }
-        }
-      }
-    },
-    "Camera access is off" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "El acceso a la cámara está desactivado"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’accès à la caméra est désactivé"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "カメラへのアクセスはオフです"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "相机访问已关闭"
-          }
-        }
-      }
-    },
-    "Camera access is restricted on this device." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "El acceso a la cámara está restringido en este dispositivo."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’accès à la caméra est restreint sur cet appareil."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このデバイスではカメラの使用が制限されています。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "此设备限制了相机访问。"
-          }
-        }
-      }
-    },
-    "Open Settings" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abrir ajustes"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ouvrir les réglages"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "設定を開く"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "打开设置"
-          }
-        }
-      }
-    },
-    "The camera is unavailable on this device." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La cámara no está disponible en este dispositivo."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La caméra est indisponible sur cet appareil."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このデバイスではカメラを利用できません。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "此设备的相机不可用。"
-          }
-        }
-      }
-    },
-    "The photo could not be saved. Please try again." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se pudo guardar la foto. Inténtalo de nuevo."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La photo n’a pas pu être enregistrée. Réessayez."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "写真を保存できませんでした。もう一度お試しください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "照片未能保存，请重试。"
-          }
-        }
-      }
-    },
-    "You can still choose a photo from your library." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Puedes elegir una foto de tu fototeca."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vous pouvez choisir une photo dans votre photothèque."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "写真ライブラリから写真を選べます。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你仍然可以从相册选择照片。"
-          }
-        }
-      }
-    },
     "# %@" : {
 
     },
     "%@" : {
 
-    },
-    "%@ · %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ · %2$@"
-          }
-        }
-      }
     },
     "%@ attachments selected" : {
 
@@ -952,6 +43,93 @@
     },
     "%@/6" : {
 
+    },
+    "%lld attachments selected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld archivos seleccionados"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld pièces jointes sélectionnées"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選択した添付ファイル：%lld件"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选 %lld 个附件"
+          }
+        }
+      }
+    },
+    "%lld coins" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld monedas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld pièces"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldコイン"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 金币"
+          }
+        }
+      }
+    },
+    "A colorful accent for your profile" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un toque de color para tu perfil"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une touche de couleur sur votre profil"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロフィールに彩りを添えます"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为个人主页添一抹光彩"
+          }
+        }
+      }
     },
     "A connection starts with both of you" : {
       "extractionState" : "stale",
@@ -1211,6 +389,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "暂未配置客服渠道。"
+          }
+        }
+      }
+    },
+    "A violet palette for your mood diary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una paleta violeta para tu diario"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Des tons violets pour votre journal"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日記を彩る紫のパレット"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让心情日记换上紫罗兰配色"
           }
         }
       }
@@ -1565,753 +772,310 @@
         }
       }
     },
-    "Block profile" : {
-      "extractionState" : "manual",
+    "Camera access is off. Your video preview is unavailable." : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bloquear perfil"
+            "value" : "El acceso a la cámara está desactivado. La vista previa de vídeo no está disponible."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bloquer le profil"
+            "value" : "L’accès à la caméra est désactivé. L’aperçu vidéo est indisponible."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "プロフィールをブロック"
+            "value" : "カメラへのアクセスがオフのため、自分の映像を確認できません。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "屏蔽此人"
+            "value" : "摄像头权限已关闭，暂时无法预览自己的画面。"
           }
         }
       }
     },
-    "Block this member?" : {
+    "Microphone access is off. Your sound level is unavailable." : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "¿Bloquear a este miembro?"
+            "value" : "El acceso al micrófono está desactivado. No se puede mostrar el nivel de sonido."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bloquer ce membre ?"
+            "value" : "L’accès au micro est désactivé. Le niveau sonore est indisponible."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "このメンバーをブロックしますか？"
+            "value" : "マイクへのアクセスがオフのため、音量を表示できません。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "要拉黑这位用户吗？"
+            "value" : "麦克风权限已关闭，暂时无法显示音量。"
           }
         }
       }
     },
-    "Block this profile" : {
-      "extractionState" : "manual",
+    "Microphone level" : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bloquear este perfil"
+            "value" : "Nivel del micrófono"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bloquer ce profil"
+            "value" : "Niveau du micro"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "このプロフィールをブロック"
+            "value" : "マイクの音量"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "屏蔽此人"
+            "value" : "麦克风音量"
           }
         }
       }
     },
-    "Blocking…" : {
-      "extractionState" : "manual",
+    "Microphone paused" : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bloqueando…"
+            "value" : "Micrófono en pausa"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Blocage…"
+            "value" : "Micro en pause"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ブロック中…"
+            "value" : "マイクを一時停止中"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在屏蔽…"
+            "value" : "麦克风已暂停"
           }
         }
       }
     },
-    "Comment options" : {
-      "extractionState" : "manual",
+    "Microphone unavailable" : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Opciones del comentario"
+            "value" : "Micrófono no disponible"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Options du commentaire"
+            "value" : "Micro indisponible"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "コメントのオプション"
+            "value" : "マイクを使用できません"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "评论选项"
+            "value" : "麦克风暂时不可用"
           }
         }
       }
     },
-    "Couldn't block this profile. Please try again." : {
-      "extractionState" : "manual",
+    "Preview paused" : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se pudo bloquear este perfil. Inténtalo de nuevo."
+            "value" : "Vista previa en pausa"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de bloquer ce profil. Réessayez."
+            "value" : "Aperçu en pause"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "このプロフィールをブロックできませんでした。もう一度お試しください。"
+            "value" : "プレビューを一時停止中"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "屏蔽失败，请重试。"
+            "value" : "预览已暂停"
           }
         }
       }
     },
-    "Couldn't confirm the report. Please try again." : {
-      "extractionState" : "manual",
+    "Preview unavailable" : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se pudo confirmar la denuncia. Inténtalo de nuevo."
+            "value" : "Vista previa no disponible"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La réception du signalement n’a pas pu être confirmée. Réessayez."
+            "value" : "Aperçu indisponible"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "通報の受け付けを確認できませんでした。もう一度お試しください。"
+            "value" : "プレビューを表示できません"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "暂时无法确认举报是否成功，请重试。"
+            "value" : "暂时无法预览"
           }
         }
       }
     },
-    "Couldn't delete this comment. Please try again." : {
-      "extractionState" : "manual",
+    "Starting camera" : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se pudo eliminar el comentario. Inténtalo de nuevo."
+            "value" : "Iniciando la cámara"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de supprimer ce commentaire. Réessayez."
+            "value" : "Démarrage de la caméra"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "コメントを削除できませんでした。もう一度お試しください。"
+            "value" : "カメラを起動中"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "评论删除失败，请重试。"
+            "value" : "正在启动摄像头"
           }
         }
       }
     },
-    "Couldn't load comments. Please try again." : {
-      "extractionState" : "manual",
+    "The front camera is unavailable on this device." : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se pudieron cargar los comentarios. Inténtalo de nuevo."
+            "value" : "La cámara frontal no está disponible en este dispositivo."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de charger les commentaires. Réessayez."
+            "value" : "La caméra avant est indisponible sur cet appareil."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "コメントを読み込めませんでした。もう一度お試しください。"
+            "value" : "この端末では前面カメラを使用できません。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "评论加载失败，请重试。"
+            "value" : "当前设备无法使用前置摄像头。"
           }
         }
       }
     },
-    "Couldn't load your profile. Please try again." : {
-      "extractionState" : "manual",
+    "The microphone is unavailable on this device." : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se pudo cargar tu perfil. Inténtalo de nuevo."
+            "value" : "El micrófono no está disponible en este dispositivo."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de charger votre profil. Réessayez."
+            "value" : "Le micro est indisponible sur cet appareil."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "プロフィールを読み込めませんでした。もう一度お試しください。"
+            "value" : "この端末ではマイクを使用できません。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "个人资料加载失败，请重试。"
+            "value" : "当前设备无法使用麦克风。"
           }
         }
       }
     },
-    "Couldn't send your comment. Your text is still here." : {
-      "extractionState" : "manual",
+    "Your camera" : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se pudo enviar tu comentario. Puedes volver a enviarlo."
+            "value" : "Tu cámara"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre commentaire n’a pas pu être envoyé. Votre texte a été conservé."
+            "value" : "Votre caméra"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "コメントを送信できませんでした。入力した内容は残っています。"
+            "value" : "自分の映像"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "评论发送失败，输入的内容已保留。"
-          }
-        }
-      }
-    },
-    "Count unavailable" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recuento no disponible"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nombre indisponible"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "件数を取得できません"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "暂时无法获取数量"
-          }
-        }
-      }
-    },
-    "Create a community profile to block" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crear un perfil de la comunidad para bloquear"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Créer un profil pour bloquer ce membre"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "コミュニティプロフィールを作成してブロック"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "创建社区资料以屏蔽此人"
-          }
-        }
-      }
-    },
-    "Liya member" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Miembro de Liya"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Membre de Liya"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Liya メンバー"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Liya 成员"
-          }
-        }
-      }
-    },
-    "Refresh likes and comments" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Actualizar Me gusta y comentarios"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Actualiser les mentions J’aime et les commentaires"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "いいねとコメントを更新"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "刷新点赞和评论"
-          }
-        }
-      }
-    },
-    "Remove like" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quitar Me gusta"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Retirer la mention J’aime"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "いいねを取り消す"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "取消点赞"
-          }
-        }
-      }
-    },
-    "Reply ideas" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ideas para responder"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Idées de réponse"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "返信のヒント"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "回复灵感"
-          }
-        }
-      }
-    },
-    "Report comment" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Denunciar comentario"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Signaler le commentaire"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "コメントを通報"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "举报评论"
-          }
-        }
-      }
-    },
-    "Report member" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Denunciar miembro"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Signaler le membre"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "メンバーを報告"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "举报用户"
-          }
-        }
-      }
-    },
-    "Report options" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opciones de denuncia"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Options de signalement"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通報のオプション"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "举报选项"
-          }
-        }
-      }
-    },
-    "Retry counts" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Actualizar los recuentos"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recharger les compteurs"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "件数を再読み込み"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "重新加载数量"
-          }
-        }
-      }
-    },
-    "Retry likes" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Volver a cargar los Me gusta"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recharger les mentions J’aime"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "いいねを再読み込み"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "重新加载点赞"
-          }
-        }
-      }
-    },
-    "Their comments and other community content will no longer be visible to you." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dejarás de ver sus comentarios y demás contenido de la comunidad."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vous ne verrez plus ses commentaires ni ses autres publications dans la communauté."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このメンバーのコメントやコミュニティへの投稿が表示されなくなります。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "屏蔽后，你将看不到对方的评论和其他社区内容。"
-          }
-        }
-      }
-    },
-    "Write a comment" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Escribe un comentario"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Écrire un commentaire"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "コメントを書く"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "写评论"
-          }
-        }
-      }
-    },
-    "You" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tú"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vous"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "あなた"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你"
-          }
-        }
-      }
-    },
-    "Your profile is still loading. Please try again." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tu perfil se está cargando. Inténtalo de nuevo en un momento."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Votre profil est en cours de chargement. Réessayez dans un instant."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "プロフィールを読み込み中です。少し待ってからもう一度お試しください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "个人资料正在加载，请稍后重试。"
+            "value" : "我的画面"
           }
         }
       }
@@ -2397,6 +1161,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "App Store 价格"
+          }
+        }
+      }
+    },
+    "Apply" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appliquer"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使う"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用"
           }
         }
       }
@@ -2487,9 +1280,6 @@
         }
       }
     },
-    "Be the first to share a thought." : {
-
-    },
     "Before we begin" : {
       "localizations" : {
         "es" : {
@@ -2576,6 +1366,35 @@
         }
       }
     },
+    "Between days" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entre dos días"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entre deux jours"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ふたつの日のあいだ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "两日之间"
+          }
+        }
+      }
+    },
     "Block" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2634,7 +1453,95 @@
         }
       }
     },
+    "Block profile" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear perfil"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquer le profil"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロフィールをブロック"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "屏蔽此人"
+          }
+        }
+      }
+    },
+    "Block this member?" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Bloquear a este miembro?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquer ce membre ?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このメンバーをブロックしますか？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要拉黑这位用户吗？"
+          }
+        }
+      }
+    },
+    "Block this profile" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear este perfil"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquer ce profil"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このプロフィールをブロック"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "屏蔽此人"
+          }
+        }
+      }
+    },
     "Block this profile?" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -2694,6 +1601,35 @@
         }
       }
     },
+    "Blocking…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloqueando…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blocage…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ブロック中…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在屏蔽…"
+          }
+        }
+      }
+    },
     "Blue" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2719,6 +1655,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "低落"
+          }
+        }
+      }
+    },
+    "Call unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llamada no disponible"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appel indisponible"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通話できません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法通话"
           }
         }
       }
@@ -2781,6 +1746,64 @@
         }
       }
     },
+    "Camera access is off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El acceso a la cámara está desactivado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’accès à la caméra est désactivé"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カメラへのアクセスはオフです"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "相机访问已关闭"
+          }
+        }
+      }
+    },
+    "Camera use is restricted on this device. You can choose a photo from your library." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El uso de la cámara está restringido en este dispositivo. Puedes elegir una foto de tu fototeca."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’utilisation de l’appareil photo est restreinte sur cet appareil. Vous pouvez choisir une photo dans votre photothèque."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このデバイスではカメラの使用が制限されています。写真ライブラリから写真を選べます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此设备限制了相机使用。你可以从相册中选择照片。"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2810,7 +1833,37 @@
         }
       }
     },
+    "Cancel call" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar llamada"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler l’appel"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "発信を取り消す"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消呼叫"
+          }
+        }
+      }
+    },
     "Chat is always free" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -3096,6 +2149,35 @@
         }
       }
     },
+    "Close journal entries" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar las entradas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refermer les entrées"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日記を閉じる"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收起原文"
+          }
+        }
+      }
+    },
     "Coin packs" : {
       "localizations" : {
         "es" : {
@@ -3187,6 +2269,35 @@
         }
       }
     },
+    "Comment options" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opciones del comentario"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Options du commentaire"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コメントのオプション"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "评论选项"
+          }
+        }
+      }
+    },
     "Comments" : {
       "localizations" : {
         "es" : {
@@ -3214,9 +2325,6 @@
           }
         }
       }
-    },
-    "Comments · %@" : {
-
     },
     "Community" : {
       "localizations" : {
@@ -3368,6 +2476,7 @@
       }
     },
     "Contact support" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -3543,6 +2652,35 @@
         }
       }
     },
+    "Couldn't block this profile. Please try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo bloquear este perfil. Inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de bloquer ce profil. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このプロフィールをブロックできませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "屏蔽失败，请重试。"
+          }
+        }
+      }
+    },
     "Couldn't check your AI privacy choice. Please try again." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3572,31 +2710,118 @@
         }
       }
     },
-    "Couldn't disconnect call notifications. Please try again." : {
-      "extractionState" : "stale",
+    "Couldn’t check your connection. Try again in a moment." : {
+      "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se pudieron desconectar las notificaciones de llamadas. Inténtalo de nuevo."
+            "value" : "No se pudo comprobar la conexión. Inténtalo más tarde."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de déconnecter les notifications d’appel. Réessayez."
+            "value" : "Impossible de vérifier la connexion. Réessayez dans un instant."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "通話通知を解除できませんでした。もう一度お試しください。"
+            "value" : "接続を確認できませんでした。しばらくしてからお試しください。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无法断开通话通知，请重试。"
+            "value" : "暂时无法检查连接，请稍后重试。"
+          }
+        }
+      }
+    },
+    "Couldn't confirm the report. Please try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo confirmar la denuncia. Inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réception du signalement n’a pas pu être confirmée. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通報の受け付けを確認できませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法确认举报是否成功，请重试。"
+          }
+        }
+      }
+    },
+    "Couldn't delete the message. Please try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo eliminar el mensaje. Inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le message n’a pas pu être supprimé. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メッセージを削除できませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "消息删除失败，请重试。"
+          }
+        }
+      }
+    },
+    "Couldn't delete this comment. Please try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo eliminar el comentario. Inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de supprimer ce commentaire. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コメントを削除できませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "评论删除失败，请重试。"
           }
         }
       }
@@ -3626,6 +2851,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "暂时无法获取回复，请重试。"
+          }
+        }
+      }
+    },
+    "Couldn't load comments. Please try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudieron cargar los comentarios. Inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de charger les commentaires. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コメントを読み込めませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "评论加载失败，请重试。"
           }
         }
       }
@@ -3662,7 +2916,37 @@
         }
       }
     },
+    "Couldn't load your profile. Please try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cargar tu perfil. Inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de charger votre profil. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロフィールを読み込めませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "个人资料加载失败，请重试。"
+          }
+        }
+      }
+    },
     "Couldn't refresh following. Please try again." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -3748,34 +3032,6 @@
         }
       }
     },
-    "Couldn't update your follow. Please try again." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se pudo guardar el cambio. Inténtalo de nuevo."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossible de modifier votre abonnement. Réessayez."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "フォローの変更を保存できませんでした。もう一度お試しください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "关注状态更新失败，请再试一次。"
-          }
-        }
-      }
-    },
     "Couldn’t save your wallet. Tap again to continue." : {
       "localizations" : {
         "es" : {
@@ -3800,6 +3056,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "钱包保存失败，请再点一次按钮。"
+          }
+        }
+      }
+    },
+    "Couldn't send this message. Your draft is saved." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo enviar este mensaje. Tu borrador está guardado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’envoi a échoué. Votre brouillon est enregistré."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "送信できませんでした。下書きは保存されています。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "消息未发送，草稿已保留。"
+          }
+        }
+      }
+    },
+    "Couldn't send your comment. Your text is still here." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo enviar tu comentario. Puedes volver a enviarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre commentaire n’a pas pu être envoyé. Votre texte a été conservé."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コメントを送信できませんでした。入力した内容は残っています。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "评论发送失败，输入的内容已保留。"
           }
         }
       }
@@ -3891,6 +3205,63 @@
         }
       }
     },
+    "Couldn't update your follow. Please try again." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar el cambio. Inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de modifier votre abonnement. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォローの変更を保存できませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关注状态更新失败，请再试一次。"
+          }
+        }
+      }
+    },
+    "Count unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recuento no disponible"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombre indisponible"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "件数を取得できません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法获取数量"
+          }
+        }
+      }
+    },
     "Create" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3916,6 +3287,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "发布"
+          }
+        }
+      }
+    },
+    "Create a community profile to block" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear un perfil de la comunidad para bloquear"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créer un profil pour bloquer ce membre"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コミュニティプロフィールを作成してブロック"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创建社区资料以屏蔽此人"
+          }
+        }
+      }
+    },
+    "Daybreak is free. Choose Tideglass in your wallet." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amanecer es gratis. Puedes elegir Cristal de marea en tu cartera."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le papier Aube est gratuit. Retrouvez Verre de mer dans votre portefeuille."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「朝焼け」は無料です。「潮のガラス」はウォレットで選べます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "晨光画纸免费。也可在钱包里选用潮汐玻璃画纸。"
           }
         }
       }
@@ -4006,6 +3435,35 @@
         }
       }
     },
+    "Delete this message?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar este mensaje?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer ce message ?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このメッセージを削除しますか？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除这条消息？"
+          }
+        }
+      }
+    },
     "Deleting account…" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4065,6 +3523,7 @@
       }
     },
     "Device alerts" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -4093,6 +3552,7 @@
       }
     },
     "Discrimination" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -4121,7 +3581,6 @@
       }
     },
     "Done" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -4149,7 +3608,11 @@
         }
       }
     },
+    "Draft · %@" : {
+
+    },
     "Draft saved" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -4177,8 +3640,92 @@
         }
       }
     },
-    "Draft · %@" : {
-
+    "Drafts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borradores"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brouillons"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下書き"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "草稿"
+          }
+        }
+      }
+    },
+    "Each style unlocks once. Comparing days and sharing postcards are free." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada estilo se desbloquea una sola vez. Comparar días y compartir postales es gratis."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque style se débloque une seule fois. Comparer des jours et partager des cartes est gratuit."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スタイルは一度の購入で使えます。日記の比較とカードの共有は無料です。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每款样式只需解锁一次。对照日记和分享明信片都免费。"
+          }
+        }
+      }
+    },
+    "Earlier day" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Primer día"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premier jour"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前の日付"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "较早的一天"
+          }
+        }
+      }
     },
     "Edit" : {
       "localizations" : {
@@ -4265,64 +3812,6 @@
         }
       }
     },
-    "End your call before deleting your account." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Termina la llamada antes de eliminar la cuenta."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Terminez votre appel avant de supprimer votre compte."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アカウントを削除する前に通話を終了してください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请先结束通话，再删除账号。"
-          }
-        }
-      }
-    },
-    "End your call before signing out." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Termina la llamada antes de cerrar sesión."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Terminez votre appel avant de vous déconnecter."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ログアウトする前に通話を終了してください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请先结束通话，再退出登录。"
-          }
-        }
-      }
-    },
     "Every mood belongs here." : {
       "localizations" : {
         "es" : {
@@ -4350,9 +3839,6 @@
           }
         }
       }
-    },
-    "Example profile %@" : {
-
     },
     "Explore your recent entries" : {
       "localizations" : {
@@ -4411,7 +3897,6 @@
       }
     },
     "Follow" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -4439,36 +3924,37 @@
         }
       }
     },
-    "Follow each other to send messages and enjoy voice or video calls." : {
-      "extractionState" : "stale",
+    "Follow each other first" : {
+      "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Síganse mutuamente para enviar mensajes y hacer llamadas de voz o vídeo."
+            "value" : "Primero, síganse mutuamente"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Suivez-vous mutuellement pour échanger des messages et passer des appels vocaux ou vidéo."
+            "value" : "Suivez-vous d’abord mutuellement"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "お互いをフォローすると、メッセージや音声・ビデオ通話を利用できます。"
+            "value" : "まずはお互いにフォロー"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "互相关注后，就可以发消息以及进行语音或视频通话。"
+            "value" : "先互相关注吧"
           }
         }
       }
     },
     "Followed creators" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -4497,6 +3983,7 @@
       }
     },
     "Followers" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -4586,7 +4073,6 @@
 
     },
     "Got it" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -4672,6 +4158,35 @@
         }
       }
     },
+    "Harassment" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acoso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harcèlement"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "嫌がらせ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "骚扰"
+          }
+        }
+      }
+    },
     "Help & legal" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4697,34 +4212,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "帮助与法律"
-          }
-        }
-      }
-    },
-    "Harassment" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Acoso"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Harcèlement"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "嫌がらせ"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "骚扰"
           }
         }
       }
@@ -4846,7 +4333,37 @@
     "If you used Sign in with Apple, you can also stop using Apple with Liya in your Apple Account settings." : {
 
     },
+    "Include note excerpts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incluir fragmentos de las notas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inclure un extrait des notes"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メモの抜粋を載せる"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "卡片附上笔记摘录"
+          }
+        }
+      }
+    },
     "Incorrect content" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -4963,6 +4480,64 @@
         }
       }
     },
+    "Journal day" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Día del diario"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Date de l’entrée"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日記の日付"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记录日期"
+          }
+        }
+      }
+    },
+    "Keep a moment" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar un momento"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garder un moment"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ひとこまを残す"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记下一刻"
+          }
+        }
+      }
+    },
     "Keep private" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5023,6 +4598,35 @@
     },
     "Keep your introduction under 500 characters." : {
 
+    },
+    "Keep your message to 4,000 characters." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribe un mensaje de hasta 4000 caracteres."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre message peut contenir jusqu’à 4 000 caractères."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メッセージは4,000文字以内で入力してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每条消息最多可输入 4000 个字符。"
+          }
+        }
+      }
     },
     "Keep your nickname under 80 characters." : {
 
@@ -5113,6 +4717,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最近 30 天"
+          }
+        }
+      }
+    },
+    "Later day" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segundo día"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Second jour"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "後の日付"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "较晚的一天"
           }
         }
       }
@@ -5263,6 +4896,34 @@
         }
       }
     },
+    "Liya Editorial" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redacción de Liya"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La rédaction de Liya"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liya編集部"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liya 编辑部"
+          }
+        }
+      }
+    },
     "Liya is a place to share moments and connect with others." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5288,6 +4949,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Liya 是一个分享生活、连接彼此的空间。"
+          }
+        }
+      }
+    },
+    "Liya member" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Miembro de Liya"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Membre de Liya"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liya メンバー"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liya 成员"
           }
         }
       }
@@ -5718,6 +5407,7 @@
       }
     },
     "More options" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -5836,6 +5526,7 @@
       }
     },
     "No followers yet" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -5864,6 +5555,7 @@
       }
     },
     "No hidden profiles" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -6096,9 +5788,6 @@
         }
       }
     },
-    "Not shared" : {
-
-    },
     "Notice one sensation you can feel." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6308,6 +5997,64 @@
         }
       }
     },
+    "Open mood diary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir el diario"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le journal"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "気分の日記を開く"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开心情日记"
+          }
+        }
+      }
+    },
+    "Open Settings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir ajustes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les réglages"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定を開く"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开设置"
+          }
+        }
+      }
+    },
     "Open system settings" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6370,6 +6117,7 @@
       }
     },
     "Other" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -6393,6 +6141,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "其他"
+          }
+        }
+      }
+    },
+    "Pair two days" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Combinar dos días"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Associer deux jours"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ふたつの日を並べる"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选两天对照"
+          }
+        }
+      }
+    },
+    "Pair two journal entries on a postcard." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reúne dos entradas de tu diario en una postal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réunissez deux pages de votre journal sur une carte postale."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ふたつの日の記録を、一枚のポストカードに。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把两天的心情放在同一张明信片上。"
           }
         }
       }
@@ -6699,6 +6505,35 @@
         }
       }
     },
+    "Post options" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opciones de la publicación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Options de la publication"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "投稿のオプション"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "动态选项"
+          }
+        }
+      }
+    },
     "Post Spotlight" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6728,30 +6563,31 @@
         }
       }
     },
-    "Post options" : {
+    "Postcard paper" : {
+      "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Opciones de la publicación"
+            "value" : "Papel de la postal"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Options de la publication"
+            "value" : "Papier de la carte"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "投稿のオプション"
+            "value" : "カードの用紙"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "动态选项"
+            "value" : "明信片画纸"
           }
         }
       }
@@ -6904,6 +6740,93 @@
         }
       }
     },
+    "Private moment" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Momento privado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moment privé"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自分だけの記録"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "私藏时刻"
+          }
+        }
+      }
+    },
+    "Private note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota privada"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note privée"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自分用のメモ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "私人笔记"
+          }
+        }
+      }
+    },
+    "Private notes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas privadas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes privées"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自分用のメモ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "私人笔记"
+          }
+        }
+      }
+    },
     "Profile" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6929,6 +6852,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我的"
+          }
+        }
+      }
+    },
+    "Profile blocked" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfil bloqueado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil bloqué"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ブロック中のプロフィール"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已屏蔽此人"
           }
         }
       }
@@ -6962,35 +6913,8 @@
         }
       }
     },
-    "Profile blocked" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Perfil bloqueado"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Profil bloqué"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ブロック中のプロフィール"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已屏蔽此人"
-          }
-        }
-      }
-    },
     "Profile options" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -7021,7 +6945,43 @@
     "Profile photo" : {
 
     },
+    "profile.following" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Following"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siguiendo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abonnements"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォロー中"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关注"
+          }
+        }
+      }
+    },
     "Profiles you hide will appear here." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -7107,30 +7067,31 @@
         }
       }
     },
-    "Push delivery for messages and activity is not available yet. Call notifications have separate settings." : {
+    "Read both entries" : {
+      "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Las notificaciones de mensajes y actividad aún no están disponibles. Las llamadas tienen ajustes separados."
+            "value" : "Leer las dos entradas"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les notifications des messages et de l’activité ne sont pas encore disponibles. Les appels ont des réglages distincts."
+            "value" : "Lire les deux entrées"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "メッセージとアクティビティのプッシュ通知は準備中です。通話通知は別の設定です。"
+            "value" : "両方の日記を読む"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "消息和互动的推送尚未开放，通话通知使用独立设置。"
+            "value" : "对照阅读原文"
           }
         }
       }
@@ -7278,41 +7239,6 @@
         }
       }
     },
-    "profile.following" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Following"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Siguiendo"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abonnements"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "フォロー中"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "关注"
-          }
-        }
-      }
-    },
     "recorded days" : {
       "localizations" : {
         "es" : {
@@ -7369,8 +7295,95 @@
         }
       }
     },
+    "Refresh likes and comments" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar Me gusta y comentarios"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualiser les mentions J’aime et les commentaires"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "いいねとコメントを更新"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刷新点赞和评论"
+          }
+        }
+      }
+    },
     "Remove items to keep at most 9 attachments." : {
 
+    },
+    "Remove like" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar Me gusta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer la mention J’aime"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "いいねを取り消す"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消点赞"
+          }
+        }
+      }
+    },
+    "Reply ideas" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ideas para responder"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idées de réponse"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返信のヒント"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回复灵感"
+          }
+        }
+      }
     },
     "Report" : {
       "extractionState" : "stale",
@@ -7397,6 +7410,93 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "举报"
+          }
+        }
+      }
+    },
+    "Report comment" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denunciar comentario"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signaler le commentaire"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コメントを通報"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "举报评论"
+          }
+        }
+      }
+    },
+    "Report member" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denunciar miembro"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signaler le membre"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メンバーを報告"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "举报用户"
+          }
+        }
+      }
+    },
+    "Report options" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opciones de denuncia"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Options de signalement"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通報のオプション"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "举报选项"
           }
         }
       }
@@ -7431,6 +7531,7 @@
       }
     },
     "Report profile" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -7457,9 +7558,6 @@
           }
         }
       }
-    },
-    "Report received · review is not yet configured" : {
-
     },
     "Report received." : {
       "extractionState" : "manual",
@@ -7490,10 +7588,8 @@
         }
       }
     },
-    "Report received. Review is not yet configured." : {
-
-    },
     "Report video" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -7520,9 +7616,6 @@
           }
         }
       }
-    },
-    "Reports are stored; review is not yet configured." : {
-
     },
     "Resume" : {
       "extractionState" : "stale",
@@ -7553,6 +7646,64 @@
         }
       }
     },
+    "Retry counts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar los recuentos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recharger les compteurs"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "件数を再読み込み"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新加载数量"
+          }
+        }
+      }
+    },
+    "Retry likes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver a cargar los Me gusta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recharger les mentions J’aime"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "いいねを再読み込み"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新加载点赞"
+          }
+        }
+      }
+    },
     "Safety" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -7578,6 +7729,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安全"
+          }
+        }
+      }
+    },
+    "Save a day in your mood diary to make your first postcard." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarda una entrada en tu diario para crear tu primera postal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrivez une page de votre journal pour créer votre première carte."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日記に今日の気持ちを残すと、最初のカードが作れます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先在心情日记里记下一天，就能做第一张明信片。"
           }
         }
       }
@@ -7638,6 +7818,9 @@
           }
         }
       }
+    },
+    "Save moment" : {
+
     },
     "Saved account" : {
       "extractionState" : "manual",
@@ -7726,8 +7909,34 @@
         }
       }
     },
-    "Say hello" : {
-
+    "Sea-glass stationery for your journal postcards" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Papel en tonos de cristal marino para tus postales"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un papier aux reflets marins pour vos cartes"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日記のカードを彩る、海色の用紙"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "给心情明信片换上海玻璃色的画纸"
+          }
+        }
+      }
     },
     "See the current status of reports you submitted from this account." : {
 
@@ -7739,6 +7948,7 @@
 
     },
     "Send" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -7767,6 +7977,7 @@
       }
     },
     "Send report" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -7795,7 +8006,33 @@
       }
     },
     "Sending this report shares this message and its attachments with Liya for review. Other messages are not included." : {
-
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al enviar el reporte, Liya recibirá este mensaje y sus archivos adjuntos para revisarlos. Los demás mensajes permanecerán privados."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En envoyant ce signalement, vous communiquez à Liya ce message et ses pièces jointes pour examen. Les autres messages restent privés."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "報告すると、このメッセージと添付ファイルが確認のためLiyaに共有されます。他のメッセージは共有されません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提交后，Liya 会收到这条消息及其附件以便审核。其他聊天内容不会包含在举报中。"
+          }
+        }
+      }
     },
     "Sending…" : {
       "extractionState" : "manual",
@@ -7856,6 +8093,7 @@
       }
     },
     "Set up your community profile to follow members." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -7913,6 +8151,7 @@
       }
     },
     "Sexual content" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -7941,6 +8180,7 @@
       }
     },
     "Share a moment" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -8049,6 +8289,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "发布动态"
+          }
+        }
+      }
+    },
+    "Share postcard" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir postal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partager la carte"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カードを共有"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享明信片"
           }
         }
       }
@@ -8371,6 +8640,38 @@
         }
       }
     },
+    "Spend %@ coins to unlock this style once." : {
+
+    },
+    "Spend %lld coins to unlock this style once." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gasta %lld monedas para desbloquear este estilo una sola vez."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Débloquez ce style une fois pour %lld pièces."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldコインでこのスタイルを一度だけ購入します。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "花费 %lld 金币解锁此样式，只需支付一次。"
+          }
+        }
+      }
+    },
     "Square" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -8400,9 +8701,6 @@
         }
       }
     },
-    "Start a conversation when you're ready." : {
-
-    },
     "Start over" : {
       "localizations" : {
         "es" : {
@@ -8430,12 +8728,6 @@
           }
         }
       }
-    },
-    "Suggested" : {
-
-    },
-    "Suggested content" : {
-
     },
     "Support" : {
       "extractionState" : "stale",
@@ -8638,6 +8930,122 @@
         }
       }
     },
+    "No camera is available. You can choose a photo from your library." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay ninguna cámara disponible. Puedes elegir una foto de tu fototeca."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun appareil photo n’est disponible. Vous pouvez choisir une photo dans votre photothèque."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カメラを使用できません。写真ライブラリから写真を選べます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前没有可用的相机。你可以从相册中选择照片。"
+          }
+        }
+      }
+    },
+    "The photo could not be saved. Please try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar la foto. Inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La photo n’a pas pu être enregistrée. Réessayez."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写真を保存できませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "照片未能保存，请重试。"
+          }
+        }
+      }
+    },
+    "The postcard could not be prepared. Try sharing again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo crear la postal. Intenta compartirla de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La carte n’a pas pu être créée. Réessayez de la partager."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カードを作成できませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "明信片暂时生成失败，请再试一次。"
+          }
+        }
+      }
+    },
+    "Their comments and other community content will no longer be visible to you." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejarás de ver sus comentarios y demás contenido de la comunidad."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous ne verrez plus ses commentaires ni ses autres publications dans la communauté."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このメンバーのコメントやコミュニティへの投稿が表示されなくなります。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "屏蔽后，你将看不到对方的评论和其他社区内容。"
+          }
+        }
+      }
+    },
     "Their photo posts will be hidden. You can unblock them in Settings." : {
       "localizations" : {
         "es" : {
@@ -8755,9 +9163,6 @@
           }
         }
       }
-    },
-    "This member is no longer available." : {
-
     },
     "This pack is not available from the App Store right now." : {
       "extractionState" : "stale",
@@ -8932,6 +9337,35 @@
         }
       }
     },
+    "This removes the message for both of you." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El mensaje se eliminará para ambos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le message sera supprimé pour vous deux."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "双方の会話からこのメッセージが削除されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此消息将从双方的会话中删除。"
+          }
+        }
+      }
+    },
     "This thought will be removed from the community and your profile." : {
 
     },
@@ -8995,6 +9429,35 @@
     "Thoughts in the tree" : {
 
     },
+    "Tideglass paper" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Papel Cristal de marea"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Papier Verre de mer"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "潮のガラス"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "潮汐玻璃画纸"
+          }
+        }
+      }
+    },
     "Tired" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -9048,6 +9511,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重试"
+          }
+        }
+      }
+    },
+    "Turn off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactiver"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オフにする"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停用"
           }
         }
       }
@@ -9160,6 +9652,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消关注"
+          }
+        }
+      }
+    },
+    "Unlock" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desbloquear"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Débloquer"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解除する"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解锁"
           }
         }
       }
@@ -9459,6 +9980,35 @@
         }
       }
     },
+    "Waiting…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En espera…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "待機中…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等待中…"
+          }
+        }
+      }
+    },
     "Watch this moment" : {
 
     },
@@ -9580,6 +10130,35 @@
         }
       }
     },
+    "Write a comment" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribe un comentario"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrire un commentaire"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コメントを書く"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写评论"
+          }
+        }
+      }
+    },
     "Write a comment…" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -9634,6 +10213,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "输入消息…"
+          }
+        }
+      }
+    },
+    "You" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tú"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あなた"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你"
           }
         }
       }
@@ -9696,6 +10304,122 @@
         }
       }
     },
+    "You can send this message once you both follow each other." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podrás enviar este mensaje cuando ambos se sigan."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous pourrez envoyer ce message une fois que vous vous suivrez mutuellement."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お互いにフォローすると、このメッセージを送れます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "双方互相关注后，就可以发送这条消息。"
+          }
+        }
+      }
+    },
+    "You can start a video call once you both follow each other." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podrás iniciar una videollamada cuando ambos se sigan."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous pourrez passer un appel vidéo une fois que vous vous suivrez mutuellement."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お互いにフォローすると、ビデオ通話ができます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "双方互相关注后，就可以打视频电话。"
+          }
+        }
+      }
+    },
+    "You can start a voice call once you both follow each other." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podrás iniciar una llamada de voz cuando ambos se sigan."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous pourrez passer un appel audio une fois que vous vous suivrez mutuellement."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お互いにフォローすると、音声通話ができます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "双方互相关注后，就可以打语音电话。"
+          }
+        }
+      }
+    },
+    "You can still choose a photo from your library." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puedes elegir una foto de tu fototeca."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous pouvez choisir une photo dans votre photothèque."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写真ライブラリから写真を選べます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你仍然可以从相册选择照片。"
+          }
+        }
+      }
+    },
     "You can't return to this account after signing out or deleting it." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -9721,6 +10445,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "退出或删除后，将无法恢复此账号。"
+          }
+        }
+      }
+    },
+    "You haven’t followed any creators yet." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no sigues a ningún creador."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous ne suivez pas encore de créateurs."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まだクリエイターをフォローしていません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有关注创作者"
+          }
+        }
+      }
+    },
+    "You haven’t followed anyone yet." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no sigues a nadie."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous ne suivez personne pour le moment."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まだ誰もフォローしていません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有关注任何人"
           }
         }
       }
@@ -9839,62 +10621,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我的互动"
-          }
-        }
-      }
-    },
-    "You haven’t followed any creators yet." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aún no sigues a ningún creador."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vous ne suivez pas encore de créateurs."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "まだクリエイターをフォローしていません。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "还没有关注创作者"
-          }
-        }
-      }
-    },
-    "You haven’t followed anyone yet." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aún no sigues a nadie."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vous ne suivez personne pour le moment."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "まだ誰もフォローしていません。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "还没有关注任何人"
           }
         }
       }
@@ -10106,6 +10832,35 @@
     "Your local space" : {
 
     },
+    "Your note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu nota"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre note"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メモを入力"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写下笔记"
+          }
+        }
+      }
+    },
     "Your posts will appear here." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -10218,6 +10973,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "社区成员可以看到你的资料和动态，消息仅对参与者可见。"
+          }
+        }
+      }
+    },
+    "Your profile is still loading. Please try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu perfil se está cargando. Inténtalo de nuevo en un momento."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre profil est en cours de chargement. Réessayez dans un instant."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロフィールを読み込み中です。少し待ってからもう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "个人资料正在加载，请稍后重试。"
           }
         }
       }

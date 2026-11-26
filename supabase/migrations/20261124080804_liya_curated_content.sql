@@ -1,4 +1,3 @@
--- Curated content is read-only for signed-in clients; it is not an Auth user or a real comment.
 create table public.liya_curated_video_creators (
   video_id text primary key references public.liya_example_media(id),
   photo_id text not null references public.liya_example_media(id),

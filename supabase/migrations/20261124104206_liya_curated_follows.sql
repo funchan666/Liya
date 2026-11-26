@@ -1,4 +1,3 @@
--- Keep explicit unfollows so importing an older installation cannot undo them.
 create table public.liya_curated_follows (
   owner_id uuid not null references auth.users(id) on delete cascade,
   media_id text not null references public.liya_example_media(id) on delete cascade,

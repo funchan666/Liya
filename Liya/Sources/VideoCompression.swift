@@ -2,7 +2,6 @@ import Foundation
 import AVFoundation
 
 enum VideoCompression {
-    // Leave headroom under the project's 50 MB per-object limit.
     static let uploadLimit: Int64 = 45_000_000
     struct Prepared {
         let url: URL
@@ -45,7 +44,6 @@ enum VideoCompression {
                outputSize > 0, Int64(outputSize) <= uploadLimit,
                let exportedDuration = try? await AVURLAsset(url: output).load(.duration) {
                 let seconds = CMTimeGetSeconds(exportedDuration)
-                // A size-limited export can truncate; never silently publish a partial video.
                 let exportedAsset = AVURLAsset(url: output)
                 let hasVideo = (try? await exportedAsset.loadTracks(withMediaType: .video))?.isEmpty == false
                 let hasAudio = (try? await exportedAsset.loadTracks(withMediaType: .audio))?.isEmpty == false

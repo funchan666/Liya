@@ -13,7 +13,7 @@
     {"id":"qmubwwcjusfbmlpw","usd":"99.99","coins":72000,"origin":"provided"}
   ],
   "welcome_coins": 600,
-  "spending": [
+  "planned_spending": [
     {"id":"mood_prism","coins":120,"description":"Diary appearance","status":"available_on_device"},
     {"id":"profile_glow","coins":180,"description":"Profile appearance","status":"available_on_device"},
     {"id":"tideglassPaper","coins":90,"description":"Reusable Tideglass postcard paper","status":"available_on_device"}

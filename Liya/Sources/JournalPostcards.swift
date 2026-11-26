@@ -1,40 +1,113 @@
 import SwiftUI
 import UIKit
 
+private let journalPaper = Color(red: 0.994, green: 0.978, blue: 0.944)
+private let journalPlum = Color(red: 0.29, green: 0.18, blue: 0.30)
+
 struct JournalPostcardLink: View {
+    var openedFromDiary = false
+
     var body: some View {
-        NavigationLink { JournalPostcardsView() } label: {
+        NavigationLink { JournalPostcardsView(openedFromDiary: openedFromDiary) } label: {
             HStack(spacing: 14) {
-                Image("journal-paper-daybreak").resizable().scaledToFill()
-                    .frame(width: 92, height: 80).clipped().accessibilityHidden(true)
+                Image(decorative: "journal-daybreak-stamp").resizable().scaledToFit()
+                    .frame(width: 54, height: 43).rotationEffect(.degrees(-6))
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Between days").font(LiyaType.sectionHeading).foregroundStyle(liyaInk)
+                    Text("Between days").font(LiyaType.sectionHeading).foregroundStyle(journalPlum)
                     Text("Pair two journal entries on a postcard.")
-                        .font(LiyaType.detail).foregroundStyle(.secondary)
-                }.fixedSize(horizontal: false, vertical: true)
+                        .font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.78))
+                }.multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 2)
-                Image("back").resizable().scaledToFit().frame(width: 14, height: 14)
-                    .scaleEffect(x: -1, y: 1).accessibilityHidden(true)
-            }.padding(.trailing, 14).frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white.opacity(0.87), in: RoundedRectangle(cornerRadius: 18))
-                .clipShape(RoundedRectangle(cornerRadius: 18))
+                PostcardDisclosure().foregroundStyle(journalPlum)
+            }.padding(14).frame(maxWidth: .infinity, alignment: .leading)
+                .modifier(JournalGlassSurface())
+                .contentShape(RoundedRectangle(cornerRadius: 14))
         }.buttonStyle(.plain).accessibilityElement(children: .combine)
     }
 }
 
+struct VideoJournalShortcut: View {
+    var body: some View {
+        NavigationLink { JournalPostcardsView(openedFromDiary: false) } label: {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) {
+                    stamp
+                    Text("Between days")
+                        .font(.custom("InstrumentSerif-Regular", size: 21, relativeTo: .headline))
+                    PostcardDisclosure()
+                }
+                .padding(.leading, 8).padding(.trailing, 12)
+                .padding(.vertical, 4).fixedSize(horizontal: true, vertical: false)
+                stamp.frame(width: 46)
+            }
+            .frame(minHeight: 44)
+            .foregroundStyle(journalPlum)
+            .modifier(JournalGlassSurface())
+            .contentShape(RoundedRectangle(cornerRadius: 14))
+        }.buttonStyle(.plain).accessibilityLabel("Between days")
+    }
+
+    private var stamp: some View {
+        Image(decorative: "journal-daybreak-stamp").resizable().scaledToFit()
+            .frame(width: 36, height: 32).rotationEffect(.degrees(-6))
+    }
+}
+
+private struct PostcardDisclosure: View {
+    @Environment(\.layoutDirection) private var direction
+
+    var body: some View {
+        Image(decorative: "back").renderingMode(.template).resizable().scaledToFit()
+            .frame(width: 12, height: 14)
+            .scaleEffect(x: direction == .rightToLeft ? 1 : -1, y: 1)
+    }
+}
+
+private struct PostcardActionStyle: ButtonStyle {
+    var secondary = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
+        configuration.label
+            .font(LiyaType.action)
+            .foregroundStyle(secondary ? journalPlum : .white)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 16).padding(.vertical, 12)
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .background(secondary ? journalPaper : journalPlum, in: shape)
+            .overlay {
+                if secondary { shape.strokeBorder(journalPlum.opacity(0.25)).allowsHitTesting(false) }
+            }
+            .brightness(configuration.isPressed ? -0.08 : 0)
+            .contentShape(shape)
+    }
+}
+
 private struct JournalPostcardsView: View {
+    let openedFromDiary: Bool
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var checkout: CoinCheckout
+    @EnvironmentObject private var store: LocalStore
     @Environment(\.locale) private var locale
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var firstStamp: String?
     @State private var secondStamp: String?
     @State private var usePair = true
     @State private var readingEntries = false
-    @State private var includeExcerpts = false
+    @State private var excerptConsent: [JournalDayEntry] = []
+    private var includeExcerpts: Bool { !excerptConsent.isEmpty && excerptConsent == chosenDays }
     @State private var exportedCard: PostcardImage?
     @State private var exportFailed = false
     private var entries: [JournalDayEntry] {
-        session.moodEntries.filter { $0.journalOwnerID == session.userID && $0.recordedDate != nil }
+        guard let owner = session.userID else { return [] }
+        let syncedDays = session.moodEntries.filter { $0.journalOwnerID == owner && $0.recordedDate != nil }
+        let archive = store.earlierJournalDays(for: owner)
+        guard !archive.isEmpty else { return syncedDays }
+        var byDate: [String: JournalDayEntry] = [:]
+        for day in archive { byDate[day.dayStamp] = day }
+        for day in syncedDays { byDate[day.dayStamp] = day }
+        return byDate.values.sorted { $0.dayStamp > $1.dayStamp }
     }
     private var chosenDays: [JournalDayEntry] {
         let records = entries
@@ -52,20 +125,16 @@ private struct JournalPostcardsView: View {
     var body: some View {
         PageShell(title: "Between days") {
             VStack(alignment: .leading, spacing: 18) {
-                JournalPaperPrint(days: chosenDays, artwork: artwork, includeExcerpts: includeExcerpts)
-                    .clipShape(RoundedRectangle(cornerRadius: 19))
-                    .accessibilityElement(children: .combine)
-                if entries.isEmpty {
-                    if session.moodLoading {
-                        HStack { LiyaLoadingIndicator(size: 24); Text("Loading journal…") }
-                    } else if let error = session.moodError {
-                        OfflineNote(text: error)
-                        Button("Reload journal") { Task { await session.refreshMoods() } }.frame(minHeight: 44)
-                    } else {
-                        Text("Save a day in your mood diary to make your first postcard.")
-                        NavigationLink("Open mood diary") { MoodDiaryView() }.frame(minHeight: 44)
+                VStack(alignment: .leading, spacing: 0) {
+                    JournalPaperPrint(days: chosenDays, artwork: artwork, includeExcerpts: includeExcerpts)
+                        .accessibilityElement(children: .combine)
+                    if entries.isEmpty {
+                        emptyJournalActions.padding(.horizontal, 18).padding(.bottom, 18)
                     }
-                } else {
+                }
+                .background(journalPaper)
+                .clipShape(RoundedRectangle(cornerRadius: 19, style: .continuous))
+                if !entries.isEmpty {
                     if entries.count > 1 {
                         Toggle("Pair two days", isOn: $usePair)
                             .onLiyaChange(of: usePair) { _ in resetExcerptChoice() }
@@ -78,8 +147,7 @@ private struct JournalPostcardsView: View {
                             readingEntries.toggle()
                         } label: {
                             Text(LocalizedStringKey(readingEntries ? "Close journal entries" : "Read both entries"))
-                                .font(LiyaType.action).frame(maxWidth: .infinity, minHeight: 44)
-                        }.buttonStyle(.plain)
+                        }.buttonStyle(PostcardActionStyle(secondary: true))
                         if readingEntries {
                             ViewThatFits(in: .horizontal) {
                                 HStack(alignment: .top, spacing: 14) {
@@ -92,29 +160,85 @@ private struct JournalPostcardsView: View {
                         }
                     }
                     if chosenDays.contains(where: { !$0.reflectionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
-                        Toggle("Include note excerpts", isOn: $includeExcerpts)
+                        Toggle("Include note excerpts", isOn: Binding(
+                            get: { includeExcerpts },
+                            set: { excerptConsent = $0 ? chosenDays : [] }
+                        ))
                     }
-                    if exportFailed { Text("The postcard could not be prepared. Try sharing again.").font(.footnote) }
-                    Button { sharePostcard() } label: {
-                        Text("Share postcard").font(.headline).foregroundStyle(.white)
-                            .frame(maxWidth: .infinity, minHeight: 50)
-                            .background(liyaInk, in: Capsule())
-                    }.buttonStyle(.plain)
+                    if exportFailed { Text("The postcard could not be prepared. Try sharing again.").font(LiyaType.text(.footnote)) }
+                    Button("Share postcard", action: sharePostcard)
+                        .buttonStyle(PostcardActionStyle())
                 }
                 NavigationLink { WalletView() } label: {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Postcard paper").font(.subheadline.weight(.semibold))
-                        Text("Daybreak is free. Choose Tideglass in your wallet.").font(.footnote)
-                    }.frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
-                }.buttonStyle(.plain)
+                    paperSelectionLabel
+                }.buttonStyle(.plain).accessibilityElement(children: .combine)
             }.padding(.top, 12).modifier(AdaptiveContainerMargins())
                 .foregroundStyle(liyaInk).tint(liyaAccent)
         }.task(id: session.userID) {
-            firstStamp = nil; secondStamp = nil; resetExcerptChoice(); exportedCard = nil
             if session.moodEntries.isEmpty { await session.refreshMoods() }
+        }.onLiyaChange(of: session.userID) { _ in
+            firstStamp = nil; secondStamp = nil; resetExcerptChoice(); exportedCard = nil
         }.sheet(item: $exportedCard) { card in
             PostcardActivitySheet(image: card.image)
         }
+    }
+
+    @ViewBuilder private var emptyJournalActions: some View {
+        if session.moodLoading {
+            HStack(spacing: 8) { LiyaLoadingIndicator(size: 24); Text("Loading journal…") }
+        } else if let error = session.moodError {
+            VStack(alignment: .leading, spacing: 12) {
+                OfflineNote(text: error)
+                Button("Try again") { Task { await session.refreshMoods() } }
+                    .buttonStyle(PostcardActionStyle(secondary: true))
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Save a day in your mood diary to make your first postcard.")
+                    .font(LiyaType.reading).foregroundStyle(journalPlum)
+                    .fixedSize(horizontal: false, vertical: true)
+                if openedFromDiary {
+                    Button { dismiss() } label: { openDiaryLabel }
+                        .buttonStyle(PostcardActionStyle())
+                } else {
+                    NavigationLink { MoodDiaryView() } label: { openDiaryLabel }
+                        .buttonStyle(PostcardActionStyle())
+                }
+            }
+        }
+    }
+
+    private var openDiaryLabel: some View {
+        HStack(spacing: 12) {
+            Text("Open mood diary").multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+            PostcardDisclosure()
+        }
+    }
+
+    private var paperSelectionLabel: some View {
+        HStack(spacing: 12) {
+            if !dynamicTypeSize.isAccessibilitySize {
+                ZStack {
+                    Image(decorative: "journal-paper-tideglass").resizable().scaledToFill()
+                        .frame(width: 43, height: 33).clipShape(RoundedRectangle(cornerRadius: 3))
+                        .rotationEffect(.degrees(8)).offset(x: 4, y: -4)
+                    Image(decorative: "journal-daybreak-stamp").resizable().scaledToFit()
+                        .frame(width: 45, height: 35).rotationEffect(.degrees(-8)).offset(x: -3, y: 4)
+                }.frame(width: 56, height: 49)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Postcard paper").font(LiyaType.sectionHeading).foregroundStyle(journalPlum)
+                Text("Daybreak is free. Choose Tideglass in your wallet.")
+                    .font(LiyaType.text(.footnote)).foregroundStyle(liyaInk.opacity(0.78))
+            }.multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+            PostcardDisclosure().foregroundStyle(journalPlum)
+        }
+        .padding(14).frame(maxWidth: .infinity, alignment: .leading)
+        .modifier(JournalGlassSurface())
+        .contentShape(RoundedRectangle(cornerRadius: 14))
     }
 
     private func dayPicker(_ current: JournalDayEntry, index: Int) -> some View {
@@ -132,16 +256,16 @@ private struct JournalPostcardsView: View {
         } label: {
             HStack(spacing: 10) {
                 Text(LocalizedStringKey(chosenDays.count == 1 ? "Journal day" : (index == 0 ? "Earlier day" : "Later day")))
-                    .font(.subheadline.weight(.semibold))
+                    .font(LiyaType.text(.subheadline, weight: .semibold))
                 Spacer()
                 if let date = current.recordedDate {
                     Text(date, format: .dateTime.year().month(.abbreviated).day())
-                        .font(.subheadline).multilineTextAlignment(.trailing)
+                        .font(LiyaType.detail).multilineTextAlignment(.trailing)
                 }
                 Image("back").resizable().scaledToFit().frame(width: 12, height: 12)
                     .rotationEffect(.degrees(-90)).accessibilityHidden(true)
             }.padding(.horizontal, 14).frame(minHeight: 44)
-                .modifier(JournalPickerSurface())
+                .modifier(JournalGlassSurface())
         }
     }
 
@@ -158,7 +282,7 @@ private struct JournalPostcardsView: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    private func resetExcerptChoice() { includeExcerpts = false; exportFailed = false; readingEntries = false }
+    private func resetExcerptChoice() { excerptConsent = []; exportFailed = false; readingEntries = false }
 
     @MainActor private func sharePostcard() {
         guard !chosenDays.isEmpty else { return }
@@ -174,17 +298,32 @@ private struct JournalPostcardsView: View {
     }
 }
 
-private struct JournalPickerSurface: ViewModifier {
-    func body(content: Content) -> some View {
-        #if compiler(>=6.2)
-        if #available(iOS 26.0, *) {
-            content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
+private struct JournalGlassSurface: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    private let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
+
+    @ViewBuilder func body(content: Content) -> some View {
+        if reduceTransparency {
+            content.background(journalPaper, in: shape)
+                .overlay { shape.strokeBorder(journalPlum.opacity(0.22)).allowsHitTesting(false) }
         } else {
-            content.background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
-        }
+        #if compiler(>=6.2)
+            if #available(iOS 26.0, *) {
+                content.glassEffect(.regular.tint(journalPaper.opacity(0.80)).interactive(), in: shape)
+                    .environment(\.colorScheme, .light)
+            } else {
+                material(content)
+            }
         #else
-        content.background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
+            material(content)
         #endif
+        }
+    }
+
+    private func material(_ content: Content) -> some View {
+        content.background(.regularMaterial, in: shape)
+            .background(journalPaper.opacity(0.86), in: shape)
+            .environment(\.colorScheme, .light)
     }
 }
 
@@ -217,7 +356,7 @@ private struct JournalPaperPrint: View {
                 }
             }.padding(18)
         }.frame(maxWidth: .infinity, alignment: .leading)
-            .foregroundStyle(ink).background(Color(red: 0.994, green: 0.978, blue: 0.944))
+            .foregroundStyle(ink).background(journalPaper)
     }
 }
 
@@ -229,7 +368,9 @@ private struct PostcardImage: Identifiable {
 private struct PostcardActivitySheet: UIViewControllerRepresentable {
     let image: UIImage
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: [image], applicationActivities: nil)
+        let sheet = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+        sheet.excludedActivityTypes = [.saveToCameraRoll]
+        return sheet
     }
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }

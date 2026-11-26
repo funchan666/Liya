@@ -17,22 +17,72 @@ struct SocialAttempt {
     }
 }
 
+struct MemberInitialsAvatar: View {
+    let name: String
+
+    private var initials: String {
+        let words = name.split(whereSeparator: \.isWhitespace)
+        guard let first = words.first?.first else { return "" }
+        let last = words.dropFirst().last?.first
+        return (String(first) + (last.map { String($0) } ?? "")).uppercased()
+    }
+
+    var body: some View {
+        Text(verbatim: initials)
+            .font(LiyaType.text(.headline, weight: .semibold)).foregroundStyle(liyaInk)
+            .lineLimit(1).minimumScaleFactor(0.6)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(liyaAccent.opacity(0.12))
+            .accessibilityHidden(true)
+    }
+}
+
 struct SocialAvatar: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     let personID: UUID
-    @State private var url: URL?
-    private var path: String? { social.person(personID)?.avatarPath }
+    var commentAuthor: SocialPerson? = nil
+    private struct PortraitSource: Equatable {
+        let viewer: UUID
+        let member: UUID
+        let path: String
+    }
+    @State private var signedPortrait: (source: PortraitSource, url: URL)?
+
+    private var person: SocialPerson? {
+        guard let viewer = session.userID, viewer == social.connectionsOwner, !social.blocked.contains(personID) else { return nil }
+        if let commentAuthor { return commentAuthor.id == personID ? commentAuthor : nil }
+        return social.person(personID)
+    }
+
+    private var source: PortraitSource? {
+        guard let viewer = session.userID, let path = person?.avatarPath,
+              path.hasPrefix(personID.uuidString.lowercased() + "/avatars/") else { return nil }
+        return PortraitSource(viewer: viewer, member: personID, path: path)
+    }
+
+    @ViewBuilder private var placeholder: some View {
+        if let person {
+            MemberInitialsAvatar(name: person.displayName)
+        } else {
+            Image(decorative: "app-mark").resizable().scaledToFit()
+        }
+    }
+
     var body: some View {
         Group {
-            if let url {
-                AsyncImage(url: url) { image in image.resizable().scaledToFill() } placeholder: { Image("app-mark").resizable().scaledToFit() }
-            } else { Image("app-mark").resizable().scaledToFit() }
+            if let source, let signedPortrait, signedPortrait.source == source {
+                AsyncImage(url: signedPortrait.url) { phase in
+                    if let image = phase.image { image.resizable().scaledToFill() }
+                    else { placeholder }
+                }.id(signedPortrait.url)
+            } else { placeholder }
         }.clipped().accessibilityHidden(true)
-            .task(id: path) {
-                url = nil
-                guard let path else { return }
-                if let signed = try? await social.mediaURL(session, path: path), !Task.isCancelled { url = signed }
+            .task(id: source) { [source] in
+                signedPortrait = nil
+                guard let source, let url = try? await social.mediaURL(session, path: source.path),
+                      !Task.isCancelled, source.viewer == session.userID else { return }
+                signedPortrait = (source, url)
             }
     }
 }
@@ -52,23 +102,23 @@ struct CommunityJoinView: View {
         PageShell(title: "Community profile") {
             VStack(alignment: .leading, spacing: 15) {
                 Text("Community profile changes may need review. Approved profile details are shown to other members. Messages stay private unless you choose to report one.")
-                    .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(LiyaType.text(.footnote)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 if loadingProfile { LiyaLoadingIndicator(size: 26).accessibilityLabel("Loading community profile") }
                 if let owner = session.userID, let status = social.moderationText(kind: "profile", id: owner) {
-                    Text(status).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    Text(status).font(LiyaType.text(.footnote)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
-                if let notice { Text(notice).font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).fixedSize(horizontal: false, vertical: true) }
-                Text("Community name").font(.headline).foregroundStyle(liyaInk)
+                if let notice { Text(notice).font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent).fixedSize(horizontal: false, vertical: true) }
+                Text("Community name").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
                 TextField("Choose a name", text: $name).padding(14).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14)).disabled(saving || loadingProfile || profileLoadError != nil)
-                Text("Introduction").font(.headline).foregroundStyle(liyaInk)
+                Text("Introduction").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
                 TextField("A little about you", text: $signature, axis: .vertical).lineLimit(2...5).padding(14).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14)).disabled(saving || loadingProfile || profileLoadError != nil)
                 Button { shareAvatar.toggle() } label: {
                     HStack(spacing: 12) {
                         Image("avatar-camera").resizable().scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("Share profile photo").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                            Text("Share profile photo").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
                             Text(LocalizedStringKey(shareAvatar ? "Share with community" : "Not shared"))
-                                .font(.caption).foregroundStyle(.secondary)
+                                .font(LiyaType.text(.caption)).foregroundStyle(.secondary)
                         }.frame(maxWidth: .infinity, alignment: .leading)
                         Image(shareAvatar ? "consent-on" : "consent-off").resizable().scaledToFit().frame(width: 28, height: 28).accessibilityHidden(true)
                     }.padding(14).frame(maxWidth: .infinity, minHeight: 64)
@@ -76,12 +126,12 @@ struct CommunityJoinView: View {
                 }.buttonStyle(.plain).accessibilityLabel("Share profile photo")
                     .accessibilityValue(shareAvatar ? "On" : "Off").accessibilityAddTraits(shareAvatar ? .isSelected : [])
                     .disabled(saving || loadingProfile || profileLoadError != nil)
-                if shareAvatar && session.profile?.avatarPath == nil { Text("Add an avatar to your account profile before sharing it.").font(.footnote).foregroundStyle(.secondary) }
+                if shareAvatar && session.profile?.avatarPath == nil { Text("Add an avatar to your account profile before sharing it.").font(LiyaType.text(.footnote)).foregroundStyle(.secondary) }
                 if let profileLoadError {
-                    Text(profileLoadError).font(.footnote).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
+                    Text(profileLoadError).font(LiyaType.text(.footnote)).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
                     Button("Try again") { Task { await loadProfile() } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
                 }
-                if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
+                if let error = social.error { Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
                 PrimaryButton(title: saving ? "Saving…" : "Save community profile", disabled: saving || loadingProfile || profileLoadError != nil || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || name.count > 80 || signature.count > 500 || (shareAvatar && session.profile?.avatarPath == nil)) {
                     saving = true
                     Task {
@@ -122,7 +172,7 @@ struct CommunityFeed: View {
         let controls = dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 8)) : AnyLayout(HStackLayout(spacing: 10))
         return VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center, spacing: 10) {
-                Text("Community").font(.title3.bold()).foregroundStyle(liyaInk)
+                Text("Community").font(LiyaType.text(.title3, weight: .bold)).foregroundStyle(liyaInk)
                 Spacer(minLength: 0)
                 if social.loading { LiyaLoadingIndicator(size: 24).accessibilityLabel("Loading community") }
             }.frame(minHeight: 44)
@@ -130,24 +180,24 @@ struct CommunityFeed: View {
                 NavigationLink { CommunityMembersView() } label: {
                     HStack(spacing: 7) {
                         Image("nav-soft-profile").resizable().scaledToFit().frame(width: 24, height: 24).accessibilityHidden(true)
-                        Text("Members").font(.subheadline.weight(.semibold))
+                        Text("Members").font(LiyaType.text(.subheadline, weight: .semibold))
                     }.foregroundStyle(liyaInk).frame(maxWidth: .infinity, minHeight: 46)
                         .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 14))
                 }.buttonStyle(.plain)
                 Button { Task { await social.refresh(session) } } label: {
-                    Text("Refresh").font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent)
+                    Text("Refresh").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaAccent)
                         .frame(maxWidth: .infinity, minHeight: 46)
                         .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 14))
                 }.buttonStyle(.plain).disabled(social.loading)
             }
             if let error = social.error {
-                Text(error).font(.footnote).foregroundStyle(.red)
+                Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.red)
             } else if !social.loading && social.posts.isEmpty {
                 HStack(spacing: 14) {
                     Image("empty-art").resizable().scaledToFit().frame(width: 64, height: 64).accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("A little quiet here").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
-                        Text("Share a moment to get things started.").font(.footnote).foregroundStyle(.secondary)
+                        Text("A little quiet here").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+                        Text("Share a moment to get things started.").font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }.frame(maxWidth: .infinity, alignment: .leading)
                 }.padding(14).frame(maxWidth: .infinity, alignment: .leading)
@@ -161,25 +211,44 @@ struct CommunityFeed: View {
 struct CommunityMembersView: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
+
     var body: some View {
         PageShell(title: "Community members") {
-            VStack(spacing: 12) {
-                if social.loading { Text("Loading…") }
-                if let error = social.error { Text(error).foregroundStyle(.red); Button("Try again") { Task { await social.refresh(session) } }.foregroundStyle(liyaAccent) }
-                if !social.loading && social.people.filter({ $0.id != session.userID }).isEmpty && social.error == nil {
-                    EmptyState(title: "No members yet", detail: "Other community members will appear here.")
-                }
-                ForEach(social.people.filter { $0.id != session.userID }) { person in
-                    NavigationLink { CommunityPersonView(personID: person.id) } label: {
-                        HStack(spacing: 12) {
-                            SocialAvatar(personID: person.id).frame(width: 44, height: 44).clipShape(Circle())
-                            VStack(alignment: .leading, spacing: 3) { Text(person.displayName).font(.headline); Text(person.signature).font(.caption).lineLimit(2).foregroundStyle(.secondary) }
-                            Spacer()
-                        }.foregroundStyle(liyaInk).frame(maxWidth: .infinity, alignment: .leading).padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
+            LazyVStack(alignment: .leading, spacing: 10) {
+                if session.userID != nil, social.checkedMemberProfileOwner == session.userID, !social.canFollowMembers(session) {
+                    NavigationLink { CommunityJoinView() } label: {
+                        ProfileDetailActionLabel(title: "Set up community profile", style: .follow)
                     }.buttonStyle(.plain)
                 }
-            }.padding(.top, 12)
-        }.task { await social.refresh(session) }
+                ForEach(social.directoryPeople) { person in
+                    NavigationLink { CommunityPersonView(personID: person.id) } label: {
+                        HStack(spacing: 12) {
+                            SocialAvatar(personID: person.id).frame(width: 46, height: 46).clipShape(Circle())
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(verbatim: person.displayName).font(LiyaType.sectionHeading)
+                                if !person.signature.isEmpty {
+                                    Text(verbatim: person.signature).font(LiyaType.detail).lineLimit(2).foregroundStyle(.secondary)
+                                }
+                            }.frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(14).foregroundStyle(liyaInk).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 18))
+                    }.buttonStyle(.plain)
+                }
+                if social.directoryFailed {
+                    ConnectionRetryRow(message: "Please check your connection and try again.") {
+                        await social.loadMemberDirectory(session, reset: social.directoryPeople.isEmpty)
+                    }
+                } else if social.directoryHasMore {
+                    LiyaLoadingIndicator(size: 26).frame(maxWidth: .infinity, minHeight: 46)
+                        .task(id: social.directoryAfter) {
+                            if social.directoryAfter != nil { await social.loadMemberDirectory(session) }
+                        }
+                } else if social.directoryPeople.isEmpty {
+                    InboxEmptyState(title: "No members yet")
+                }
+            }.padding(.vertical, 12)
+        }.task(id: session.userID) { await social.loadMemberDirectory(session, reset: true) }
+        .refreshable { await social.loadMemberDirectory(session, reset: true) }
     }
 }
 
@@ -193,61 +262,92 @@ struct CommunityPostCard: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     let post: SocialPost
-    @State private var busy = false
     @State private var deleting = false
-    @State private var counts: CommunityPostCounts?
-    @State private var countsRequest = UUID()
-    @State private var countsFailed = false
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 NavigationLink { CommunityPersonView(personID: post.ownerID) } label: {
                     HStack(spacing: 8) {
                         SocialAvatar(personID: post.ownerID).frame(width: 40, height: 40).clipShape(Circle())
-                        VStack(alignment: .leading) { Text(social.person(post.ownerID)?.displayName ?? "Liya member").font(.subheadline.bold()); Text("Community post").font(.caption).foregroundStyle(.secondary) }
+                        VStack(alignment: .leading) { Text(social.person(post.ownerID)?.displayName ?? "Liya member").font(LiyaType.text(.subheadline, weight: .bold)); Text("Community post").font(LiyaType.text(.caption)).foregroundStyle(.secondary) }
                     }.foregroundStyle(liyaInk)
                 }.buttonStyle(.plain)
                 Spacer()
                 if post.ownerID == session.userID {
-                    NavigationLink("Edit") { CommunityEditPostView(post: post) }.font(.caption.bold()).foregroundStyle(liyaAccent)
-                    Button("Delete") { deleting = true }.font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                    NavigationLink("Edit") { CommunityEditPostView(post: post) }.font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent)
+                    Button("Delete") { deleting = true }.font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                 } else {
-                    NavigationLink("Report") { CommunityReportView(target: post.ownerID, post: post.id) }.font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                    NavigationLink("Report") { CommunityReportView(target: post.ownerID, post: post.id) }.font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                 }
             }
             if post.ownerID == session.userID, let status = social.moderationText(kind: "post", id: post.id) {
-                Text(status).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(status).font(LiyaType.text(.footnote)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             if !post.body.isEmpty { Text(post.body).foregroundStyle(liyaInk).frame(maxWidth: .infinity, alignment: .leading) }
-            if !post.tags.isEmpty { Text(post.tags.map { "# " + $0 }.joined(separator: "   ")).font(.caption).foregroundStyle(liyaAccent) }
-            SocialMediaStrip(paths: post.mediaPaths, kinds: post.mediaKinds, largeSingle: true)
-            HStack(spacing: 8) {
-                Button {
-                    busy = true; Task { await social.toggleLike(session, post: post.id); await loadCounts(); busy = false }
-                } label: {
-                    LiyaFeedActionLabel(title: social.likes.contains(post.id) ? "Liked" : "Like",
-                                        count: counts.map { String($0.likeCount) } ?? "—",
-                                        icon: social.likes.contains(post.id) ? "video-like-on" : "video-like-off",
-                                        active: social.likes.contains(post.id))
-                }.buttonStyle(.plain).disabled(busy || social.loading)
-                    .accessibilityAddTraits(social.likes.contains(post.id) ? .isSelected : [])
-                NavigationLink { CommunityCommentsView(post: post) } label: {
-                    LiyaFeedActionLabel(title: "Comments", count: counts.map { String($0.commentCount) } ?? "—", icon: "profile-action-message")
-                }.buttonStyle(.plain)
-                Spacer(minLength: 0)
-            }
-            if countsFailed {
-                Button("Retry counts") { Task { await loadCounts() } }
-                    .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
-            }
+            if !post.tags.isEmpty { Text(post.tags.map { "# " + $0 }.joined(separator: "   ")).font(LiyaType.text(.caption)).foregroundStyle(liyaAccent) }
+            SocialMediaStrip(post: post)
+            CommunityPostEngagement(post: post)
         }.modifier(LiyaFeedCardSurface())
             .sheet(isPresented: $deleting) {
                 LocalConfirmation(title: "Delete this post?", message: "The post and its comments will no longer be visible to the community.", action: "Delete") {
                     deleting = false; Task { _ = await social.deletePost(session, id: post.id) }
                 } cancel: { deleting = false }.presentationDetents([.medium])
             }
-            .task(id: post.id) { await loadCounts() }
-            .onLiyaChange(of: social.syncGeneration) { _ in Task { await loadCounts() } }
+    }
+}
+
+private struct CommunityPostEngagement: View {
+    @EnvironmentObject private var session: LiyaSession
+    @EnvironmentObject private var social: SocialStore
+    let post: SocialPost
+    var onOpenComments: () -> Void = {}
+    @State private var busy = false
+    @State private var counts: CommunityPostCounts?
+    @State private var countsRequest = UUID()
+    @State private var countsFailed = false
+    @State private var showingComments = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) { engagementActions }.fixedSize(horizontal: true, vertical: false)
+                VStack(alignment: .leading, spacing: 6) { engagementActions }
+            }
+            if countsFailed {
+                Button("Retry counts") { Task { await loadCounts() } }
+                    .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+            }
+        }
+        .sheet(isPresented: $showingComments) {
+            NavigationStack { CommunityCommentsView(post: post) }
+                .environment(\.liyaTabBarClearance, 0)
+                .presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+        }
+        .task(id: post.id) {
+            async let like: Void = social.refreshPostLike(session, post: post.id)
+            await loadCounts()
+            await like
+        }
+        .onLiyaChange(of: social.syncGeneration) { _ in Task { await loadCounts() } }
+    }
+
+    @ViewBuilder private var engagementActions: some View {
+        let placeholder = countsFailed ? "—" : "…"
+        Button {
+            busy = true; Task { await social.toggleLike(session, post: post.id); await loadCounts(); busy = false }
+        } label: {
+            LiyaFeedActionLabel(title: social.likes.contains(post.id) ? "Liked" : "Like",
+                                count: counts.map { $0.likeCount.formatted() } ?? placeholder,
+                                icon: social.likes.contains(post.id) ? "video-like-on" : "video-like-off",
+                                active: social.likes.contains(post.id))
+        }.buttonStyle(.plain).disabled(busy || social.loading)
+            .accessibilityAddTraits(social.likes.contains(post.id) ? .isSelected : [])
+        Button {
+            onOpenComments()
+            showingComments = true
+        } label: {
+            LiyaFeedActionLabel(title: "Comments", count: counts.map { $0.commentCount.formatted() } ?? placeholder, icon: "profile-action-message")
+        }.buttonStyle(.plain)
     }
 
     private func loadCounts() async {
@@ -262,7 +362,6 @@ struct CommunityPostCard: View {
             counts = rows.first
             countsFailed = counts == nil
         } catch {
-            // Keep the last confirmed totals during a temporary connection failure.
             guard countsRequest == request, !Task.isCancelled, session.userID == owner else { return }
             countsFailed = true
         }
@@ -296,8 +395,8 @@ struct CommunityEditPostView: View {
                     }.padding(12).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                 }
                 DraftMediaPicker(attachments: $additions, loading: $mediaLoading, note: "The post can contain up to 9 photos and videos in total.")
-                if paths.count + additions.count > 9 { Text("Remove items to keep at most 9 attachments.").font(.footnote).foregroundStyle(.red) }
-                if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
+                if paths.count + additions.count > 9 { Text("Remove items to keep at most 9 attachments.").font(LiyaType.text(.footnote)).foregroundStyle(.red) }
+                if let error = social.error { Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
                 PrimaryButton(title: saving ? "Saving…" : "Save changes", disabled: saving || mediaLoading || paths.count + additions.count > 9 || text.count > 4000 || (text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && paths.isEmpty && additions.isEmpty)) {
                     saving = true
                     Task { if await social.updatePost(session, post: post, body: text.trimmingCharacters(in: .whitespacesAndNewlines), tags: tags, paths: paths, kinds: kinds, additions: additions) { dismiss() }; saving = false }
@@ -324,7 +423,7 @@ struct CommunityPersonView: View {
         posts.flatMap { post in
             post.mediaPaths.enumerated().compactMap { index, path in
                 guard post.mediaKinds.indices.contains(index), post.mediaKinds[index] == "video" else { return nil }
-                return SocialMediaItem(path: path, kind: "video")
+                return SocialMediaItem(path: path, kind: "video", post: post)
             }
         }
     }
@@ -336,25 +435,27 @@ struct CommunityPersonView: View {
                 } actions: {
                     if personID != session.userID {
                         VStack(spacing: 10) {
-                            followAction
+                            if !social.blocked.contains(personID) {
+                                ProfileContactActions(recipient: .member(personID), name: person.displayName) { followAction }
+                            }
                             if social.connectionsError != nil {
                                 ConnectionRetryRow { await social.refresh(session) }
                             } else if profileCheckNeeded && !social.loading {
                                 ConnectionRetryRow(message: "Couldn't load your profile. Please try again.") { await social.refresh(session) }
                             }
                             if followUpdateFailed {
-                                Text("Couldn't update your follow. Please try again.").font(.footnote).foregroundStyle(liyaInk)
+                                Text("Couldn't update your follow. Please try again.").font(LiyaType.text(.footnote)).foregroundStyle(liyaInk)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }
                     } else {
                         NavigationLink { CommunityJoinView() } label: {
-                            Text("Edit community profile").font(.subheadline.bold()).foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 46)
+                            Text("Edit community profile").font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 46)
                                 .background(liyaGradient, in: Capsule())
                         }.buttonStyle(.plain)
                     }
                 } content: {
-                    if let error = social.error, !followUpdateFailed, !profileCheckNeeded { Text(error).font(.footnote).foregroundStyle(.secondary) }
+                    if let error = social.error, !followUpdateFailed, !profileCheckNeeded { Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.secondary) }
                     if !posts.isEmpty {
                         ProfileContentTabs(selection: $section, showVideo: !videos.isEmpty)
                     }
@@ -398,7 +499,7 @@ struct CommunityPersonView: View {
                 if updating || checkingProfile || social.connectionsLoading {
                     LiyaLoadingIndicator(size: 25)
                 } else {
-                    Text("Follow").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+                    Text("Follow").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(.secondary)
                 }
             }.frame(maxWidth: .infinity, minHeight: 54)
                 .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 17))
@@ -474,7 +575,7 @@ private struct CommunityProfileOptions: View {
             case .block: blockConfirmation
             case .report: reportForm
             case .reportReceived:
-                Text("Report received.").font(.body.weight(.semibold)).foregroundStyle(liyaInk)
+                Text("Report received.").font(LiyaType.text(.body, weight: .semibold)).foregroundStyle(liyaInk)
                     .accessibilityFocused($reportFeedbackFocused)
                     .onAppear { reportFeedbackFocused = true }
                 SafetySubmitButton(title: "Done") { dismiss() }
@@ -510,9 +611,9 @@ private struct CommunityProfileOptions: View {
     private var blockConfirmation: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Their comments and other community content will no longer be visible to you.")
-                .font(.subheadline).foregroundStyle(liyaInk.opacity(0.77)).fixedSize(horizontal: false, vertical: true)
+                .font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.77)).fixedSize(horizontal: false, vertical: true)
             if blockFailed {
-                Text("Couldn't block this profile. Please try again.").font(.footnote).foregroundStyle(liyaInk)
+                Text("Couldn't block this profile. Please try again.").font(LiyaType.text(.footnote)).foregroundStyle(liyaInk)
             }
             SafetySubmitButton(title: submittingBlock ? "Blocking…" : "Block member",
                                destructive: true, busy: submittingBlock) { submitBlock() }
@@ -524,7 +625,7 @@ private struct CommunityProfileOptions: View {
     private var reportForm: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Choose a reason")
-                .font(.subheadline).foregroundStyle(liyaInk.opacity(0.77)).fixedSize(horizontal: false, vertical: true)
+                .font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.77)).fixedSize(horizontal: false, vertical: true)
             SafetyReasonList(selected: reason) { selected in
                 guard selected != reason else { return }
                 reason = selected
@@ -533,7 +634,7 @@ private struct CommunityProfileOptions: View {
             }
             .disabled(submittingReport)
             if reportFailed {
-                Text("Couldn't confirm the report. Please try again.").font(.footnote).foregroundStyle(liyaInk)
+                Text("Couldn't confirm the report. Please try again.").font(LiyaType.text(.footnote)).foregroundStyle(liyaInk)
                     .fixedSize(horizontal: false, vertical: true).accessibilityFocused($reportFeedbackFocused)
                     .onAppear { reportFeedbackFocused = true }
             }
@@ -602,20 +703,18 @@ struct CommunityReportView: View {
             VStack(alignment: .leading, spacing: 12) {
                 if message != nil {
                     Text("Sending this report shares this message and its attachments with Liya for review. Other messages are not included.")
-                        .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        .font(LiyaType.text(.footnote)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
-                Link("Email support: Liya2026support@liya.vip", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
-                    .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                 ForEach(reasons, id: \.self) { reason in
                     Button { selected = reason; id = UUID(); failed = false } label: {
-                        HStack { Text(reason); Spacer(); if selected == reason { Text("Selected").font(.caption.bold()).foregroundStyle(liyaAccent) } }
+                        HStack { Text(reason); Spacer(); if selected == reason { Text("Selected").font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent) } }
                             .foregroundStyle(liyaInk).padding(16).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 12))
                     }.buttonStyle(.plain).disabled(sending || sent)
                 }
-                if failed { Text("Could not confirm your report. Please try again.").font(.footnote).foregroundStyle(.red) }
-                if sent { Text("Report received.").font(.footnote).foregroundStyle(liyaAccent) }
+                if failed { Text("Could not confirm your report. Please try again.").font(LiyaType.text(.footnote)).foregroundStyle(.red) }
+                if sent { Text("Report received.").font(LiyaType.text(.footnote)).foregroundStyle(liyaAccent) }
                 PrimaryButton(title: sending ? "Sending…" : "Send report", disabled: selected == nil || sending || sent) {
-                    guard let selected else { return }; sending = true
+                    guard let selected, !sending, !sent else { return }; sending = true
                     Task {
                         if let message { sent = await social.reportMessage(session, id: id, message: message, reason: selected) }
                         else if let comment { sent = await social.reportComment(session, id: id, comment: comment, reason: selected) }
@@ -636,50 +735,76 @@ struct CommunityCommentsView: View {
     @EnvironmentObject private var social: SocialStore
     let post: SocialPost
     @State private var comments: [SocialComment] = []
+    @State private var loadedForAccount: UUID?
     @State private var text = ""
     @State private var sending = false
     @State private var loading = false
     @State private var failed = false
     @State private var loadID = UUID()
     @State private var attempt = UUID()
-    @State private var loadedDraft = false
+    @State private var loadedDraftKey: String?
     @State private var deleting: SocialComment?
-    private var draftKey: String { "liya.social.commentDraft.\(session.userID?.uuidString ?? "none").\(post.id.uuidString)" }
+    private var draftKey: String? {
+        session.userID.map { "liya.social.commentDraft.\($0.uuidString).\(post.id.uuidString)" }
+    }
     var body: some View {
         PageShell(title: "Comments") {
             VStack(alignment: .leading, spacing: 12) {
                 if loading { Text("Loading comments…").foregroundStyle(.secondary) }
                 if failed { Text("Couldn't load or save comments.").foregroundStyle(.red); Button("Try again") { Task { await load() } }.foregroundStyle(liyaAccent) }
                 if !loading && !failed && comments.isEmpty { EmptyState(title: "No comments yet", detail: "Start the conversation.") }
-                ForEach(comments) { comment in
+                ForEach(loadedForAccount == session.userID ? comments : []) { comment in
                     VStack(alignment: .leading, spacing: 6) {
-                        NavigationLink(social.person(comment.ownerID)?.displayName ?? "Liya member") { CommunityPersonView(personID: comment.ownerID) }.font(.caption.bold()).foregroundStyle(liyaAccent)
+                        if let author = comment.author, author.id == comment.ownerID {
+                            NavigationLink { CommunityPersonView(personID: comment.ownerID) } label: {
+                                HStack(spacing: 10) {
+                                    SocialAvatar(personID: comment.ownerID, commentAuthor: author)
+                                        .frame(width: 36, height: 36).clipShape(Circle())
+                                    Text(verbatim: author.displayName)
+                                        .font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+                                }.frame(minHeight: 44)
+                            }.buttonStyle(.plain)
+                        } else {
+                            Text("Liya member").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(.secondary)
+                        }
                         Text(comment.body).foregroundStyle(liyaInk)
                         if comment.ownerID == session.userID, let status = social.moderationText(kind: "post_comment", id: comment.id) {
-                            Text(status).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                            Text(status).font(LiyaType.text(.footnote)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                         }
                         if comment.ownerID == session.userID {
-                            Button("Delete") { deleting = comment }.font(.caption.bold()).foregroundStyle(liyaAccent)
+                            Button("Delete") { deleting = comment }.font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent)
                         } else {
                             NavigationLink("Report comment") { CommunityReportView(target: comment.ownerID, post: nil, comment: comment) }
-                                .font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                                .font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading).padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                 }
-                if social.isJoined(session) {
+                if social.canCommentOnMedia(session) {
                     TextField("Write a comment", text: Binding(get: { text }, set: { text = $0; attempt = UUID() }), axis: .vertical).lineLimit(2...6).padding(14).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 14)).disabled(sending)
                     PrimaryButton(title: sending ? "Sending…" : "Send comment", disabled: sending || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || text.count > 2000) {
-                        let body = text.trimmingCharacters(in: .whitespacesAndNewlines); sending = true
+                        guard let key = draftKey, key == loadedDraftKey else { return }
+                        let body = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let commentID = attempt
+                        sending = true
                         persistDraft()
-                        Task { if await social.sendComment(session, id: attempt, post: post.id, body: body) { text = ""; attempt = UUID(); persistDraft(); await load() } else { failed = true }; sending = false }
+                        Task {
+                            guard draftKey == key else { return }
+                            let sent = await social.sendComment(session, id: commentID, post: post.id, body: body)
+                            guard draftKey == key else { return }
+                            if sent {
+                                text = ""; attempt = UUID(); persistDraft()
+                                await load()
+                            } else { failed = true }
+                            if draftKey == key { sending = false }
+                        }
                     }
                 } else { NavigationLink("Create a community profile to comment") { CommunityJoinView() }.foregroundStyle(liyaAccent) }
             }.padding(.top, 12)
-        }.onAppear { restoreDraft() }
+        }
             .onLiyaChange(of: text) { _ in persistDraft() }
             .onLiyaChange(of: social.syncGeneration) { _ in Task { await load() } }
             .onDisappear { persistDraft() }
-            .task { await load() }
+            .task(id: draftKey) { restoreDraft(); await load() }
             .sheet(item: $deleting) { comment in
                 LocalConfirmation(title: "Delete this comment?", message: "The comment will be removed for everyone.", action: "Delete") {
                     deleting = nil; Task { if await social.deleteComment(session, id: comment.id) { await load() } else { failed = true } }
@@ -688,39 +813,50 @@ struct CommunityCommentsView: View {
     }
     private func load() async {
         let currentLoad = UUID()
+        let owner = session.userID
         loadID = currentLoad
         loading = true; failed = false; comments = []
         do {
             let result = try await social.comments(session, post: post.id)
-            guard loadID == currentLoad, !Task.isCancelled else { return }
+            guard loadID == currentLoad, session.userID == owner, !Task.isCancelled else { return }
+            loadedForAccount = owner
             comments = result
         } catch {
-            guard loadID == currentLoad, !Task.isCancelled else { return }
+            guard loadID == currentLoad, session.userID == owner, !Task.isCancelled else { return }
             failed = true
         }
         if loadID == currentLoad { loading = false }
     }
     private func restoreDraft() {
-        guard !loadedDraft else { return }
-        if let saved = UserDefaults.standard.dictionary(forKey: draftKey) as? [String: String] {
-            text = saved["text"] ?? ""; attempt = UUID(uuidString: saved["attempt"] ?? "") ?? UUID()
-        }
-        loadedDraft = true
+        guard loadedDraftKey != draftKey else { return }
+        loadedDraftKey = draftKey
+        let saved = draftKey.flatMap { UserDefaults.standard.dictionary(forKey: $0) as? [String: String] }
+        text = saved?["text"] ?? ""
+        attempt = UUID(uuidString: saved?["attempt"] ?? "") ?? UUID()
+        deleting = nil
+        sending = false
     }
     private func persistDraft() {
-        guard loadedDraft, session.userID != nil else { return }
-        UserDefaults.standard.set(["text": text, "attempt": attempt.uuidString], forKey: draftKey)
+        guard let key = loadedDraftKey, key == draftKey else { return }
+        UserDefaults.standard.set(["text": text, "attempt": attempt.uuidString], forKey: key)
     }
 }
 
-struct SocialMediaItem: Identifiable { let path: String; let kind: String; var id: String { path } }
+struct SocialMediaItem: Identifiable {
+    let path: String
+    let kind: String
+    let post: SocialPost?
+    var id: String { path }
+}
+
 struct SocialMediaStrip: View {
-    let paths: [String]; let kinds: [String]
-    var largeSingle = false
+    let post: SocialPost
+    private var paths: [String] { post.mediaPaths }
+    private var kinds: [String] { post.mediaKinds }
     @State private var preview: SocialMediaItem?
     var body: some View {
-        if largeSingle, paths.count == 1, let path = paths.first {
-            let item = SocialMediaItem(path: path, kind: kinds.first ?? "photo")
+        if paths.count == 1, let path = paths.first {
+            let item = SocialMediaItem(path: path, kind: kinds.first ?? "photo", post: post)
             Button { preview = item } label: {
                 GeometryReader { geometry in
                     SocialMediaThumbnail(item: item).frame(width: geometry.size.width, height: geometry.size.height).clipped()
@@ -733,7 +869,7 @@ struct SocialMediaStrip: View {
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     ForEach(Array(paths.enumerated()), id: \.element) { index, path in
-                        let item = SocialMediaItem(path: path, kind: kinds.indices.contains(index) ? kinds[index] : "photo")
+                        let item = SocialMediaItem(path: path, kind: kinds.indices.contains(index) ? kinds[index] : "photo", post: post)
                         Button { preview = item } label: { SocialMediaThumbnail(item: item).frame(width: 150, height: 150).clipped().clipShape(RoundedRectangle(cornerRadius: 12)) }
                             .buttonStyle(.plain).accessibilityLabel(item.kind == "video" ? "Open video" : "Open photo")
                     }
@@ -761,10 +897,10 @@ struct SocialMediaThumbnail: View {
             else if let url {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image { image.resizable().scaledToFill() }
-                    else if phase.error != nil { Text("Photo unavailable").font(.caption) }
+                    else if phase.error != nil { Text("Photo unavailable").font(LiyaType.text(.caption)) }
                     else { Color.clear }
                 }
-            } else if failed { Text("Photo unavailable").font(.caption) }
+            } else if failed { Text("Photo unavailable").font(LiyaType.text(.caption)) }
         }.task(id: item.path) {
             videoCover = nil; url = nil; failed = false
             do {
@@ -811,6 +947,12 @@ struct SocialMediaPreview: View {
                             Image(playing ? "pause" : "play").resizable().scaledToFit().frame(width: 48, height: 48)
                         }.accessibilityLabel(playing ? "Pause video" : "Play video")
                     }
+                    if let post = item.post {
+                        CommunityPostEngagement(post: post) {
+                            player?.pause()
+                            playing = false
+                        }
+                    }
                 }.buttonStyle(.plain).padding(20).frame(width: size.width, height: size.height)
             }
         }.task {
@@ -843,16 +985,16 @@ private struct InboxEmptyState: View {
     var body: some View {
         VStack(spacing: 12) {
             Image("empty-art").resizable().scaledToFit().frame(width: 104, height: 96).accessibilityHidden(true)
-            Text(LocalizedStringKey(title)).font(.headline.weight(.semibold)).foregroundStyle(liyaInk)
+            Text(LocalizedStringKey(title)).font(LiyaType.text(.headline, weight: .semibold)).foregroundStyle(liyaInk)
             if let detail {
-                Text(LocalizedStringKey(detail)).font(.subheadline).foregroundStyle(liyaInk.opacity(0.58))
+                Text(LocalizedStringKey(detail)).font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.58))
                     .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
             }
         }.frame(maxWidth: .infinity).padding(.horizontal, 20).padding(.vertical, 54)
     }
 }
 
-private func inboxDate(_ value: String) -> String? {
+private func activityDate(_ value: String) -> String? {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     let fractional = formatter.date(from: value)
@@ -861,343 +1003,386 @@ private func inboxDate(_ value: String) -> String? {
     return Calendar.current.isDateInToday(date) ? date.formatted(date: .omitted, time: .shortened) : date.formatted(date: .abbreviated, time: .omitted)
 }
 
-struct CommunityMessagesView: View {
+struct CommunityInboxThreads: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
-    let hasLocalDrafts: Bool
+    let hasDrafts: Bool
 
-    init(hasLocalDrafts: Bool = false) { self.hasLocalDrafts = hasLocalDrafts }
-    private var peers: [UUID] {
+    private var threads: [SocialMessage] {
         guard let owner = session.userID else { return [] }
-        var result: [UUID] = []
-        for message in social.messages.reversed() {
-            let other = message.senderID == owner ? message.recipientID : message.senderID
-            if !result.contains(other) { result.append(other) }
+        var seen = Set<UUID>()
+        return social.messages.reversed().filter { message in
+            guard message.senderID == owner || message.recipientID == owner else { return false }
+            let peer = message.senderID == owner ? message.recipientID : message.senderID
+            return !social.blocked.contains(peer) && seen.insert(peer).inserted
         }
-        return result
     }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if social.messagesLoading && !social.messagesReady {
-                LiyaLoadingIndicator(size: 32).frame(maxWidth: .infinity).padding(.vertical, 48)
-            } else if social.messageLoadError != nil {
-                inboxNotice(title: "Messages are taking a moment", detail: "Please check your connection and try again.") {
-                    Task { await social.refreshMessages(session) }
-                }
-            } else if social.messagesReady && peers.isEmpty && !hasLocalDrafts {
-                InboxEmptyState(title: "No messages yet", detail: "Your conversations will appear here.")
-            }
-            if !peers.isEmpty && social.error != nil {
-                inboxNotice(title: "Some profile details are unavailable", detail: "Please check your connection and try again.") {
-                    Task { await social.refresh(session) }
-                }
-            } else if !peers.isEmpty && !social.realtimeConnected && social.isJoined(session) && !social.messagesLoading {
-                inboxNotice(title: "Updates are paused", detail: "Reconnect to see new messages as they arrive.") {
-                    social.watchMessages(session)
+        let previews = threads
+        if let owner = session.userID {
+            if social.messageLoadError != nil {
+                ConnectionRetryRow(message: "Messages are taking a moment") {
+                    await social.refreshMessages(session)
+                    if !social.realtimeConnected { social.watchMessages(session) }
                 }
             }
-            ForEach(peers, id: \.self) { id in
-                let last = social.messages.last(where: { $0.senderID == id || $0.recipientID == id })
-                HStack(spacing: 12) {
-                    NavigationLink { CommunityPersonView(personID: id) } label: {
-                        SocialAvatar(personID: id).frame(width: 48, height: 48).clipShape(Circle())
-                    }.buttonStyle(.plain).accessibilityLabel("View member profile")
-                    VStack(alignment: .leading, spacing: 4) {
-                        NavigationLink { CommunityPersonView(personID: id) } label: {
-                            Text(social.person(id)?.displayName ?? "Liya member").font(.subheadline.bold()).foregroundStyle(liyaInk).lineLimit(1)
-                        }.buttonStyle(.plain)
-                        NavigationLink { CommunityConversationView(personID: id) } label: {
-                            Text(last.map { $0.body.isEmpty ? "Attachment" : $0.body } ?? "Open conversation")
-                                .font(.caption).lineLimit(1).foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 30, alignment: .leading)
-                        }.buttonStyle(.plain)
-                    }.frame(maxWidth: .infinity, alignment: .leading)
-                    if let last, let date = inboxDate(last.createdAt) {
-                        NavigationLink { CommunityConversationView(personID: id) } label: {
-                            Text(date).font(.caption2).foregroundStyle(.secondary).frame(minHeight: 44)
-                        }.buttonStyle(.plain)
-                    }
-                }.foregroundStyle(liyaInk).padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
+            if previews.isEmpty && !hasDrafts && social.messageLoadError == nil {
+                if social.messagesReady {
+                    InboxEmptyState(title: "No messages yet")
+                } else {
+                    LiyaLoadingIndicator(size: 26).frame(maxWidth: .infinity).padding(.vertical, 40)
+                }
             }
-            if !peers.isEmpty && !social.loading && social.error == nil && social.isJoined(session) {
-                HStack {
-                    Spacer()
-                    NavigationLink { CommunityMembersView() } label: { inboxAction("Find people") }
-                    Spacer()
+            ForEach(previews) { message in
+                let peer = message.senderID == owner ? message.recipientID : message.senderID
+                NavigationLink { CommunityConversationView(personID: peer) } label: {
+                    HStack(spacing: 12) {
+                        SocialAvatar(personID: peer).frame(width: 46, height: 46).clipShape(Circle())
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(verbatim: social.person(peer)?.displayName ?? String(localized: "Liya member"))
+                                .font(LiyaType.sectionHeading).foregroundStyle(liyaInk)
+                            if message.body.isEmpty {
+                                Text("Photos and videos").font(LiyaType.detail).foregroundStyle(.secondary)
+                            } else {
+                                Text(verbatim: message.body).lineLimit(2).font(LiyaType.detail).foregroundStyle(.secondary)
+                            }
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                        if let date = activityDate(message.createdAt) {
+                            Text(verbatim: date).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
+                        }
+                    }.padding(14).background(.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 18))
                 }.buttonStyle(.plain)
             }
-        }.task { await social.refreshMessages(session) }
-    }
-
-    private func inboxNotice(title: String, detail: String, retry: @escaping () -> Void) -> some View {
-        HStack(alignment: .center, spacing: 12) {
-            Image("profile-action-message").resizable().scaledToFit().frame(width: 42, height: 42).accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(LocalizedStringKey(detail)).font(.caption).foregroundStyle(liyaInk.opacity(0.60))
-                    .fixedSize(horizontal: false, vertical: true)
-                Button(action: retry) {
-                    Text("Try again").font(.caption.weight(.semibold)).foregroundStyle(liyaAccent)
-                        .padding(.horizontal, 14).frame(minHeight: 44)
-                        .background(liyaAccent.opacity(0.09), in: Capsule())
-                }.buttonStyle(.plain)
-            }.frame(maxWidth: .infinity, alignment: .leading)
-        }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
-            .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 20))
-    }
-
-    private func inboxAction(_ title: String) -> some View {
-        Text(title).font(.footnote.weight(.semibold)).foregroundStyle(.white)
-            .padding(.horizontal, 24).frame(minHeight: 44).background(liyaGradient, in: Capsule())
+        } else if !hasDrafts {
+            InboxEmptyState(title: "No messages yet")
+        }
     }
 }
 
 struct CommunityConversationView: View {
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
-    @EnvironmentObject private var calls: LiyaCalls
+    @EnvironmentObject private var store: LocalStore
     @Environment(\.dismiss) private var dismiss
-    let personID: UUID
-    @State private var text = ""
-    @State private var attachments: [DraftAttachment] = []
-    @State private var mediaLoading = false
+    @Environment(\.locale) private var locale
+    @Environment(\.profileDetailVisible) private var detailVisible
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @FocusState private var editing: Bool
+
+    private let recipient: ProfileContactRecipient
+    private let collectionName: String?
+    @State private var draft = MessageDraft(text: "", attachments: [], attempt: "", fingerprint: "")
+    @State private var ownerID: UUID?
     @State private var sending = false
-    @State private var loaded = false
-    @State private var attempt = ""
-    @State private var fingerprint = ""
+    @State private var showMutualNotice = false
+    @State private var showingOptions = false
+    @State private var visible = false
+    @State private var failure: String?
+    @State private var pickingMedia = false
+    @State private var readingMedia = false
     @State private var deleting: SocialMessage?
-    @State private var showMediaPicker = false
-    @State private var draftOwner: UUID?
-    @State private var positionedHistory = false
-    @State private var connectionNotice: ConnectionNotice?
-    @State private var checkingConnection = false
-    private var key: String { "liya.social.messageDraft.\(draftOwner?.uuidString ?? "none").\(personID.uuidString)" }
-    private var conversation: [SocialMessage] {
-        guard let owner = session.userID else { return [] }
-        return social.messages.filter { ($0.senderID == owner && $0.recipientID == personID) || ($0.senderID == personID && $0.recipientID == owner) }
-    }
-    var body: some View {
-        ZStack {
-            LiyaBackground()
-            VStack(spacing: 0) {
-                conversationHeader
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: 14) {
-                            if let error = social.error {
-                                VStack(spacing: 4) {
-                                    Text(error).font(.footnote).foregroundStyle(.red)
-                                    Button("Try again") { Task { await social.refresh(session) } }
-                                        .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                                }.frame(maxWidth: .infinity)
-                            }
-                            if let error = social.messageError ?? social.messageLoadError {
-                                VStack(spacing: 4) {
-                                    Text(error).font(.footnote).foregroundStyle(.red)
-                                    Button("Try again") { Task { social.messageError = nil; await social.refreshMessages(session) } }
-                                        .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                                }.frame(maxWidth: .infinity)
-                            }
-                            if !social.realtimeConnected && social.isJoined(session) && social.messageLoadError == nil {
-                                Button("Reconnect live updates") { social.watchMessages(session) }
-                                    .font(.caption.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                            }
-                            if let error = calls.error { Text(error).font(.footnote).foregroundStyle(.red) }
-                            if social.messagesLoading && conversation.isEmpty { LiyaLoadingIndicator(size: 28) }
-                            if social.messagesReady && !social.messagesLoading && social.messageLoadError == nil && conversation.isEmpty {
-                                VStack(spacing: 10) {
-                                    Image("profile-action-message").resizable().scaledToFit().frame(width: 68, height: 68).accessibilityHidden(true)
-                                    Text("Say hello").font(.headline).foregroundStyle(liyaInk)
-                                    Text("Start a conversation when you're ready.").font(.subheadline).foregroundStyle(.secondary)
-                                        .multilineTextAlignment(.center)
-                                }.frame(maxWidth: .infinity).padding(.vertical, 35)
-                            }
-                            ForEach(conversation) { message in
-                                messageBubble(message).id(message.id)
-                            }
-                        }.frame(maxWidth: 620).frame(maxWidth: .infinity).padding(.horizontal, 16).padding(.vertical, 18)
-                            .modifier(AdaptiveContainerMargins())
-                    }
-                    .scrollDismissesKeyboard(.interactively)
-                    .safeAreaInset(edge: .bottom, spacing: 0) { conversationComposer }
-                    .task {
-                        social.messageError = nil
-                        await social.refreshMessages(session)
-                        if let id = conversation.last?.id { proxy.scrollTo(id, anchor: .bottom); positionedHistory = true }
-                    }
-                    .onLiyaChange(of: conversation.last?.id) { id in
-                        if let id, sending || !positionedHistory {
-                            withAnimation { proxy.scrollTo(id, anchor: .bottom) }
-                            positionedHistory = true
-                        }
-                    }
-                }
-            }
-        }.navigationBarHidden(true).onAppear { restore() }
-            .onLiyaChange(of: session.userID) { owner in
-                if let draftOwner, owner != draftOwner { dismiss() }
-                else if !loaded { restore() }
-            }
-            .onLiyaChange(of: text) { _ in persist() }
-            .onLiyaChange(of: attachments) { _ in persist() }
-            .onDisappear { persist() }
-            .sheet(isPresented: $showMediaPicker) {
-                NavigationStack {
-                    PageShell(title: "Add media") {
-                        DraftMediaPicker(attachments: $attachments, loading: $mediaLoading).padding(.top, 12)
-                    }
-                }.presentationDetents([.medium, .large])
-            }
-            .sheet(item: $deleting) { message in
-                LocalConfirmation(title: "Delete this message?", message: "The message will be removed for both participants.", action: "Delete") {
-                    deleting = nil; Task { _ = await social.deleteMessage(session, message: message) }
-                } cancel: { deleting = nil }.presentationDetents([.medium])
-            }
-            .sheet(item: $connectionNotice) { notice in
-                ConnectionNoticeSheet(notice: notice) { connectionNotice = nil }.presentationDetents([.medium, .large])
-            }
+    @State private var preview: SocialMediaItem?
+    @State private var atBottom = true
+    @State private var positioned = false
+    @ScaledMetric(relativeTo: .headline) private var headerHeight: CGFloat = 54
+
+    init(personID: UUID) {
+        recipient = .member(personID)
+        collectionName = nil
     }
 
-    private var conversationHeader: some View {
-        DuoControlRegion { _ in
-            HStack(spacing: 4) {
-                Button { dismiss() } label: {
-                    Image("back").resizable().scaledToFit().frame(width: 20, height: 20).frame(width: 44, height: 44)
-                }.buttonStyle(.plain).accessibilityLabel("Back")
-                NavigationLink { CommunityPersonView(personID: personID) } label: {
-                    HStack(spacing: 8) {
-                        SocialAvatar(personID: personID).frame(width: 38, height: 38).clipShape(Circle())
-                        Text(social.person(personID)?.displayName ?? "Liya member")
-                            .font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk).lineLimit(1)
-                    }.frame(maxWidth: .infinity, alignment: .leading).frame(minHeight: 44)
-                }.buttonStyle(.plain)
-                Button { startCall(kind: "audio") } label: {
-                    Image("profile-action-voice").resizable().scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44)
-                }.buttonStyle(.plain).accessibilityLabel("Voice call")
-                    .disabled(!social.isJoined(session) || social.person(personID) == nil || calls.busy || calls.call != nil || checkingConnection || sending)
-                Button { startCall(kind: "video") } label: {
-                    Image("profile-action-video").resizable().scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44)
-                }.buttonStyle(.plain).accessibilityLabel("Video call")
-                    .disabled(!social.isJoined(session) || social.person(personID) == nil || calls.busy || calls.call != nil || checkingConnection || sending)
-            }.padding(.horizontal, 8).modifier(AdaptiveContainerMargins())
-        }.frame(height: 54).background(.white.opacity(0.75))
+    init(collectionIndex: Int, displayName: String) {
+        recipient = .collection(collectionIndex)
+        collectionName = displayName
     }
 
-    private func messageBubble(_ message: SocialMessage) -> some View {
-        let mine = message.senderID == session.userID
-        return HStack(alignment: .bottom, spacing: 8) {
-            if mine { Spacer(minLength: 40) }
-            else {
-                NavigationLink { CommunityPersonView(personID: message.senderID) } label: {
-                    SocialAvatar(personID: message.senderID).frame(width: 32, height: 32).clipShape(Circle())
-                }.buttonStyle(.plain).accessibilityLabel("View member profile")
-            }
-            VStack(alignment: mine ? .trailing : .leading, spacing: 4) {
-                VStack(alignment: .leading, spacing: 8) {
-                    if !message.body.isEmpty { Text(message.body).foregroundStyle(mine ? .white : liyaInk).fixedSize(horizontal: false, vertical: true) }
-                    SocialMediaStrip(paths: message.mediaPaths, kinds: message.mediaKinds)
-                }.padding(12).background {
-                    if mine { RoundedRectangle(cornerRadius: 18).fill(liyaGradient) }
-                    else { RoundedRectangle(cornerRadius: 18).fill(.white.opacity(0.94)) }
-                }
-                HStack(spacing: 8) {
-                    if let date = inboxDate(message.createdAt) { Text(date).font(.caption2).foregroundStyle(.secondary) }
-                    if mine {
-                        Button("Delete") { deleting = message }.font(.caption2.weight(.semibold))
-                            .foregroundStyle(liyaAccent).frame(minHeight: 44)
-                    } else {
-                        NavigationLink("Report") { CommunityReportView(target: message.senderID, post: nil, message: message) }
-                            .font(.caption2.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                    }
-                }
-            }.frame(maxWidth: 340, alignment: mine ? .trailing : .leading)
-            if !mine { Spacer(minLength: 40) }
-        }.frame(maxWidth: .infinity)
+    private var name: String {
+        switch recipient {
+        case .collection: return collectionName ?? String(localized: "Liya collection", locale: locale)
+        case .member(let id): return social.person(id)?.displayName ?? String(localized: "Liya member", locale: locale)
+        }
     }
 
-    @ViewBuilder private var conversationComposer: some View {
-        if social.isJoined(session) && social.person(personID) != nil {
-            VStack(alignment: .leading, spacing: 6) {
-                if !attachments.isEmpty {
-                    Button { showMediaPicker = true } label: {
-                        Text("\(attachments.count) attachments selected").font(.caption.weight(.semibold)).foregroundStyle(liyaAccent)
-                            .frame(minHeight: 36)
-                    }.buttonStyle(.plain).disabled(sending)
-                }
-                HStack(alignment: .bottom, spacing: 8) {
-                    Button { showMediaPicker = true } label: {
-                        Image("avatar-camera").resizable().scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44)
-                    }.buttonStyle(.plain).accessibilityLabel("Add photos or videos").disabled(sending)
-                    TextField("Write a message…", text: $text, axis: .vertical).lineLimit(1...5)
-                        .padding(.horizontal, 14).padding(.vertical, 12)
-                        .background(Color(red: 0.96, green: 0.95, blue: 0.99), in: RoundedRectangle(cornerRadius: 19))
-                        .disabled(sending)
-                    Button(sending ? "Sending…" : "Send") { sendMessage() }
-                        .font(.subheadline.weight(.semibold)).foregroundStyle(.white).padding(.horizontal, 15).frame(minHeight: 44)
-                        .background(liyaGradient.opacity(canSend ? 1 : 0.45), in: Capsule()).disabled(!canSend)
-                }
-            }.padding(.horizontal, 12).padding(.vertical, 8).frame(maxWidth: .infinity)
-                .background(.white.opacity(0.96)).modifier(AdaptiveContainerMargins())
-        } else if !social.isJoined(session) && !social.loading && social.error == nil {
-            NavigationLink("Set up your profile to message") { CommunityJoinView() }
-                .font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 48)
-                .frame(maxWidth: .infinity).background(.white.opacity(0.94))
-        } else if social.person(personID) == nil && !social.loading && social.error == nil {
-            Text("This member is no longer available.").font(.footnote).foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, minHeight: 48).background(.white.opacity(0.94))
+    private var history: [SocialMessage] {
+        guard case .member(let peer) = recipient, let owner = session.userID, !social.blocked.contains(peer) else { return [] }
+        return social.messages.filter {
+            ($0.senderID == peer && $0.recipientID == owner) || ($0.senderID == owner && $0.recipientID == peer)
+        }
+    }
+
+    private var blocked: Bool {
+        switch recipient {
+        case .member(let id): return social.blocked.contains(id)
+        case .collection(let index): return store.hiddenCollectionProfiles.contains(index)
         }
     }
 
     private var canSend: Bool {
-        !sending && !checkingConnection && !mediaLoading && text.count <= 4000 && (!text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty)
+        ownerID != nil && !sending && !readingMedia && !blocked && draft.text.unicodeScalars.count <= 4000 &&
+            (!draft.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !draft.attachments.isEmpty)
     }
 
-    private func startCall(kind: String) {
-        guard !checkingConnection, !sending else { return }
-        checkingConnection = true
-        Task {
-            defer { checkingConnection = false }
-            do {
-                guard try await social.isMutualFollow(session, target: personID) else { connectionNotice = .mutual; return }
-                await calls.start(session, peer: personID, kind: kind)
-            } catch { connectionNotice = .unavailable }
-        }
-    }
-
-    private func sendMessage() {
-        guard canSend, let owner = session.userID else { return }
-        let body = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let stamp = SocialAttempt.fingerprint(owner: owner, target: personID, text: body, files: attachments)
-        if stamp != fingerprint || UUID(uuidString: attempt) == nil { fingerprint = stamp; attempt = UUID().uuidString }
-        guard let id = UUID(uuidString: attempt) else { return }
-        persist(); sending = true
-        Task {
-            do {
-                guard try await social.isMutualFollow(session, target: personID) else {
-                    connectionNotice = .mutual; sending = false; return
-                }
-            } catch { connectionNotice = .unavailable; sending = false; return }
-            if await social.sendMessage(session, id: id, target: personID, body: body, attachments: attachments) {
-                guard session.userID == owner, draftOwner == owner else { sending = false; return }
-                text = ""; attachments = []; attempt = ""; fingerprint = ""; persist()
-            } else if let mutual = try? await social.isMutualFollow(session, target: personID), !mutual {
-                connectionNotice = .mutual
+    var body: some View {
+        ZStack {
+            LiyaBackground()
+            VStack(spacing: 0) {
+                header
+                transcript
             }
-            sending = false
+        }
+        .navigationBarHidden(true)
+        .onAppear { visible = true; detailVisible.wrappedValue = true; restore() }
+        .onDisappear { visible = false; detailVisible.wrappedValue = false }
+        .onLiyaChange(of: draft.text) { _ in failure = nil; persist() }
+        .onLiyaChange(of: draft.attachments) { _ in failure = nil; persist() }
+        .onLiyaChange(of: session.userID) { value in
+            if ownerID != nil && value != ownerID { dismiss() } else { restore() }
+        }
+        .sheet(isPresented: $showingOptions, onDismiss: { if blocked { dismiss() } }) {
+            switch recipient {
+            case .member(let peer): CommunityProfileOptions(personID: peer)
+            case .collection(let index):
+                if session.photos.indices.contains(index) {
+                    CollectionSafetySheet(target: CollectionSafetyTarget(mediaID: session.photos[index].id, name: name, kind: .profile, ownerID: ownerID))
+                }
+            }
+        }
+        .sheet(isPresented: $showMutualNotice) { MutualFollowNotice(action: .message) }
+        .sheet(isPresented: $pickingMedia) {
+            NavigationStack {
+                PageShell(title: "Add media") {
+                    DraftMediaPicker(attachments: $draft.attachments, loading: $readingMedia, compactButtons: true)
+                        .padding(.vertical, 12)
+                }
+            }.presentationDetents([.medium, .large])
+        }
+        .sheet(item: $deleting) { message in
+            LocalConfirmation(title: "Delete this message?", message: "This removes the message for both of you.", action: "Delete") {
+                deleting = nil
+                Task { if !(await social.deleteMessage(session, message: message)) { failure = "Couldn't delete the message. Please try again." } }
+            } cancel: { deleting = nil }
+            .presentationDetents([.medium])
+        }
+        .sheet(item: $preview) { item in SocialMediaPreview(item: item) }
+    }
+
+    private var header: some View {
+        DuoControlRegion { _ in
+            HStack(spacing: 10) {
+                Button { dismiss() } label: {
+                    Image("back").resizable().scaledToFit().frame(width: 20, height: 20).frame(width: 44, height: 44)
+                }.buttonStyle(.plain).accessibilityLabel("Back")
+                switch recipient {
+                case .member(let id):
+                    SocialAvatar(personID: id).frame(width: 36, height: 36).clipShape(Circle())
+                case .collection(let index):
+                    CollectionPortrait(index: index, size: 36)
+                }
+                Text(verbatim: name).font(LiyaType.sectionHeading).foregroundStyle(liyaInk)
+                    .lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityAddTraits(.isHeader)
+                Button { editing = false; showingOptions = true } label: {
+                    Image("more").resizable().scaledToFit().frame(width: 23, height: 23).frame(width: 44, height: 44)
+                }.buttonStyle(.plain).accessibilityLabel("More options")
+            }.padding(.horizontal, 10).modifier(AdaptiveContainerMargins())
+        }.frame(height: max(headerHeight, 54))
+    }
+
+    private var transcript: some View {
+        let messages = history
+        return ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 14) {
+                    if case .member = recipient, social.messageLoadError != nil {
+                        ConnectionRetryRow(message: "Couldn't load this conversation. Please try again.") {
+                            await social.refreshMessages(session)
+                            if !social.realtimeConnected { social.watchMessages(session) }
+                        }
+                    }
+                    if messages.isEmpty {
+                        switch recipient {
+                        case .member where !social.messagesReady && social.messageLoadError == nil:
+                            LiyaLoadingIndicator(size: 26).padding(.vertical, 50)
+                        case .member where social.messageLoadError != nil:
+                            EmptyView()
+                        default:
+                            InboxEmptyState(title: "No messages yet")
+                        }
+                    }
+                    ForEach(messages) { message in bubble(message).id(message.id) }
+                    Color.clear.frame(height: 1).accessibilityHidden(true)
+                        .onAppear { atBottom = true }.onDisappear { atBottom = false }
+                }
+                .frame(maxWidth: 620).frame(maxWidth: .infinity)
+                .padding(.horizontal, 16).padding(.vertical, 12).modifier(AdaptiveContainerMargins())
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .safeAreaInset(edge: .bottom, spacing: 0) { composer }
+            .task(id: session.userID) {
+                restore()
+                if case .member = recipient, session.userID != nil {
+                    await social.refreshMessages(session)
+                    if !social.realtimeConnected { social.watchMessages(session) }
+                }
+                if let last = history.last { proxy.scrollTo(last.id, anchor: .bottom); positioned = true }
+            }
+            .onLiyaChange(of: messages.last?.id) { id in
+                guard let id, atBottom || !positioned || sending else { return }
+                withAnimation(reduceMotion ? nil : .easeOut(duration: 0.18)) { proxy.scrollTo(id, anchor: .bottom) }
+                positioned = true
+            }
         }
     }
+
+    private func bubble(_ message: SocialMessage) -> some View {
+        let mine = message.senderID == session.userID
+        return VStack(alignment: mine ? .trailing : .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) {
+                if !message.body.isEmpty {
+                    Text(verbatim: message.body).textSelection(.enabled).font(LiyaType.reading)
+                        .foregroundStyle(mine ? .white : liyaInk).fixedSize(horizontal: false, vertical: true)
+                }
+                if !message.mediaPaths.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(Array(message.mediaPaths.enumerated()), id: \.element) { index, path in
+                                let kind = message.mediaKinds.indices.contains(index) ? message.mediaKinds[index] : "photo"
+                                let item = SocialMediaItem(path: path, kind: kind, post: nil)
+                                Button { preview = item } label: {
+                                    SocialMediaThumbnail(item: item).frame(width: 120, height: 136)
+                                        .clipped().clipShape(RoundedRectangle(cornerRadius: 12))
+                                }.buttonStyle(.plain).accessibilityLabel(kind == "video" ? "Open video" : "Open photo")
+                            }
+                        }
+                    }.frame(maxWidth: 264)
+                }
+            }
+            .padding(.horizontal, 14).padding(.vertical, 10)
+            .background(mine ? Color(red: 0.27, green: 0.19, blue: 0.50) : Color.white.opacity(0.96),
+                        in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            HStack(spacing: 10) {
+                if let date = activityDate(message.createdAt) {
+                    Text(verbatim: date).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
+                }
+                if mine {
+                    Button("Delete") { deleting = message }
+                } else {
+                    NavigationLink("Report") { CommunityReportView(target: message.senderID, post: nil, message: message) }
+                }
+            }.buttonStyle(.plain).font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+        }
+        .frame(maxWidth: 440, alignment: mine ? .trailing : .leading)
+        .padding(mine ? .leading : .trailing, 24)
+        .frame(maxWidth: .infinity, alignment: mine ? .trailing : .leading)
+    }
+
+    private var composer: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let failure {
+                Text(LocalizedStringKey(failure)).font(LiyaType.text(.footnote)).foregroundStyle(liyaInk).padding(.horizontal, 10)
+            } else if draft.text.unicodeScalars.count > 4000 {
+                Text("Keep your message to 4,000 characters.").font(LiyaType.text(.footnote)).foregroundStyle(liyaInk)
+            }
+            if !draft.attachments.isEmpty {
+                Button { pickingMedia = true } label: {
+                    Text("\(draft.attachments.count) attachments selected").font(LiyaType.text(.footnote, weight: .bold))
+                        .padding(.horizontal, 12).frame(minHeight: 44)
+                }.disabled(sending).foregroundStyle(liyaAccent)
+            }
+            HStack(alignment: .bottom, spacing: 6) {
+                if case .member = recipient {
+                    Button { editing = false; pickingMedia = true } label: {
+                        Image("avatar-camera").resizable().scaledToFit().frame(width: 26, height: 26).frame(width: 44, height: 44)
+                    }.disabled(sending).accessibilityLabel("Add photos or videos")
+                }
+                TextField("Write a message…", text: $draft.text, axis: .vertical)
+                    .focused($editing).lineLimit(1...5).padding(.leading, 7).padding(.vertical, 12)
+                    .font(LiyaType.reading).foregroundStyle(liyaInk).disabled(sending)
+                Button(action: send) {
+                    Text(sending ? "Sending…" : "Send")
+                        .font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(.white)
+                        .padding(.horizontal, 14).frame(minHeight: 44)
+                        .background(Color(red: 0.27, green: 0.19, blue: 0.50).opacity(canSend || sending ? 1 : 0.57), in: Capsule())
+                }.disabled(!canSend)
+            }
+        }
+        .buttonStyle(.plain)
+        .padding(7).modifier(ContactBarSurface())
+        .frame(maxWidth: 620).frame(maxWidth: .infinity)
+        .padding(.horizontal, 12).padding(.vertical, 7).modifier(AdaptiveContainerMargins())
+    }
+
+    private func send() {
+        guard canSend, let owner = ownerID, session.userID == owner else { return }
+        failure = nil
+        guard case .member(let peer) = recipient else {
+            persist()
+            editing = false
+            showMutualNotice = true
+            return
+        }
+        let text = draft.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let stamp = SocialAttempt.fingerprint(owner: owner, target: peer, text: text, files: draft.attachments)
+        if draft.fingerprint != stamp || UUID(uuidString: draft.attempt) == nil {
+            draft.attempt = UUID().uuidString
+            draft.fingerprint = stamp
+        }
+        guard let id = UUID(uuidString: draft.attempt) else { return }
+        let files = draft.attachments
+        persist()
+        sending = true
+        Task {
+            defer { sending = false }
+            do {
+                try await social.sendMessage(session, id: id, target: peer, body: text, attachments: files)
+                guard session.userID == owner, draft.attempt == id.uuidString else { return }
+                let key = draftKey(owner, peer)
+                guard let data = UserDefaults.standard.data(forKey: key),
+                      let stored = try? JSONDecoder().decode(MessageDraft.self, from: data),
+                      stored.attempt == id.uuidString, stored.fingerprint == stamp, stored.text == draft.text,
+                      stored.attachments == files else { return }
+                UserDefaults.standard.removeObject(forKey: key)
+                if visible { draft = MessageDraft(text: "", attachments: [], attempt: "", fingerprint: "") }
+            } catch MessageDeliveryError.mutualFollowRequired {
+                guard session.userID == owner else { return }
+                editing = false; showMutualNotice = true
+            } catch {
+                guard session.userID == owner, !Task.isCancelled else { return }
+                failure = (error as? VideoCompression.Failure)?.errorDescription ?? "Couldn't send this message. Your draft is saved."
+            }
+        }
+    }
+
+    private func draftKey(_ owner: UUID, _ peer: UUID) -> String {
+        "liya.social.messageDraft.\(owner.uuidString).\(peer.uuidString)"
+    }
+
     private func restore() {
-        guard !loaded, let owner = session.userID else { return }
-        draftOwner = owner
-        if let data = UserDefaults.standard.data(forKey: key), let draft = try? JSONDecoder().decode(MessageDraft.self, from: data) {
-            text = draft.text; attachments = draft.attachments; attempt = draft.attempt; fingerprint = draft.fingerprint
+        guard ownerID == nil, let owner = session.userID else { return }
+        switch recipient {
+        case .member(let peer):
+            if let saved = UserDefaults.standard.data(forKey: draftKey(owner, peer)),
+               let previous = try? JSONDecoder().decode(MessageDraft.self, from: saved) { draft = previous }
+        case .collection(let index):
+            draft.text = store.messageDrafts[String(index)] ?? ""
         }
-        loaded = true
+        ownerID = owner
     }
+
     private func persist() {
-        guard loaded, let owner = draftOwner, session.userID == owner else { return }
-        let draft = MessageDraft(text: text, attachments: attachments, attempt: attempt, fingerprint: fingerprint)
-        if let data = try? JSONEncoder().encode(draft) { UserDefaults.standard.set(data, forKey: key) }
+        guard let owner = ownerID, owner == session.userID else { return }
+        switch recipient {
+        case .member(let peer):
+            let key = draftKey(owner, peer)
+            if draft.text.isEmpty && draft.attachments.isEmpty {
+                UserDefaults.standard.removeObject(forKey: key)
+            } else if let bytes = try? JSONEncoder().encode(draft) {
+                UserDefaults.standard.set(bytes, forKey: key)
+            }
+        case .collection(let index):
+            store.saveMessageDraft(draft.text, index: index)
+        }
     }
 }
 
@@ -1213,12 +1398,12 @@ private struct ConnectionRetryRow: View {
             Task { await retry(); retrying = false }
         } label: {
             HStack(spacing: 12) {
-                Text(message).font(.footnote).foregroundStyle(liyaInk)
+                Text(message).font(LiyaType.text(.footnote)).foregroundStyle(liyaInk)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 if retrying {
                     LiyaLoadingIndicator(size: 22)
                 } else {
-                    Text("Try again").font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent)
+                    Text("Try again").font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent)
                 }
             }
             .padding(.horizontal, 16).padding(.vertical, 8).frame(minHeight: 48)
@@ -1268,7 +1453,7 @@ struct CommunityRelationList: View {
             } else {
                 LazyVStack(alignment: .leading, spacing: 8) {
                     if mutationFailed {
-                        Text("Couldn't update your follow. Please try again.").font(.footnote).foregroundStyle(liyaInk)
+                        Text("Couldn't update your follow. Please try again.").font(LiyaType.text(.footnote)).foregroundStyle(liyaInk)
                     } else if readFailed {
                         ConnectionRetryRow { await refresh() }
                     } else if !ready {
@@ -1278,9 +1463,9 @@ struct CommunityRelationList: View {
                         VStack(spacing: 10) {
                             Image("profile-home-people").resizable().scaledToFit().frame(width: 76, height: 76)
                                 .accessibilityHidden(true)
-                            Text(emptyTitle).font(.headline).foregroundStyle(liyaInk)
+                            Text(emptyTitle).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
                             if showsCreators {
-                                Text("Tap Follow on a profile to add it here.").font(.subheadline).foregroundStyle(.secondary)
+                                Text("Tap Follow on a profile to add it here.").font(LiyaType.detail).foregroundStyle(.secondary)
                             }
                         }.multilineTextAlignment(.center).frame(maxWidth: .infinity).padding(.vertical, 36)
                     }
@@ -1350,8 +1535,8 @@ struct CommunityRelationList: View {
         HStack(spacing: 12) {
             avatar().frame(width: 46, height: 46).clipShape(Circle()).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
-                Text(verbatim: name).font(.headline).foregroundStyle(liyaInk).lineLimit(2)
-                if !bio.isEmpty { Text(verbatim: bio).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
+                Text(verbatim: name).font(LiyaType.text(.headline)).foregroundStyle(liyaInk).lineLimit(2)
+                if !bio.isEmpty { Text(verbatim: bio).font(LiyaType.text(.caption)).foregroundStyle(.secondary).lineLimit(2) }
             }.frame(maxWidth: .infinity, alignment: .leading)
         }.contentShape(Rectangle())
     }
@@ -1376,7 +1561,7 @@ struct CommunityRelationList: View {
             if pending {
                 LiyaLoadingIndicator(size: 21).frame(minWidth: 64, minHeight: 44)
             } else {
-                Text("Unfollow").font(.caption.weight(.semibold)).foregroundStyle(liyaInk)
+                Text("Unfollow").font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(liyaInk)
                     .padding(.horizontal, 12).frame(minHeight: 44)
                     .background(liyaAccent.opacity(0.07), in: Capsule())
             }
@@ -1408,7 +1593,7 @@ struct CommunityActivityView: View {
         VStack(alignment: .leading, spacing: 12) {
             if social.notificationsLoading { LiyaLoadingIndicator(size: 28).frame(maxWidth: .infinity).padding(.vertical, 32) }
             if let error = social.notificationsError {
-                Text(error).font(.footnote).foregroundStyle(.red)
+                Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.red)
                 Button("Try again") { Task { await social.refreshNotifications(session) } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
             }
             if social.notifications.isEmpty && !social.notificationsLoading && social.notificationsError == nil && !hasLocalActivity {
@@ -1422,21 +1607,21 @@ struct CommunityActivityView: View {
                         }.buttonStyle(.plain).accessibilityLabel("View member profile")
                         VStack(alignment: .leading, spacing: 3) {
                             NavigationLink { CommunityPersonView(personID: activity.actorID) } label: {
-                                Text(social.person(activity.actorID)?.displayName ?? "Liya member").font(.subheadline.bold()).foregroundStyle(liyaInk)
+                                Text(social.person(activity.actorID)?.displayName ?? "Liya member").font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(liyaInk)
                             }.buttonStyle(.plain)
-                            if let date = inboxDate(activity.createdAt) { Text(date).font(.caption2).foregroundStyle(.secondary) }
+                            if let date = activityDate(activity.createdAt) { Text(date).font(LiyaType.text(.caption2)).foregroundStyle(.secondary) }
                         }.frame(maxWidth: .infinity, alignment: .leading)
-                        if !activity.isRead { Button("Mark read") { Task { await social.markRead(session, id: activity.id) } }.font(.caption.bold()).foregroundStyle(liyaAccent).frame(minHeight: 44) }
+                        if !activity.isRead { Button("Mark read") { Task { await social.markRead(session, id: activity.id) } }.font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44) }
                     }
                     Text(activity.kind == "follow" ? "Started following you" : activity.kind == "like" ? "Liked your post" : activity.kind == "comment" ? "Commented on your post" : "Interacted with your post")
-                        .font(.subheadline).foregroundStyle(liyaInk)
+                        .font(LiyaType.detail).foregroundStyle(liyaInk)
                     if let postID = activity.postID, let post = social.posts.first(where: { $0.id == postID }) {
                         NavigationLink { CommunityCommentsView(post: post) } label: {
                             HStack(spacing: 10) {
-                                Text(post.body.isEmpty ? "View post" : post.body).font(.caption).lineLimit(2).foregroundStyle(liyaInk)
+                                Text(post.body.isEmpty ? "View post" : post.body).font(LiyaType.text(.caption)).lineLimit(2).foregroundStyle(liyaInk)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 if let path = post.mediaPaths.first {
-                                    SocialMediaThumbnail(item: SocialMediaItem(path: path, kind: post.mediaKinds.first ?? "photo"))
+                                    SocialMediaThumbnail(item: SocialMediaItem(path: path, kind: post.mediaKinds.first ?? "photo", post: post))
                                         .frame(width: 48, height: 48).clipped().clipShape(RoundedRectangle(cornerRadius: 8))
                                 }
                             }.padding(10).frame(maxWidth: .infinity).background(.white.opacity(0.75), in: RoundedRectangle(cornerRadius: 10))

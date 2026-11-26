@@ -50,7 +50,7 @@ struct CameraPhotoButton: View {
                 ComposeMediaActionLabel(title: cameraRequest != nil ? "Opening…" : "Take photo", subtitle: "Camera", image: "avatar-camera")
             } else {
                 Text(cameraRequest != nil ? "Opening…" : "Take photo")
-                    .font(.caption.bold()).foregroundStyle(liyaAccent)
+                    .font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent)
                     .frame(minWidth: 100, minHeight: 44)
                     .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
             }
@@ -72,17 +72,17 @@ struct CameraPhotoButton: View {
                     Image("avatar-camera").resizable().scaledToFit().padding(4)
                 } content: {
                     Text("You can still choose a photo from your library.")
-                        .font(.subheadline).foregroundStyle(.secondary)
+                        .font(LiyaType.detail).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                     Button { showingSettings = false } label: {
-                        Text("Done").font(.headline).foregroundStyle(liyaInk)
+                        Text("Done").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
                             .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
                     }
                     Button {
                         showingSettings = false
                         if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                     } label: {
-                        Text("Open Settings").font(.subheadline).foregroundStyle(liyaAccent)
+                        Text("Open Settings").font(LiyaType.detail).foregroundStyle(liyaAccent)
                             .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
                     }
                 }.buttonStyle(.plain)
@@ -95,7 +95,7 @@ struct CameraPhotoButton: View {
         switch authorization {
         case .authorized, .notDetermined:
             guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
-                onError(String(localized: "The camera is unavailable on this device.", locale: locale))
+                onError(String(localized: "No camera is available. You can choose a photo from your library.", locale: locale))
                 return
             }
             if authorization == .authorized {
@@ -111,9 +111,9 @@ struct CameraPhotoButton: View {
         case .denied:
             showingSettings = true
         case .restricted:
-            onError(String(localized: "Camera access is restricted on this device.", locale: locale))
+            onError(String(localized: "Camera use is restricted on this device. You can choose a photo from your library.", locale: locale))
         @unknown default:
-            onError(String(localized: "The camera is unavailable on this device.", locale: locale))
+            onError(String(localized: "No camera is available. You can choose a photo from your library.", locale: locale))
         }
     }
 }
@@ -127,9 +127,9 @@ private struct ComposeMediaActionLabel: View {
         HStack(spacing: 8) {
             Image(image).resizable().scaledToFit().frame(width: 40, height: 40).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
-                Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                Text(LocalizedStringKey(title)).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(LocalizedStringKey(subtitle)).font(.caption).foregroundStyle(.secondary)
+                Text(LocalizedStringKey(subtitle)).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }.frame(maxWidth: .infinity, alignment: .leading)
         }.padding(.horizontal, 11).padding(.vertical, 10).frame(maxWidth: .infinity, minHeight: 76)
@@ -189,7 +189,7 @@ struct DraftMediaPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Photos and videos").font(.headline).foregroundStyle(liyaInk)
+            Text("Photos and videos").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
             if compactButtons && attachments.count < 9 {
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 10) { compactLibraryButton; cameraButton }.frame(minWidth: 300)
@@ -203,7 +203,7 @@ struct DraftMediaPicker: View {
                                      matching: .any(of: [.images, .videos])) {
                             VStack(spacing: 5) {
                                 Image("avatar-camera").resizable().scaledToFit().frame(width: 42, height: 42)
-                                Text("Add media").font(.caption.bold()).foregroundStyle(liyaAccent)
+                                Text("Add media").font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent)
                             }.frame(width: 100, height: 120).background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
                         }.disabled(loading).accessibilityLabel("Add photos or videos")
                     }
@@ -220,9 +220,9 @@ struct DraftMediaPicker: View {
                 }
             }.scrollIndicators(.hidden)
             if attachments.count < 9 && !compactButtons { cameraButton }
-            if loading { Text("Loading selected media…").font(.footnote).foregroundStyle(.secondary) }
-            if let errorMessage { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
-            Text(note).font(.footnote).foregroundStyle(.secondary)
+            if loading { Text("Loading selected media…").font(LiyaType.text(.footnote)).foregroundStyle(.secondary) }
+            if let errorMessage { Text(errorMessage).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
+            Text(note).font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
         }.sheet(item: $preview) { item in
             if item.isVideo { DraftVideoPreview(item: item) } else { DraftPhotoPreview(item: item) }
         }
@@ -275,7 +275,7 @@ struct MediaThumbnail: View {
             } else if let image = UIImage(contentsOfFile: DraftFiles.url(item).path) {
                 Image(uiImage: image).resizable().scaledToFill()
             } else {
-                Text("Unavailable").font(.caption).foregroundStyle(.secondary)
+                Text("Unavailable").font(LiyaType.text(.caption)).foregroundStyle(.secondary)
             }
         }.accessibilityLabel(item.isVideo ? "Video attachment" : "Photo attachment")
             .task(id: item.id) {
@@ -311,7 +311,7 @@ struct DraftVideoPreview: View {
                     Button { dismiss() } label: { Image("close").resizable().scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44) }
                         .buttonStyle(.plain).accessibilityLabel("Close video")
                     Spacer()
-                    Text("Private draft video").foregroundStyle(.white).font(.headline)
+                    Text("Private draft video").foregroundStyle(.white).font(LiyaType.text(.headline))
                 }
                 Spacer()
                 if player == nil { Text("Video unavailable").foregroundStyle(.white) }

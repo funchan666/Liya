@@ -103,8 +103,6 @@ private enum VideoPanel: Hashable, Identifiable {
     var id: Self { self }
 }
 
-// The supplied photos and videos have no known author relationship. These
-// stable display-only pairings are examples, not real user accounts.
 struct CollectionVideoAuthor: Decodable {
     let videoID: String
     let name: String
@@ -177,16 +175,17 @@ struct VideoHome: View {
                 HStack {
                     Image("video-title").resizable().scaledToFit().frame(width: 145, height: 42)
                         .allowsHitTesting(false).accessibilityLabel("Liya videos")
-                    Spacer()
+                    Spacer(minLength: 4)
+                    VideoJournalShortcut()
                 }
                 Spacer(minLength: 16)
                 if session.catalogLoading || preview.loading { EmptyView() }
                 else if let error = session.catalogError {
-                    Text(error).font(.headline)
+                    Text(error).font(LiyaType.text(.headline))
                     Button("Try again") { Task { await session.refreshCatalog() } }.frame(minHeight: 44)
-                } else if session.videos.isEmpty { Text("No videos yet.").font(.headline) }
+                } else if session.videos.isEmpty { Text("No videos yet.").font(LiyaType.text(.headline)) }
                 else if preview.unavailable {
-                    Text("This video is unavailable.").font(.headline)
+                    Text("This video is unavailable.").font(LiyaType.text(.headline))
                     Button("Try again") { preview.select(preview.requestedIndex, active: active && scenePhase == .active && panel == nil, session: session) }.frame(minHeight: 44)
                 }
                 HStack(alignment: .bottom, spacing: 12) {
@@ -208,7 +207,7 @@ struct VideoHome: View {
                                     HStack(spacing: 10) {
                                         VideoAuthorPortrait(photoID: creator?.photoID)
                                         Text(authorName)
-                                            .font(.subheadline.weight(.semibold)).lineLimit(2)
+                                            .font(LiyaType.text(.subheadline, weight: .semibold)).lineLimit(2)
                                     }
                                     .foregroundStyle(.white)
                                 }
@@ -217,7 +216,7 @@ struct VideoHome: View {
                                 if let creator, let photoIndex {
                                     CuratedFollowButton(id: creator.photoID) { following, title in
                                         Text(LocalizedStringKey(title))
-                                            .font(.caption.weight(.semibold)).foregroundStyle(.white)
+                                            .font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(.white)
                                             .fixedSize(horizontal: true, vertical: false)
                                             .padding(.horizontal, 12).frame(minHeight: 36)
                                             .background {
@@ -234,7 +233,7 @@ struct VideoHome: View {
                                 }
                             }
                             if let caption = creator?.caption {
-                                Text(caption).font(.subheadline).lineSpacing(3).fixedSize(horizontal: false, vertical: true)
+                                Text(caption).font(LiyaType.detail).lineSpacing(3).fixedSize(horizontal: false, vertical: true)
                                     .allowsHitTesting(false)
                             }
                         }
@@ -246,7 +245,7 @@ struct VideoHome: View {
                     }
                 }
                 if let error = session.likesError {
-                    Text(error).font(.footnote)
+                    Text(error).font(LiyaType.text(.footnote))
                     Button("Retry likes") { Task { await session.refreshLikes() } }.frame(minHeight: 44)
                 }
                }
@@ -277,7 +276,6 @@ struct VideoHome: View {
                     .animation(reduceMotion ? nil : .interactiveSpring(response: 0.3, dampingFraction: 0.85), value: swipeTranslation)
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
-                // The visible picture can extend beyond the scrollable controls on Duo.
                 if canTapVideo { playbackTapSurface.accessibilityHidden(true) }
             }
             .ignoresSafeArea(.container)
@@ -352,7 +350,8 @@ struct VideoHome: View {
         let failed = session.mediaEngagementFailures.contains(video.id)
         return VStack(spacing: 12) {
             Button { Task { await session.toggleMediaLike(id: video.id) } } label: {
-                metric(icon: liked ? "video-like-on" : "video-like-off", count: counts?.likeCount, failed: failed)
+                metric(liked ? "Liked" : "Like", icon: liked ? "video-like-on" : "video-like-off",
+                       count: counts?.likeCount, failed: failed)
             }
             .disabled(!session.likesReady || session.likesLoading)
             .accessibilityLabel(liked ? "Remove like" : "Like")
@@ -360,7 +359,7 @@ struct VideoHome: View {
             .accessibilityAddTraits(liked ? .isSelected : [])
 
             Button { panel = .comments(video.id) } label: {
-                metric(icon: "comment", count: counts?.commentCount, failed: failed)
+                metric("Comments", icon: "comment", count: counts?.commentCount, failed: failed)
             }
             .accessibilityLabel("Comments")
             .accessibilityValue(countValue(counts?.commentCount))
@@ -375,7 +374,7 @@ struct VideoHome: View {
 
             if failed {
                 Button("Try again") { Task { await session.refreshMediaEngagement(ids: [video.id]) } }
-                    .font(.caption.weight(.semibold)).frame(minHeight: 44)
+                    .font(LiyaType.text(.caption, weight: .semibold)).frame(minHeight: 44)
                     .accessibilityHint("Refresh likes and comments")
             }
         }
@@ -387,17 +386,19 @@ struct VideoHome: View {
         }
     }
 
-    private func metric(icon: String, count: Int?, failed: Bool) -> some View {
+    private func metric(_ title: LocalizedStringKey, icon: String, count: Int?, failed: Bool) -> some View {
         VStack(spacing: 2) {
-            Image(decorative: icon).resizable().scaledToFit().frame(width: 44, height: 44)
-            Group {
+            HStack(spacing: 4) {
+                Image(decorative: icon).resizable().scaledToFit().frame(width: 28, height: 28)
                 if let count { Text(count, format: .number) }
                 else { Text(verbatim: failed ? "—" : "…") }
-            }
-            .font(.subheadline.weight(.bold)).monospacedDigit().foregroundStyle(.white)
-            .padding(.horizontal, 8).padding(.vertical, 2)
-            .background(.black.opacity(0.64), in: Capsule())
+            }.font(LiyaType.text(.subheadline, weight: .bold)).monospacedDigit()
+            Text(title).font(LiyaType.text(.caption, weight: .semibold))
+                .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
         }
+        .foregroundStyle(.white).padding(.horizontal, 9).padding(.vertical, 5)
+        .frame(minWidth: 52, minHeight: 44)
+        .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 15))
         .contentShape(Rectangle())
     }
 
@@ -407,13 +408,80 @@ struct VideoHome: View {
     }
 }
 
+private enum MediaThreadComment: Identifiable {
+    case editorial(EditorialMediaComment)
+    case member(VideoComment)
+
+    var id: String {
+        switch self {
+        case .editorial(let comment): return comment.id
+        case .member(let comment): return comment.id.uuidString
+        }
+    }
+
+    var memberComment: VideoComment? {
+        if case .member(let comment) = self { return comment }
+        return nil
+    }
+
+    var memberAuthor: SocialPerson? {
+        guard let member = memberComment, let author = member.author, author.id == member.ownerID else { return nil }
+        return author
+    }
+
+    var bodyText: String {
+        switch self {
+        case .editorial(let comment): return comment.body
+        case .member(let comment): return comment.body
+        }
+    }
+
+    var mediaID: String {
+        switch self {
+        case .editorial(let comment): return comment.mediaID
+        case .member(let comment): return comment.mediaID
+        }
+    }
+
+    var authorName: String? {
+        switch self {
+        case .editorial(let comment): return comment.displayName
+        case .member: return memberAuthor?.displayName
+        }
+    }
+}
+
+private struct MediaCommentAvatar: View {
+    @EnvironmentObject private var session: LiyaSession
+    let comment: MediaThreadComment
+
+    @ViewBuilder
+    var body: some View {
+        switch comment {
+        case .member(let member):
+            if let author = comment.memberAuthor {
+                SocialAvatar(personID: member.ownerID, commentAuthor: author)
+            } else {
+                MemberInitialsAvatar(name: "")
+            }
+        case .editorial(let credit):
+            if let portraitID = credit.portraitMediaID,
+               let index = CollectionPhotoRoles.portraitIndex(forMediaID: portraitID, in: session.photos) {
+                CollectionPhoto(catalogIndex: index, contentMode: .fill, avatarName: credit.displayName)
+                    .id(portraitID)
+            } else {
+                MemberInitialsAvatar(name: credit.displayName)
+            }
+        }
+    }
+}
+
 struct MediaCommentsView: View {
-    @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     @Environment(\.dismiss) private var dismiss
     let mediaID: String
-    @State private var comments: [VideoComment] = []
+    @State private var comments: [MediaThreadComment] = []
     @State private var text = ""
     @State private var loading = true
     @State private var sending = false
@@ -423,8 +491,8 @@ struct MediaCommentsView: View {
     @State private var loadID = UUID()
     @State private var attempt = UUID()
     @State private var loadedDraftKey: String?
-    @State private var target: VideoComment?
-    @State private var reportedCommentID: UUID?
+    @State private var target: MediaThreadComment?
+    @State private var reportedCommentIDs: Set<String> = []
     @State private var showProfileSetup = false
     @FocusState private var commentFocused: Bool
 
@@ -442,10 +510,6 @@ struct MediaCommentsView: View {
         return session.mediaEngagement[mediaID]?.commentCount
     }
 
-    private var replyIdeas: [VideoReplySuggestion] {
-        session.curatedVideoPrompts.filter { $0.videoID == mediaID }
-    }
-
     var body: some View {
         ZStack {
             LiyaBackground()
@@ -458,9 +522,9 @@ struct MediaCommentsView: View {
                         }.buttonStyle(.plain).disabled(sending).accessibilityLabel("Back")
                         Spacer(minLength: 0)
                         HStack(spacing: 6) {
-                            Text("Comments").font(.headline)
+                            Text("Comments").font(LiyaType.text(.headline))
                             if let count = displayedCommentCount {
-                                Text(count, format: .number).font(.subheadline.weight(.semibold)).monospacedDigit()
+                                Text(count, format: .number).font(LiyaType.text(.subheadline, weight: .semibold)).monospacedDigit()
                                     .foregroundStyle(.secondary)
                             }
                         }.accessibilityElement(children: .combine)
@@ -475,22 +539,8 @@ struct MediaCommentsView: View {
                         } else if error == nil && comments.isEmpty {
                             VStack(spacing: 10) {
                                 Image(decorative: "profile-action-message").resizable().scaledToFit().frame(width: 52, height: 52)
-                                Text("No comments yet").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                                Text("No comments yet").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
                             }.frame(maxWidth: .infinity).padding(.vertical, 28)
-                            if !replyIdeas.isEmpty && text.isEmpty {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text("Reply ideas").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                                    ForEach(replyIdeas) { idea in
-                                        Button {
-                                            text = idea.suggestedReply; attempt = UUID(); persistDraft(); commentFocused = true
-                                        } label: {
-                                            Text(verbatim: idea.suggestedReply).font(.subheadline).foregroundStyle(liyaInk)
-                                                .multilineTextAlignment(.leading).padding(.horizontal, 12)
-                                                .frame(minHeight: 44).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                                        }.buttonStyle(.plain)
-                                    }
-                                }
-                            }
                         }
                         ForEach(comments) { comment in commentRow(comment) }
                     }.frame(maxWidth: 620, alignment: .leading)
@@ -507,13 +557,16 @@ struct MediaCommentsView: View {
         .navigationDestination(isPresented: $showProfileSetup) { CommunityJoinView() }
         .task(id: draftKey) {
             restoreDraft()
-            reportedCommentID = nil
+            target = nil
+            reportedCommentIDs = []
             comments = []
             await refreshThread()
         }
         .onLiyaChange(of: social.syncGeneration) { _ in Task { await load() } }
         .sheet(item: $target) { comment in
-            MediaCommentSafetyView(comment: comment) { reportedCommentID = comment.id }
+            MediaCommentSafetyView(comment: comment, alreadyReported: reportedCommentIDs.contains(comment.id)) {
+                reportedCommentIDs.insert(comment.id)
+            }
         }
     }
 
@@ -521,11 +574,11 @@ struct MediaCommentsView: View {
         VStack(alignment: .leading, spacing: 6) {
             if let error {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(LocalizedStringKey(error)).font(.footnote).foregroundStyle(.red)
+                    Text(LocalizedStringKey(error)).font(LiyaType.text(.footnote)).foregroundStyle(.red)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     if loadFailed {
                         Button("Try again") { Task { await refreshThread() } }
-                            .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                            .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                     }
                 }
             }
@@ -538,7 +591,7 @@ struct MediaCommentsView: View {
                     .overlay(RoundedRectangle(cornerRadius: 18).stroke(liyaAccent.opacity(0.12), lineWidth: 1))
                     .focused($commentFocused).disabled(sending).accessibilityLabel("Write a comment")
                 Button(sending ? "Sending…" : "Send") { send() }
-                    .font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                    .font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(.white)
                     .padding(.horizontal, 18).frame(minHeight: 44)
                     .background(liyaGradient.opacity(canSend ? 1 : 0.45), in: Capsule())
                     .disabled(!canSend)
@@ -547,45 +600,53 @@ struct MediaCommentsView: View {
             .background(.ultraThinMaterial).modifier(AdaptiveContainerMargins())
     }
 
-    private func commentRow(_ comment: VideoComment) -> some View {
-        let mine = comment.ownerID == session.userID
-        let person = social.person(comment.ownerID)
+    private func commentRow(_ comment: MediaThreadComment) -> some View {
+        let member = comment.memberComment
+        let mine = member != nil && member?.ownerID == session.userID
         return HStack(alignment: .top, spacing: 12) {
-            SocialAvatar(personID: comment.ownerID).frame(width: 38, height: 38).clipShape(Circle())
+            MediaCommentAvatar(comment: comment).frame(width: 38, height: 38).clipShape(Circle())
             VStack(alignment: .leading, spacing: 5) {
                 Group {
-                    if let person {
+                    if let person = comment.memberAuthor {
                         NavigationLink { CommunityPersonView(personID: person.id) } label: {
                             if mine { Text("You") } else { Text(verbatim: person.displayName) }
                         }.buttonStyle(.plain)
                     } else if mine { Text("You") }
+                    else if case .editorial(let credit) = comment {
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text(verbatim: credit.displayName)
+                            Text("Collection").font(LiyaType.text(.caption)).foregroundStyle(.secondary)
+                        }
+                    }
                     else { Text("Liya member") }
-                }.font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
-                Text(verbatim: comment.body).font(.subheadline).foregroundStyle(liyaInk.opacity(0.9))
+                }.font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+                Text(verbatim: comment.bodyText).font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.9))
                     .lineSpacing(3).fixedSize(horizontal: false, vertical: true)
-                if reportedCommentID == comment.id {
-                    Text("Report received.").font(.footnote.weight(.medium)).foregroundStyle(liyaAccent)
+                if reportedCommentIDs.contains(comment.id) {
+                    Text("Report received.").font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaAccent)
                 }
-                if mine, let status = social.moderationText(kind: "media_comment", id: comment.id) {
-                    Text(LocalizedStringKey(status)).font(.footnote).foregroundStyle(.secondary)
+                if mine, let member, let status = social.moderationText(kind: "media_comment", id: member.id) {
+                    Text(LocalizedStringKey(status)).font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
-            if mine {
-                Button("Delete") { delete(comment) }
-                    .font(.caption.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
-                    .disabled(deleting.contains(comment.id))
+            if let member, mine {
+                Button("Delete") { delete(member) }
+                    .font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                    .disabled(deleting.contains(member.id))
             } else {
                 Button { commentFocused = false; target = comment } label: {
-                    Image("more").resizable().scaledToFit().frame(width: 18, height: 18).frame(width: 44, height: 44)
-                }.buttonStyle(.plain).accessibilityLabel("Comment options")
+                    Image(decorative: member == nil ? "safety-report" : "more").resizable().scaledToFit()
+                        .frame(width: 18, height: 18).frame(width: 44, height: 44)
+                }.buttonStyle(.plain).accessibilityLabel(member == nil ? Text("Report comment") : Text("Comment options"))
+                    .disabled(member == nil && reportedCommentIDs.contains(comment.id))
             }
         }.padding(.vertical, 12)
     }
 
     private func refreshThread() async {
-        async let counts: Void = session.refreshMediaEngagement(ids: [mediaID])
+        await session.refreshMediaEngagement(ids: [mediaID])
+        guard !Task.isCancelled else { return }
         await load()
-        await counts
     }
 
     private func load() async {
@@ -596,13 +657,19 @@ struct MediaCommentsView: View {
             return
         }
         loading = true; loadFailed = false; error = nil
-        do {
-            let rows = try await social.videoComments(session, mediaID: mediaID)
-            guard !Task.isCancelled, loadID == request, session.userID == owner else { return }
-            comments = rows; loading = false
-        } catch {
-            guard !Task.isCancelled, loadID == request, session.userID == owner else { return }
-            loading = false; loadFailed = true; self.error = "Couldn't load comments. Please try again."
+        async let published = social.editorialComments(session, mediaID: mediaID)
+        async let members = social.videoComments(session, mediaID: mediaID)
+        let publishedRows = try? await published
+        let memberRows = try? await members
+        guard !Task.isCancelled, loadID == request, session.userID == owner else { return }
+        comments = (publishedRows ?? []).map(MediaThreadComment.editorial)
+                 + (memberRows ?? []).map(MediaThreadComment.member)
+        loading = false
+        loadFailed = publishedRows == nil || memberRows == nil
+        if loadFailed {
+            error = "Couldn't load comments. Please try again."
+        } else {
+            session.confirmVisibleMediaComments(comments.count, mediaID: mediaID)
         }
     }
 
@@ -664,9 +731,9 @@ struct VideoSafetyReason: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                Text(title).font(.subheadline.weight(selected ? .semibold : .medium)).foregroundStyle(liyaInk)
+                Text(title).font(LiyaType.text(.subheadline, weight: selected ? .semibold : .medium)).foregroundStyle(liyaInk)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                if selected { Text("Selected").font(.caption.weight(.semibold)).foregroundStyle(liyaAccent) }
+                if selected { Text("Selected").font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(liyaAccent) }
             }.padding(.horizontal, 16).frame(maxWidth: .infinity, minHeight: 48)
                 .background(selected ? liyaAccent.opacity(0.09) : Color(red: 0.96, green: 0.96, blue: 0.98), in: RoundedRectangle(cornerRadius: 12))
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(liyaAccent.opacity(selected ? 0.35 : 0), lineWidth: 1))
@@ -691,27 +758,35 @@ private struct MediaCommentSafetyView: View {
     @EnvironmentObject private var social: SocialStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
-    let comment: VideoComment
+    let comment: MediaThreadComment
+    let alreadyReported: Bool
     let reportReceived: () -> Void
-    @State private var step = Step.options
+    @State private var step: Step
     @State private var selected: String?
     @State private var requestID = UUID()
     @State private var sending = false
     @State private var error: String?
     @State private var showProfileSetup = false
 
+    init(comment: MediaThreadComment, alreadyReported: Bool, reportReceived: @escaping () -> Void) {
+        self.comment = comment
+        self.alreadyReported = alreadyReported
+        self.reportReceived = reportReceived
+        _step = State(initialValue: comment.memberComment == nil ? .report : .options)
+    }
+
     private var profileName: String {
-        social.person(comment.ownerID)?.displayName ?? String(localized: "Liya member", locale: locale)
+        comment.authorName ?? String(localized: "Liya member", locale: locale)
     }
 
     var body: some View {
         SafetyPanel(title: step.title, subject: profileName,
-                    back: step == .options ? nil : { changeStep(.options) },
+                    back: step == .options || comment.memberComment == nil ? nil : { changeStep(.options) },
                     close: { dismiss() }, busy: sending) {
-            SocialAvatar(personID: comment.ownerID).frame(width: 44, height: 44).clipShape(Circle())
+            MediaCommentAvatar(comment: comment).frame(width: 44, height: 44).clipShape(Circle())
         } content: {
             VStack(alignment: .leading, spacing: 12) {
-                Text(verbatim: comment.body).font(.subheadline).foregroundStyle(liyaInk.opacity(0.76))
+                Text(verbatim: comment.bodyText).font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.76))
                     .lineLimit(3).fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -719,6 +794,7 @@ private struct MediaCommentSafetyView: View {
                 case .options:
                     VStack(spacing: 0) {
                         SafetyActionRow(title: "Report comment", kind: .report) { changeStep(.report) }
+                            .disabled(alreadyReported)
                         Divider()
                         SafetyActionRow(title: "Block profile", kind: .block) { changeStep(.block) }
                     }
@@ -732,12 +808,9 @@ private struct MediaCommentSafetyView: View {
                     feedback
                     SafetySubmitButton(title: sending ? "Sending…" : "Send report", busy: sending,
                                        disabled: selected == nil || sending, action: report)
-                    Link("Contact support", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
-                        .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent)
-                        .frame(maxWidth: .infinity, minHeight: 44).disabled(sending)
                 case .block:
                     Text("Their comments and other community content will no longer be visible to you.")
-                        .font(.subheadline).foregroundStyle(liyaInk).fixedSize(horizontal: false, vertical: true)
+                        .font(LiyaType.detail).foregroundStyle(liyaInk).fixedSize(horizontal: false, vertical: true)
                     feedback
                     if social.canCommentOnMedia(session) {
                         SafetySubmitButton(title: sending ? "Blocking…" : "Block profile", destructive: true,
@@ -746,7 +819,7 @@ private struct MediaCommentSafetyView: View {
                         LiyaLoadingIndicator(size: 24).frame(maxWidth: .infinity, minHeight: 44)
                     } else if session.userID == nil || social.checkedMemberProfileOwner != session.userID || social.error != nil {
                         Text("Couldn't load your profile. Please try again.")
-                            .font(.footnote).foregroundStyle(liyaInk)
+                            .font(LiyaType.text(.footnote)).foregroundStyle(liyaInk)
                         SafetySecondaryButton(title: "Try again") { Task { await social.refresh(session) } }
                     } else {
                         SafetySubmitButton(title: "Create a community profile to block") { showProfileSetup = true }
@@ -764,7 +837,7 @@ private struct MediaCommentSafetyView: View {
 
     @ViewBuilder private var feedback: some View {
         if let error {
-            Text(LocalizedStringKey(error)).font(.footnote.weight(.medium)).foregroundStyle(liyaInk)
+            Text(LocalizedStringKey(error)).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaInk)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -776,30 +849,32 @@ private struct MediaCommentSafetyView: View {
     }
 
     private func report() {
-        guard let reason = selected, let owner = session.userID, !sending else { return }
+        guard let reason = selected, let owner = session.userID, !sending, !alreadyReported else { return }
         sending = true
         error = nil
         Task {
             let saved = await social.reportVideoComment(session, id: requestID, mediaID: comment.mediaID,
-                                                        commentID: comment.id, presetKey: nil,
-                                                        body: comment.body, reason: reason)
+                                                        commentID: comment.memberComment?.id,
+                                                        presetKey: comment.memberComment == nil ? comment.id : nil,
+                                                        body: comment.bodyText, reason: reason)
             guard session.userID == owner else { return }
-            sending = false
             if saved {
                 reportReceived()
                 dismiss()
             } else {
+                sending = false
                 error = "Couldn't confirm the report. Please try again."
             }
         }
     }
 
     private func block() {
-        guard let owner = session.userID, social.canCommentOnMedia(session), !sending else { return }
+        guard let owner = session.userID, let member = comment.memberComment,
+              social.canCommentOnMedia(session), !sending else { return }
         sending = true
         error = nil
         Task {
-            let blocked = await social.blockMediaCommenter(session, ownerID: comment.ownerID)
+            let blocked = await social.blockMediaCommenter(session, ownerID: member.ownerID)
             guard session.userID == owner else { return }
             sending = false
             if blocked { dismiss() }
@@ -833,10 +908,10 @@ private struct VideoReportView: View {
             if sent {
                 SafetySubmitButton(title: "Done") { dismiss() }
             } else if targetIndex == nil {
-                Text("This video is unavailable.").font(.subheadline).foregroundStyle(liyaInk)
+                Text("This video is unavailable.").font(LiyaType.detail).foregroundStyle(liyaInk)
                 SafetySecondaryButton(title: "Close") { dismiss() }
             } else {
-                Text("Choose a reason").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                Text("Choose a reason").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
                 SafetyReasonList(selected: selected) { reason in
                     guard !sending, reason != selected else { return }
                     selected = reason
@@ -845,7 +920,7 @@ private struct VideoReportView: View {
                 }.disabled(sending)
                 if failed {
                     Text("Couldn't confirm the report. Please try again.")
-                        .font(.footnote.weight(.medium)).foregroundStyle(liyaInk)
+                        .font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaInk)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 SafetySubmitButton(title: sending ? "Sending…" : "Send report", busy: sending,

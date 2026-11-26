@@ -26,7 +26,7 @@ final class LiyaSession: ObservableObject {
             catalogLoading = false
             catalogHasLoaded = false
             catalogError = nil
-            photos = []; videos = []; curatedVideoCreators = [:]; curatedVideoPrompts = []; curatedTreePrompts = []
+            photos = []; videos = []; curatedVideoCreators = [:]; curatedTreePrompts = []
             resetMediaEngagement()
             resetCuratedFollows()
         }
@@ -34,7 +34,6 @@ final class LiyaSession: ObservableObject {
     @Published private(set) var photos: [CatalogMediaAsset] = []
     @Published private(set) var videos: [CatalogMediaAsset] = []
     @Published private(set) var curatedVideoCreators: [String: CollectionVideoAuthor] = [:]
-    @Published private(set) var curatedVideoPrompts: [VideoReplySuggestion] = []
     @Published private(set) var curatedTreePrompts: [ReflectionPrompt] = []
     @Published private(set) var catalogError: String?
     @Published private(set) var catalogLoading = false
@@ -53,6 +52,7 @@ final class LiyaSession: ObservableObject {
     @Published private(set) var mediaEngagement: [String: MediaEngagement] = [:]
     @Published private(set) var mediaEngagementFailures: Set<String> = []
     private var engagementRequests: [String: UUID] = [:]
+    private var threadCountsDuringRefresh: [String: Int] = [:]
     @Published private(set) var likesLoading = false
     @Published private(set) var likesReady = false
     @Published private(set) var likesError: String?
@@ -189,8 +189,6 @@ final class LiyaSession: ObservableObject {
 
     private func authenticate(_ signIn: (AuthClient) async throws -> Session) async throws -> Bool {
         if let owner = savedMember?.id {
-            // A linked identity or email could have changed since the credential was saved.
-            // Verify ownership before replacing the session in Keychain.
             let probe = SupabaseClient(supabaseURL: Self.projectURL, supabaseKey: Self.publishableKey,
                 options: .init(auth: .init(storage: TemporaryAuthStorage(), autoRefreshToken: false,
                                           emitLocalSessionAsInitialSession: true)))
@@ -294,7 +292,6 @@ final class LiyaSession: ObservableObject {
         }
     }
 
-    /// Read saved state for the welcome screen without starting a sign-in.
     func prepareWelcome(store: LocalStore) {
         store.identifyPreviousCloudSpace(savedMember?.id)
         guard !isSigningIn else { return }
@@ -320,7 +317,6 @@ final class LiyaSession: ObservableObject {
         return saved
     }
 
-    /// Resume only when requested. Refresh an expired access token through the SDK.
     func restoreSavedAccount() async -> Bool {
         guard !isSigningIn, !isSigningOut, !isDeletingAccount, let saved = inspectSavedCredential() else { return false }
         if userID == saved.user.id, !saved.isExpired { return true }
@@ -340,7 +336,6 @@ final class LiyaSession: ObservableObject {
         errorMessage = nil
         defer { isSigningIn = false }
         do {
-            // Restore an existing account without creating a new anonymous session.
             guard client.auth.currentSession != nil else { throw SessionError.savedSessionUnavailable }
             let session = try await client.auth.session
             guard !session.user.isAnonymous else { throw SessionError.savedSessionUnavailable }
@@ -388,7 +383,7 @@ final class LiyaSession: ObservableObject {
             var offset = 0
             while true {
                 let page: [CatalogMediaAsset] = try await client.from("liya_example_media")
-                    .select("id,kind,sort_order,object_key")
+                    .select("id,kind,sort_order,object_key,portrait_byline")
                     .order("sort_order").order("id").range(from: offset, to: offset + 499).execute().value
                 rows.append(contentsOf: page)
                 if page.count < 500 { break }
@@ -396,15 +391,12 @@ final class LiyaSession: ObservableObject {
             }
             let creators: [CollectionVideoAuthor] = try await client.from("liya_curated_video_creators")
                 .select("video_id,photo_id,display_name,caption").order("video_id").execute().value
-            let prompts: [VideoReplySuggestion] = try await client.from("liya_curated_video_prompts")
-                .select("video_id,position,body").order("video_id").order("position").execute().value
             let treePrompts: [ReflectionPrompt] = try await client.from("liya_curated_tree_prompts")
                 .select("position,mood,body").order("position").execute().value
             guard userID == owner, catalogRequest == request else { return }
             photos = rows.filter { $0.mediaKind == "photo" }
             videos = rows.filter { $0.mediaKind == "video" }
             curatedVideoCreators = Dictionary(uniqueKeysWithValues: creators.map { ($0.videoID, $0) })
-            curatedVideoPrompts = prompts
             curatedTreePrompts = treePrompts
             catalogHasLoaded = true
             catalogGeneration = UUID(); imageGeneration = UUID()
@@ -429,18 +421,6 @@ final class LiyaSession: ObservableObject {
         guard userID != nil, !isDeletingAccount, !isSigningOut else { return }
         imageGeneration = UUID()
         await refreshProfile()
-    }
-
-    /// Restore an existing session for an incoming call; never create a new account here.
-    func restoreForIncomingCall() async -> Bool {
-        guard !passwordRecovery, !UserDefaults.standard.bool(forKey: "liya.pendingPasswordRecovery") else { return false }
-        guard !isDeletingAccount, !isSigningOut, UserDefaults.standard.bool(forKey: "liya.hasSupabaseAccount") else { return false }
-        if userID != nil { return true }
-        do {
-            let saved = try await client.auth.session
-            userID = saved.user.id
-            return true
-        } catch { return false }
     }
 
     func deleteAccount() async -> Bool {
@@ -469,13 +449,12 @@ final class LiyaSession: ObservableObject {
             guard let http = reply as? HTTPURLResponse, (200..<300).contains(http.statusCode), result.code == 0, result.data.status == "deleted" else { throw SessionError.deletionUnconfirmed }
             userID = nil
             profile = nil; profileAvatarURL = nil; moodEntries = []; treeEntries = []
-            photos = []; videos = []; curatedVideoCreators = [:]; curatedVideoPrompts = []; curatedTreePrompts = []
+            photos = []; videos = []; curatedVideoCreators = [:]; curatedTreePrompts = []
             catalogGeneration = UUID(); imageGeneration = UUID()
             try? await client.auth.signOut(scope: .local)
             UserDefaults.standard.removeObject(forKey: key)
             UserDefaults.standard.removeObject(forKey: "liya.hasSupabaseAccount")
             welcomeNotice = "Your account has been deleted. You can start again whenever you're ready."
-            // No Apple refresh token was retained; Apple documents manual revocation for this case.
             showAppleRevocationHelp = true
             return true
         } catch {
@@ -494,13 +473,8 @@ final class LiyaSession: ObservableObject {
             return false
         }
         signOutError = nil
-        guard calls.call == nil else { signOutError = "End your call before signing out."; return false }
         isSigningOut = true
         defer { isSigningOut = false }
-        guard await LiyaVoIP.shared.unregisterForSignOut() else {
-            signOutError = "Couldn't disconnect call notifications. Please try again."
-            return false
-        }
         accountGeneration = UUID()
         var serverConfirmed = client.auth.currentSession != nil
         do {
@@ -508,15 +482,13 @@ final class LiyaSession: ObservableObject {
         } catch {
             guard client.auth.currentSession == nil else {
                 signOutError = "Couldn't sign out. Please check your connection and try again."
-                await LiyaVoIP.shared.updateRegistration()
                 return false
             }
-            // The SDK can clear its local session before its server request fails.
             serverConfirmed = false
         }
         userID = nil
         profile = nil; profileAvatarURL = nil; moodEntries = []; treeEntries = []
-        photos = []; videos = []; curatedVideoCreators = [:]; curatedVideoPrompts = []; curatedTreePrompts = []
+        photos = []; videos = []; curatedVideoCreators = [:]; curatedTreePrompts = []
         catalogGeneration = UUID(); imageGeneration = UUID()
         likesReady = false; likesError = nil
         clearAuthFeedback()
@@ -526,7 +498,7 @@ final class LiyaSession: ObservableObject {
         store.archiveCloudSpace(leaving: owner)
         store.inPreview = false
         social.clearAccount()
-        await calls.reset()
+        calls.reset()
         return true
     }
 
@@ -537,15 +509,16 @@ final class LiyaSession: ObservableObject {
         defer { if moodGeneration == generation { moodLoading = false } }
         do {
             var rows: [JournalDayEntry] = []
-            var offset = 0
+            var beforeDay: String?
             while true {
-                let page: [JournalDayEntry] = try await client.from("liya_moods")
-                    .select("owner_id,day,state,mood,note")
+                var query = client.from("liya_moods").select("owner_id,day,state,mood,note")
                     .eq("owner_id", value: owner.uuidString).eq("state", value: "saved")
-                    .order("day", ascending: false).range(from: offset, to: offset + 499).execute().value
+                if let beforeDay { query = query.lt("day", value: beforeDay) }
+                let page: [JournalDayEntry] = try await query.order("day", ascending: false)
+                    .limit(500).execute().value
                 rows.append(contentsOf: page)
-                if page.count < 500 { break }
-                offset += 500
+                guard page.count == 500, let oldest = page.last else { break }
+                beforeDay = oldest.dayStamp
             }
             guard userID == owner, moodGeneration == generation else { return }
             moodEntries = rows
@@ -636,7 +609,7 @@ final class LiyaSession: ObservableObject {
         guard media.indices.contains(index) else { return false }
         let report = ContentReport(id: id, reporterID: owner, mediaID: media[index].id, targetType: targetType, reason: reason)
         do { try await client.from("liya_content_reports").insert(report).execute() }
-        catch { /* The insert may have succeeded before the connection failed; read it back. */ }
+        catch {}
         do {
             let rows: [ContentReport] = try await client.from("liya_content_reports")
                 .select("id,reporter_id,media_id,target_type,reason").eq("id", value: id.uuidString).execute().value
@@ -660,7 +633,10 @@ final class LiyaSession: ObservableObject {
     }
 
     func curatedDisplayName(for photoID: String) -> String {
-        curatedCreator(for: photoID)?.name ?? "Liya collection"
+        if let creator = curatedCreator(for: photoID) { return creator.name }
+        guard let post = photos.firstIndex(where: { $0.id == photoID }),
+              let portrait = CollectionPhotoRoles.portraitIndex(for: post, in: photos) else { return "Liya collection" }
+        return photos[portrait].portraitByline ?? "Liya collection"
     }
 
     func curatedFollowing(in store: LocalStore) -> [CuratedFollowedProfile] {
@@ -707,7 +683,6 @@ final class LiyaSession: ObservableObject {
     private func loadCuratedFollows(owner: UUID, generation: UUID, store: LocalStore) async {
         guard generation == curatedFollowGeneration, store.hasCloudSpace(for: owner) else { return }
         let catalog = Set(photos.map(\.id))
-        // Historical indices refer to the numbered photo manifest, even if the catalog is reordered.
         let legacy = store.previousCollectionFollows.compactMap { index -> (Int, String)? in
             guard (0..<40).contains(index) else { return nil }
             let id = String(format: "example-photo-%03d", index + 1)
@@ -774,7 +749,6 @@ final class LiyaSession: ObservableObject {
             guard generation == curatedFollowGeneration, store.hasCloudSpace(for: owner) else { return false }
             if following {
                 curatedFollowIDs.insert(id)
-                // A block may have been requested while this write was in flight.
                 if !store.hiddenCollectionProfiles.contains(index) {
                     store.finishBlockedUnfollows([id], owner: owner)
                 }
@@ -798,8 +772,16 @@ final class LiyaSession: ObservableObject {
         likesLoading = false
         likesError = nil
         engagementRequests = [:]
+        threadCountsDuringRefresh = [:]
         mediaEngagement = [:]
         mediaEngagementFailures = []
+    }
+
+    func confirmVisibleMediaComments(_ count: Int, mediaID: String) {
+        if engagementRequests[mediaID] != nil { threadCountsDuringRefresh[mediaID] = count }
+        if let prior = mediaEngagement[mediaID], prior.commentCount != count {
+            mediaEngagement[mediaID] = MediaEngagement(mediaID: mediaID, likeCount: prior.likeCount, commentCount: count)
+        }
     }
 
     func refreshMediaEngagement(ids: [String]) async {
@@ -807,7 +789,16 @@ final class LiyaSession: ObservableObject {
         let generation = accountGeneration
         let ids = Array(Set(ids))
         let request = UUID()
-        for id in ids { engagementRequests[id] = request }
+        for id in ids {
+            engagementRequests[id] = request
+            threadCountsDuringRefresh.removeValue(forKey: id)
+        }
+        defer {
+            for id in ids where engagementRequests[id] == request {
+                engagementRequests.removeValue(forKey: id)
+                threadCountsDuringRefresh.removeValue(forKey: id)
+            }
+        }
         for start in stride(from: 0, to: ids.count, by: 150) {
             guard userID == owner, accountGeneration == generation else { return }
             let batch = Array(ids[start..<min(start + 150, ids.count)])
@@ -815,22 +806,20 @@ final class LiyaSession: ObservableObject {
             do {
                 rows = try await client.rpc("liya_media_engagement", params: ["p_media_ids": batch]).execute().value
             } catch {
-                if Task.isCancelled {
-                    for id in ids where engagementRequests[id] == request { engagementRequests.removeValue(forKey: id) }
-                    return
-                }
+                if Task.isCancelled { return }
                 rows = []
             }
             guard userID == owner, accountGeneration == generation else { return }
-            // An older list refresh must never overwrite a newer like or comment.
             let latest = batch.filter { engagementRequests[$0] == request }
             let received = Dictionary(uniqueKeysWithValues: rows.map { ($0.mediaID, $0) })
-            let updates = received.filter { engagementRequests[$0.key] == request }
-            mediaEngagement.merge(updates) { _, new in new }
+            let updates = received.filter { engagementRequests[$0.key] == request }.mapValues { update in
+                MediaEngagement(mediaID: update.mediaID, likeCount: update.likeCount,
+                                commentCount: threadCountsDuringRefresh[update.mediaID] ?? update.commentCount)
+            }
+            mediaEngagement.merge(updates) { _, latest in latest }
             let missing = latest.filter { received[$0] == nil }
             mediaEngagementFailures.subtract(updates.keys)
             mediaEngagementFailures.formUnion(missing)
-            for id in latest { engagementRequests.removeValue(forKey: id) }
         }
     }
 
@@ -875,7 +864,7 @@ final class LiyaSession: ObservableObject {
             } else {
                 try await client.from("liya_media_likes").delete().eq("owner_id", value: owner.uuidString).eq("media_id", value: id).execute()
             }
-        } catch { /* Read back below to resolve an uncertain request. */ }
+        } catch {}
         guard userID == owner, generation == accountGeneration else { return }
         do {
             let rows: [MediaLike] = try await client.from("liya_media_likes").select("owner_id,media_id")
@@ -919,7 +908,7 @@ final class LiyaSession: ObservableObject {
         guard let owner = userID else { return false }
         let row = TreeEntry(id: id, ownerID: owner, mood: mood, body: body)
         do { try await client.from("liya_tree_entries").insert(row).execute() }
-        catch { /* A prior attempt may already have reached the server. */ }
+        catch {}
         do {
             let rows: [TreeEntry] = try await client.from("liya_tree_entries")
                 .select("id,owner_id,mood,body").eq("id", value: id.uuidString).execute().value
@@ -955,18 +944,9 @@ struct CatalogMediaAsset: Decodable, Identifiable {
     let id: String
     let mediaKind: String
     let storageObjectPath: String
+    let portraitByline: String?
     enum CodingKeys: String, CodingKey {
-        case id, mediaKind = "kind", storageObjectPath = "object_key"
-    }
-}
-
-struct VideoReplySuggestion: Decodable, Identifiable {
-    let videoID: String
-    let suggestionOrder: Int
-    let suggestedReply: String
-    var id: String { "\(videoID):\(suggestionOrder)" }
-    enum CodingKeys: String, CodingKey {
-        case videoID = "video_id", suggestionOrder = "position", suggestedReply = "body"
+        case id, mediaKind = "kind", storageObjectPath = "object_key", portraitByline = "portrait_byline"
     }
 }
 

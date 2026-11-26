@@ -34,7 +34,8 @@ struct SocialComment: Codable, Identifiable, Equatable {
     let ownerID: UUID
     let postID: UUID
     let body: String
-    enum CodingKeys: String, CodingKey { case id, body; case ownerID = "owner_id", postID = "post_id" }
+    var author: SocialPerson? = nil
+    enum CodingKeys: String, CodingKey { case id, body, author; case ownerID = "owner_id", postID = "post_id" }
 }
 
 struct VideoComment: Decodable, Identifiable {
@@ -47,6 +48,18 @@ struct VideoComment: Decodable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case id, body, author
         case mediaID = "media_id", ownerID = "owner_id", createdAt = "created_at"
+    }
+}
+
+struct EditorialMediaComment: Decodable, Identifiable {
+    let mediaID: String
+    let position: Int
+    let displayName: String
+    let portraitMediaID: String?
+    let body: String
+    var id: String { "\(mediaID):starter:\(position)" }
+    enum CodingKeys: String, CodingKey {
+        case mediaID = "media_id", position, displayName = "display_name", portraitMediaID = "portrait_media_id", body
     }
 }
 
@@ -93,6 +106,8 @@ private struct SocialPostInput: Encodable {
     let id: UUID; let ownerID: UUID; let body: String; let tags: [String]; let mediaPaths: [String]; let mediaKinds: [String]
     enum CodingKeys: String, CodingKey { case id, body, tags; case ownerID = "owner_id", mediaPaths = "media_paths", mediaKinds = "media_kinds" }
 }
+enum MessageDeliveryError: Error { case mutualFollowRequired, unconfirmed }
+
 private struct SocialMessageInput: Encodable {
     let id: UUID; let senderID: UUID; let recipientID: UUID; let body: String; let mediaPaths: [String]; let mediaKinds: [String]
     enum CodingKeys: String, CodingKey { case id, body; case senderID = "sender_id", recipientID = "recipient_id", mediaPaths = "media_paths", mediaKinds = "media_kinds" }
@@ -119,15 +134,6 @@ private struct PostCommentReport: Codable, Equatable {
     enum CodingKeys: String, CodingKey {
         case id, reason; case reporterID = "reporter_id", commentID = "comment_id", postID = "post_id"
         case targetUser = "target_user", bodySnapshot = "body_snapshot"
-    }
-}
-
-private struct MessageReport: Codable, Equatable {
-    let id: UUID; let reporterID: UUID; let messageID: UUID; let targetUser: UUID
-    let bodySnapshot: String; let mediaPaths: [String]; let mediaKinds: [String]; let reason: String
-    enum CodingKeys: String, CodingKey {
-        case id, reason; case reporterID = "reporter_id", messageID = "message_id", targetUser = "target_user"
-        case bodySnapshot = "body_snapshot", mediaPaths = "media_paths", mediaKinds = "media_kinds"
     }
 }
 
@@ -173,10 +179,21 @@ final class SocialStore: ObservableObject {
  @Published private(set) var messagesLoading = false
  @Published private(set) var messagesReady = false
  @Published var error: String?
- @Published var messageError: String?
  @Published var messageLoadError: String?
  private var commentAuthors: [UUID: SocialPerson] = [:]
  private var connectionPeople: [UUID: SocialPerson] = [:]
+ @Published private(set) var directoryPeople: [SocialPerson] = []
+ @Published private(set) var directoryLoading = false
+ @Published private(set) var directoryFailed = false
+ @Published private(set) var directoryHasMore = true
+ @Published private(set) var directoryAfter: UUID?
+ private var directoryReadID = UUID()
+ private var messagePeople: [UUID: SocialPerson] = [:]
+ private var messageReadPending = false
+ private var messageSubscription: Task<Void, Never>?
+ private var messageChannelID = UUID()
+ private var messageReconnectDelay = 2
+ private let messageColumns = "id,sender_id,recipient_id,body,media_paths,media_kinds,created_at"
  private var connectionAccountRevision = UUID()
  private var connectionsRequest = UUID()
  private var connectionsTask: Task<Void, Never>?
@@ -185,8 +202,11 @@ final class SocialStore: ObservableObject {
  private var moderationRequest = UUID()
  private var moderationEndpointMissing = false
  private let commentColumns = "id,media_id,owner_id,body,created_at"
- func person(_ id: UUID) -> SocialPerson? { people.first { $0.id == id } ?? connectionPeople[id] ?? commentAuthors[id] }
- func isJoined(_ session: LiyaSession) -> Bool { false }
+ private let postCommentColumns = "id,post_id,owner_id,body"
+ private var changingPostLikes: Set<UUID> = []
+ private var postLikeReads: [UUID: UUID] = [:]
+ func person(_ id: UUID) -> SocialPerson? { people.first { $0.id == id } ?? connectionPeople[id] ?? directoryPeople.first { $0.id == id } ?? commentAuthors[id] ?? messagePeople[id] }
+ func isJoined(_ session: LiyaSession) -> Bool { canCommentOnMedia(session) }
  func canFollowMembers(_ session: LiyaSession) -> Bool {
      canCommentOnMedia(session) || (session.userID == connectionsOwner && (!follows.isEmpty || !followers.isEmpty))
  }
@@ -264,7 +284,14 @@ final class SocialStore: ObservableObject {
      resetConnections(owner: nil)
      checkedMemberProfileOwner = nil
      commentAuthors.removeAll(); people = []; posts = []; blocked = []; likes = []
-     messages = []; notifications = []; error = nil; messageError = nil; messageLoadError = nil
+     changingPostLikes = []; postLikeReads = [:]
+     messages = []; notifications = []; error = nil; messageLoadError = nil
+     messageSubscription?.cancel()
+     messageSubscription = nil; messageChannelID = UUID(); messageReconnectDelay = 2
+     realtimeConnected = false; messagesLoading = false; messageReadPending = false
+     messagePeople.removeAll()
+     directoryReadID = UUID(); directoryAfter = nil; directoryPeople = []
+     directoryLoading = false; directoryFailed = false; directoryHasMore = true
      messagesReady = false; syncGeneration = UUID()
  }
 
@@ -378,6 +405,9 @@ final class SocialStore: ObservableObject {
              visibilityRevision = UUID()
              blocked = blocks
              let hidden = Set(blocks)
+             directoryPeople.removeAll { hidden.contains($0.id) }
+             messages.removeAll { hidden.contains($0.senderID) || hidden.contains($0.recipientID) }
+             messagePeople = messagePeople.filter { !hidden.contains($0.key) }
              follows.removeAll { hidden.contains($0) }
              followers.removeAll { hidden.contains($0) }
              connectionPeople = connectionPeople.filter { !hidden.contains($0.key) }
@@ -401,7 +431,6 @@ final class SocialStore: ObservableObject {
      let requested = SocialPerson(id: owner, displayName: name, signature: signature, avatarPath: path)
      error = nil
      do {
-         // Read back the requested values even if the write response was interrupted.
          do { try await session.client.from("liya_people").upsert(requested, onConflict: "id").execute() } catch { }
          guard let saved = try await publicProfile(session, owner: owner) else { throw OfflineError.unavailable }
          if saved != requested {
@@ -420,7 +449,51 @@ final class SocialStore: ObservableObject {
  func publish(_ session: LiyaSession, id: UUID, body: String, tags: [String], attachments: [DraftAttachment]) async -> Bool { error = "Sharing is unavailable right now."; return false }
  func updatePost(_ session: LiyaSession, post: SocialPost, body: String, tags: [String], paths: [String], kinds: [String], additions: [DraftAttachment]) async -> Bool { error = "Sharing is unavailable right now."; return false }
  func deletePost(_ session: LiyaSession, id: UUID) async -> Bool { false }
- func toggleLike(_ session: LiyaSession, post: UUID) async { error = "Community features are unavailable right now." }
+ private func committedPostLike(_ session: LiyaSession, owner: UUID, post: UUID) async throws -> Bool {
+     let rows: [PostLike] = try await session.client.from("liya_post_likes")
+         .select("owner_id,post_id").eq("owner_id", value: owner.uuidString)
+         .eq("post_id", value: post.uuidString).limit(1).execute().value
+     guard session.userID == owner else { throw CancellationError() }
+     return rows.contains { $0.ownerID == owner && $0.postID == post }
+ }
+ func refreshPostLike(_ session: LiyaSession, post: UUID) async {
+     guard let owner = session.userID, !changingPostLikes.contains(post) else { return }
+     let request = UUID()
+     postLikeReads[post] = request
+     defer { if postLikeReads[post] == request { postLikeReads.removeValue(forKey: post) } }
+     guard let liked = try? await committedPostLike(session, owner: owner, post: post),
+           postLikeReads[post] == request, !Task.isCancelled else { return }
+     if liked { likes.insert(post) } else { likes.remove(post) }
+ }
+ func toggleLike(_ session: LiyaSession, post: UUID) async {
+     guard let owner = session.userID, changingPostLikes.insert(post).inserted else { return }
+     let revision = connectionAccountRevision
+     postLikeReads.removeValue(forKey: post)
+     defer { if connectionAccountRevision == revision { changingPostLikes.remove(post) } }
+     guard canCommentOnMedia(session) else { error = "Create your community profile first."; return }
+     do {
+         let wasLiked = try await committedPostLike(session, owner: owner, post: post)
+         guard connectionAccountRevision == revision else { return }
+         let table = session.client.from("liya_post_likes")
+         do {
+             if wasLiked {
+                 try await table.delete().eq("owner_id", value: owner.uuidString).eq("post_id", value: post.uuidString).execute()
+             } else {
+                 try await table.insert(PostLike(ownerID: owner, postID: post)).execute()
+             }
+         } catch {}
+         let liked = try await committedPostLike(session, owner: owner, post: post)
+         guard connectionAccountRevision == revision else { return }
+         if liked { likes.insert(post) } else { likes.remove(post) }
+         if liked == wasLiked { throw OfflineError.unavailable }
+         error = nil
+         syncGeneration = UUID()
+     } catch {
+         if session.userID == owner, connectionAccountRevision == revision {
+             self.error = "Couldn't update this like. Please try again."
+         }
+     }
+ }
  @discardableResult
  func setRelation(_ session: LiyaSession, target: UUID, table: String, enabled: Bool) async -> Bool {
      switch table {
@@ -451,7 +524,7 @@ final class SocialStore: ObservableObject {
              try await session.client.from("liya_follows").delete()
                  .eq("owner_id", value: owner.uuidString).eq("target_id", value: target.uuidString).execute()
          }
-     } catch { /* A retry can encounter a follow that was already committed. */ }
+     } catch {}
      do {
          guard session.userID == owner, connectionAccountRevision == accountRevision else { return false }
          let row: [FollowMember] = try await session.client.from("liya_follows")
@@ -459,7 +532,6 @@ final class SocialStore: ObservableObject {
              .eq("owner_id", value: owner.uuidString).eq("target_id", value: target.uuidString).limit(1).execute().value
          guard session.userID == owner, connectionAccountRevision == accountRevision else { return false }
          guard (row.first?.member.id == target) == enabled, !blocked.contains(target) else { throw OfflineError.unavailable }
-         // A read that started before this write must not reinstate the old snapshot.
          invalidateConnectionRead()
          follows.removeAll { $0 == target }
          if let member = row.first?.member {
@@ -490,7 +562,7 @@ final class SocialStore: ObservableObject {
          } else {
              try await session.client.from("liya_blocks").delete().eq("owner_id", value: owner.uuidString).eq("target_id", value: target.uuidString).execute()
          }
-     } catch { /* Verify the requested state below, including a duplicate block. */ }
+     } catch {}
      do {
          let rows: [SocialRelation] = try await session.client.from("liya_blocks").select("owner_id,target_id")
              .eq("owner_id", value: owner.uuidString).eq("target_id", value: target.uuidString).limit(1).execute().value
@@ -501,6 +573,9 @@ final class SocialStore: ObservableObject {
          blocked.removeAll { $0 == target }
          if enabled {
              blocked.append(target)
+             directoryPeople.removeAll { $0.id == target }
+             messages.removeAll { $0.senderID == target || $0.recipientID == target }
+             messagePeople.removeValue(forKey: target)
              follows.removeAll { $0 == target }
              followers.removeAll { $0 == target }
              connectionPeople.removeValue(forKey: target)
@@ -518,13 +593,40 @@ final class SocialStore: ObservableObject {
          return false
      }
  }
- func comments(_ session: LiyaSession, post: UUID) async throws -> [SocialComment] { throw OfflineError.unavailable }
+ func comments(_ session: LiyaSession, post: UUID) async throws -> [SocialComment] {
+     guard let owner = session.userID else { throw OfflineError.unavailable }
+     let revision = visibilityRevision
+     let columns = postCommentColumns + ",author:liya_people!liya_post_comments_owner_id_fkey(id,display_name,signature,avatar_path)"
+     let rows: [SocialComment] = try await pages { offset in
+         guard session.userID == owner, visibilityRevision == revision else { throw CancellationError() }
+         return try await session.client.from("liya_post_comments").select(columns)
+             .eq("post_id", value: post.uuidString).order("created_at").order("id")
+             .range(from: offset, to: offset + 499).execute().value
+     }
+     try Task.checkCancellation()
+     guard session.userID == owner, visibilityRevision == revision else { throw CancellationError() }
+     for row in rows where !blocked.contains(row.ownerID) {
+         if let author = row.author, author.id == row.ownerID { commentAuthors[row.ownerID] = author }
+         else { commentAuthors.removeValue(forKey: row.ownerID) }
+     }
+     var seen = Set<UUID>()
+     return rows.filter { !blocked.contains($0.ownerID) && seen.insert($0.id).inserted }
+ }
+ func editorialComments(_ session: LiyaSession, mediaID: String) async throws -> [EditorialMediaComment] {
+     guard let owner = session.userID else { throw OfflineError.unavailable }
+     let rows: [EditorialMediaComment] = try await pages { offset in
+         guard session.userID == owner else { throw CancellationError() }
+         return try await session.client.from("liya_media_editorial_comments").select()
+             .eq("media_id", value: mediaID).order("position").range(from: offset, to: offset + 499).execute().value
+     }
+     guard session.userID == owner else { throw CancellationError() }
+     return rows
+ }
  func videoComments(_ session: LiyaSession, mediaID: String) async throws -> [VideoComment] {
      guard let owner = session.userID else { throw OfflineError.unavailable }
      let revision = visibilityRevision
      let columns = commentColumns + ",author:liya_people!liya_video_comments_owner_id_fkey(id,display_name,signature,avatar_path)"
      var rows: [VideoComment] = []
-     // A stable cursor keeps concurrent deletes on an earlier page from skipping replies.
      while true {
          try Task.checkCancellation()
          guard session.userID == owner, visibilityRevision == revision else { throw CancellationError() }
@@ -587,8 +689,35 @@ final class SocialStore: ObservableObject {
          return session.userID == owner && rows.first == report
      } catch { return false }
  }
- func sendComment(_ session: LiyaSession, id: UUID, post: UUID, body: String) async -> Bool { false }
- func deleteComment(_ session: LiyaSession, id: UUID) async -> Bool { false }
+ func sendComment(_ session: LiyaSession, id: UUID, post: UUID, body: String) async -> Bool {
+     let text = body.trimmingCharacters(in: .whitespacesAndNewlines)
+     guard let owner = session.userID, canCommentOnMedia(session), !text.isEmpty, text.count <= 2000 else { return false }
+     let item = SocialComment(id: id, ownerID: owner, postID: post, body: text)
+     let table = "liya_post_comments"
+     do { try await session.client.from(table).insert(item).execute() } catch {}
+     do {
+         guard session.userID == owner else { return false }
+         let saved: [SocialComment] = try await session.client.from(table).select(postCommentColumns)
+             .eq("id", value: id.uuidString).eq("owner_id", value: owner.uuidString).limit(1).execute().value
+         guard session.userID == owner, saved.first == item else { return false }
+         syncGeneration = UUID()
+         await refreshModeration(session)
+         return session.userID == owner
+     } catch { return false }
+ }
+ func deleteComment(_ session: LiyaSession, id: UUID) async -> Bool {
+     guard let owner = session.userID else { return false }
+     let table = "liya_post_comments"
+     do {
+         try await session.client.from(table).delete().eq("id", value: id.uuidString).eq("owner_id", value: owner.uuidString).execute()
+         guard session.userID == owner else { return false }
+         let remaining: [SocialComment] = try await session.client.from(table).select(postCommentColumns)
+             .eq("id", value: id.uuidString).eq("owner_id", value: owner.uuidString).limit(1).execute().value
+         guard session.userID == owner, remaining.isEmpty else { return false }
+         syncGeneration = UUID()
+         return true
+     } catch { return false }
+ }
  func report(_ session: LiyaSession, id: UUID, target: UUID, post: UUID?, reason: String) async -> Bool {
      guard let owner = session.userID, session.hasSavedMemberSession, owner != target else { return false }
      let report = SocialReport(id: id, reporterID: owner, targetUser: target, postID: post, reason: reason)
@@ -599,7 +728,6 @@ final class SocialStore: ObservableObject {
              .insert(report).select(columns).single().execute().value
          return session.userID == owner && saved == report
      } catch {
-         // An interrupted response or a retry can follow an already committed insert.
          guard session.userID == owner, !Task.isCancelled else { return false }
          let saved: [SocialReport]? = try? await session.client.from(table).select(columns)
              .eq("id", value: id.uuidString).eq("reporter_id", value: owner.uuidString)
@@ -607,13 +735,223 @@ final class SocialStore: ObservableObject {
          return session.userID == owner && saved?.first == report
      }
  }
- func reportComment(_ session: LiyaSession, id: UUID, comment: SocialComment, reason: String) async -> Bool { false }
- func reportMessage(_ session: LiyaSession, id: UUID, message: SocialMessage, reason: String) async -> Bool { false }
- func refreshMessages(_ session: LiyaSession) async { messagesReady = false; messageLoadError = "Messaging is unavailable right now." }
- func isMutualFollow(_ session: LiyaSession, target: UUID) async throws -> Bool { throw OfflineError.unavailable }
- func sendMessage(_ session: LiyaSession, id: UUID, target: UUID, body: String, attachments: [DraftAttachment]) async -> Bool { messageError = "Messaging is unavailable right now."; return false }
- func deleteMessage(_ session: LiyaSession, message: SocialMessage) async -> Bool { false }
- func watchMessages(_ session: LiyaSession) { }
+ func reportComment(_ session: LiyaSession, id: UUID, comment: SocialComment, reason: String) async -> Bool {
+     guard let owner = session.userID, owner != comment.ownerID else { return false }
+     let item = PostCommentReport(id: id, reporterID: owner, commentID: comment.id, postID: comment.postID,
+                                  targetUser: comment.ownerID, bodySnapshot: comment.body, reason: reason)
+     let table = "liya_social_reports"
+     do { try await session.client.from(table).insert(item).execute() } catch {}
+     do {
+         guard session.userID == owner else { return false }
+         let saved: [PostCommentReport] = try await session.client.from(table).select("id,reporter_id,comment_id,post_id,target_user,body_snapshot,reason")
+             .eq("id", value: id.uuidString).eq("reporter_id", value: owner.uuidString).limit(1).execute().value
+         return session.userID == owner && saved.first == item
+     } catch { return false }
+ }
+ func reportMessage(_ session: LiyaSession, id: UUID, message: SocialMessage, reason: String) async -> Bool {
+     guard let owner = session.userID, owner == message.recipientID, owner != message.senderID else { return false }
+     do {
+         let saved: UUID = try await session.client.rpc("liya_report_message", params: [
+             "p_report_id": id.uuidString, "p_message_id": message.id.uuidString, "p_reason": reason
+         ]).execute().value
+         return session.userID == owner && saved == id
+     } catch { return false }
+ }
+ func loadMemberDirectory(_ session: LiyaSession, reset: Bool = false) async {
+     guard let owner = session.userID else { return }
+     selectConnectionAccount(owner)
+     guard reset || (!directoryLoading && directoryHasMore) else { return }
+     let token = UUID()
+     directoryReadID = token
+     directoryLoading = true; directoryFailed = false
+     defer { if directoryReadID == token { directoryLoading = false } }
+     do {
+         var query = session.client.from("liya_people").select("id,display_name,signature,avatar_path")
+             .neq("id", value: owner.uuidString)
+         if !reset, let directoryAfter { query = query.gt("id", value: directoryAfter.uuidString) }
+         let rows: [SocialPerson] = try await query.order("id").limit(40).execute().value
+         guard session.userID == owner, directoryReadID == token else { return }
+         let visible = rows.filter { !blocked.contains($0.id) }
+         if reset { directoryPeople = visible } else { directoryPeople.append(contentsOf: visible) }
+         directoryAfter = rows.last?.id
+         directoryHasMore = rows.count == 40
+     } catch {
+         if session.userID == owner && directoryReadID == token && !Task.isCancelled { directoryFailed = true }
+     }
+ }
+
+ func refreshMessages(_ session: LiyaSession) async {
+     guard let owner = session.userID else { return }
+     selectConnectionAccount(owner)
+     if messagesLoading { messageReadPending = true; return }
+     let revision = connectionAccountRevision
+     messagesLoading = true
+     defer { if connectionAccountRevision == revision { messagesLoading = false } }
+     repeat {
+         messageReadPending = false
+         do {
+             let result: [SocialMessage] = try await pages { offset in
+                 guard session.userID == owner else { throw CancellationError() }
+                 return try await session.client.from("liya_messages").select(messageColumns)
+                     .or("sender_id.eq.\(owner),recipient_id.eq.\(owner)").order("created_at").order("id")
+                     .range(from: offset, to: offset + 499).execute().value
+             }
+             guard session.userID == owner, connectionAccountRevision == revision else { return }
+             let hidden = Set(blocked)
+             var seen = Set<UUID>()
+             messages = result.filter { !hidden.contains($0.senderID) && !hidden.contains($0.recipientID) && seen.insert($0.id).inserted }
+             messagesReady = true
+             messageLoadError = nil
+             let peers = Set(messages.map { $0.senderID == owner ? $0.recipientID : $0.senderID })
+             messagePeople = messagePeople.filter { peers.contains($0.key) }
+             let missing = Array(peers.filter { person($0) == nil })
+             for start in stride(from: 0, to: missing.count, by: 80) {
+                 let ids = missing[start..<min(start + 80, missing.count)].map(\.uuidString)
+                 guard let profiles: [SocialPerson] = try? await session.client.from("liya_people")
+                     .select("id,display_name,signature,avatar_path").in("id", values: ids).execute().value,
+                     session.userID == owner, connectionAccountRevision == revision else { break }
+                 let visible = profiles.filter { !blocked.contains($0.id) }
+                 messagePeople.merge(visible.map { ($0.id, $0) }, uniquingKeysWith: { _, latest in latest })
+                 objectWillChange.send()
+             }
+         } catch {
+             guard session.userID == owner, connectionAccountRevision == revision, !Task.isCancelled else { return }
+             messageLoadError = "Couldn't load your messages. Please try again."
+         }
+     } while messageReadPending && session.userID == owner && connectionAccountRevision == revision && !Task.isCancelled
+ }
+
+ func isMutualFollow(_ session: LiyaSession, target: UUID) async throws -> Bool {
+     guard let owner = session.userID else { throw OfflineError.unavailable }
+     guard owner != target else { return false }
+     let allowed: Bool = try await session.client.rpc("liya_can_contact", params: ["p_peer": target.uuidString]).execute().value
+     guard owner == session.userID else { throw CancellationError() }
+     return allowed
+ }
+
+ private func uploadedMessagePaths(_ session: LiyaSession, owner: UUID, attempt: UUID, files: [DraftAttachment]) async throws -> [String] {
+     let bucket = session.client.storage.from("liya-user-media")
+     var paths: [String] = []
+     for file in files {
+         guard session.userID == owner else { throw CancellationError() }
+         let source = DraftFiles.url(file)
+         let prepared: VideoCompression.Prepared
+         if file.isVideo { prepared = try await VideoCompression.prepare(source) }
+         else { prepared = .init(url: source, isTemporary: false) }
+         defer { if prepared.isTemporary { try? FileManager.default.removeItem(at: prepared.url) } }
+         let ext = prepared.url.pathExtension.lowercased()
+         let path = "\(owner.uuidString.lowercased())/social/\(attempt.uuidString.lowercased())/\(file.id.uuidString.lowercased()).\(ext)"
+         do { try await bucket.upload(path, fileURL: prepared.url) }
+         catch {
+             guard try await bucket.exists(path: path) else { throw error }
+         }
+         paths.append(path)
+     }
+     return paths
+ }
+
+ func sendMessage(_ session: LiyaSession, id: UUID, target: UUID, body: String, attachments: [DraftAttachment]) async throws {
+     guard let owner = session.userID, owner != target, body.unicodeScalars.count <= 4000,
+           !body.isEmpty || !attachments.isEmpty, attachments.count <= 9 else { throw MessageDeliveryError.unconfirmed }
+     guard try await isMutualFollow(session, target: target) else { throw MessageDeliveryError.mutualFollowRequired }
+     let kinds = attachments.map { $0.isVideo ? "video" : "photo" }
+     func confirmedMessage() async throws -> SocialMessage? {
+         let rows: [SocialMessage] = try await session.client.from("liya_messages").select(messageColumns)
+             .eq("id", value: id.uuidString).eq("sender_id", value: owner.uuidString).limit(1).execute().value
+         guard session.userID == owner else { throw CancellationError() }
+         return rows.first
+     }
+     let saved: SocialMessage
+     if let previous = try await confirmedMessage() {
+         saved = previous
+     } else {
+         let paths = try await uploadedMessagePaths(session, owner: owner, attempt: id, files: attachments)
+         guard session.userID == owner else { throw CancellationError() }
+         let input = SocialMessageInput(id: id, senderID: owner, recipientID: target, body: body, mediaPaths: paths, mediaKinds: kinds)
+         do {
+             saved = try await session.client.from("liya_messages").insert(input).select(messageColumns).single().execute().value
+         } catch {
+             if let databaseError = error as? PostgrestError, databaseError.message.contains("LIYA_MUTUAL_FOLLOW_REQUIRED") {
+                 if !paths.isEmpty, session.userID == owner { _ = try? await session.client.storage.from("liya-user-media").remove(paths: paths) }
+                 throw MessageDeliveryError.mutualFollowRequired
+             }
+             guard let previous = try await confirmedMessage() else {
+                 guard try await isMutualFollow(session, target: target) else { throw MessageDeliveryError.mutualFollowRequired }
+                 throw MessageDeliveryError.unconfirmed
+             }
+             saved = previous
+         }
+         guard saved.mediaPaths == paths else { throw MessageDeliveryError.unconfirmed }
+     }
+     guard session.userID == owner, saved.id == id, saved.recipientID == target, saved.senderID == owner,
+           saved.body == body, saved.mediaKinds == kinds, saved.mediaPaths.count == kinds.count else { throw MessageDeliveryError.unconfirmed }
+     if !messages.contains(where: { $0.id == id }) { messages.append(saved) }
+     Task { if session.userID == owner { await refreshMessages(session) } }
+ }
+
+ func deleteMessage(_ session: LiyaSession, message: SocialMessage) async -> Bool {
+     guard let owner = session.userID, owner == message.senderID else { return false }
+     do {
+         try await session.client.from("liya_messages").delete()
+             .eq("sender_id", value: owner.uuidString).eq("id", value: message.id.uuidString).execute()
+         let rows: [SocialMessage] = try await session.client.from("liya_messages").select(messageColumns)
+             .eq("id", value: message.id.uuidString).limit(1).execute().value
+         guard session.userID == owner, rows.isEmpty else { return false }
+         messages.removeAll { $0.id == message.id }
+         if messagesLoading { messageReadPending = true }
+         return true
+     } catch { return false }
+ }
+
+ func watchMessages(_ session: LiyaSession) {
+     guard let owner = session.userID else { return }
+     selectConnectionAccount(owner)
+     guard messageSubscription == nil else { return }
+     let token = UUID()
+     messageChannelID = token
+     let client = session.client
+     let channel = client.channel("message-inbox-\(owner)-\(token)")
+     let revisions = channel.postgresChange(AnyAction.self, schema: "public", table: "liya_user_revisions",
+                                            filter: .eq("owner_id", value: owner.uuidString.lowercased()))
+     let statuses = channel.statusChange
+     messageSubscription = Task { [weak self, weak session] in
+         let changes = Task { [weak self, weak session] in
+             for await _ in revisions {
+                 guard !Task.isCancelled, let self, self.messageChannelID == token, let session, session.userID == owner else { return }
+                 await self.refreshMessages(session)
+             }
+         }
+         let connection = Task { [weak self, weak session] in
+             for await state in statuses {
+                 guard !Task.isCancelled, let self, self.messageChannelID == token, let session, session.userID == owner else { return }
+                 if case .subscribed = state {
+                     self.realtimeConnected = true; self.messageReconnectDelay = 2
+                     await self.refreshMessages(session)
+                 } else { self.realtimeConnected = false }
+             }
+         }
+         await withTaskCancellationHandler {
+             do {
+                 try await channel.subscribeWithError()
+                 await changes.value
+             } catch {}
+         } onCancel: {
+             changes.cancel()
+             connection.cancel()
+         }
+         changes.cancel()
+         connection.cancel()
+         await client.removeChannel(channel)
+         guard !Task.isCancelled, let self, self.messageChannelID == token, let session, session.userID == owner else { return }
+         self.realtimeConnected = false
+         let delay = self.messageReconnectDelay
+         self.messageReconnectDelay = min(60, delay * 2)
+         do { try await Task.sleep(nanoseconds: UInt64(delay) * 1_000_000_000) } catch { return }
+         guard self.messageChannelID == token, session.userID == owner else { return }
+         self.messageSubscription = nil
+         self.watchMessages(session)
+     }
+ }
  func refreshNotifications(_ session: LiyaSession) async { notifications = []; notificationsLoading = false }
  func markRead(_ session: LiyaSession, id: Int64) async { }
  func mediaURL(_ session: LiyaSession, path: String) async throws -> URL {

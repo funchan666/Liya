@@ -3,14 +3,23 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleURLTypes</key>
-	<array><dict><key>CFBundleURLSchemes</key><array><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string></array></dict></array>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Typefaces/Nunito-Regular.ttf</string>
+		<string>Typefaces/Nunito-Medium.ttf</string>
+		<string>Typefaces/Nunito-SemiBold.ttf</string>
 		<string>Typefaces/Nunito-Bold.ttf</string>
 		<string>Typefaces/InstrumentSerif-Regular.ttf</string>
 	</array>
+	<key>UILaunchScreen</key>
+	<false/>
 </dict>
 </plist>

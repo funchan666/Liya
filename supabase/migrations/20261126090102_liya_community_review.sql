@@ -1,5 +1,3 @@
--- Hold new community submissions for operator review before publication.
--- Existing content has no review row and remains visible. No existing content is deleted.
 create table liya_social_private.moderation_content (
   kind text not null check (kind in ('profile', 'post', 'post_comment', 'media_comment')),
   content_id uuid not null,
@@ -15,7 +13,6 @@ create index liya_moderation_content_owner on liya_social_private.moderation_con
 alter table liya_social_private.moderation_content enable row level security;
 revoke all on liya_social_private.moderation_content from public, anon, authenticated;
 
--- Queue entries contain identifiers only; source reports retain their existing RLS and deletion rules.
 create table liya_social_private.moderation_reports (
   kind text not null check (kind in ('social', 'curated', 'media_comment')),
   report_id uuid not null,
@@ -28,7 +25,6 @@ create index liya_moderation_reports_pending on liya_social_private.moderation_r
 alter table liya_social_private.moderation_reports enable row level security;
 revoke all on liya_social_private.moderation_reports from public, anon, authenticated;
 
--- Keep unapproved public profile fields private while retaining the last approved profile.
 create table liya_social_private.moderation_profiles (
   owner_id uuid primary key references auth.users(id) on delete cascade,
   display_name text not null check (char_length(trim(display_name)) between 1 and 80),
@@ -46,7 +42,6 @@ create table liya_social_private.hidden_profiles (
 alter table liya_social_private.hidden_profiles enable row level security;
 revoke all on liya_social_private.hidden_profiles from public, anon, authenticated;
 
--- Keep catalog rows and their stable sort positions while denying new object access.
 create table liya_social_private.hidden_curated_media (
   media_id text primary key references public.liya_example_media(id) on delete cascade,
   hidden_at timestamptz not null default now()
@@ -63,7 +58,6 @@ create table liya_social_private.hidden_curated_starters (
 alter table liya_social_private.hidden_curated_starters enable row level security;
 revoke all on liya_social_private.hidden_curated_starters from public, anon, authenticated;
 
--- New clients fail closed if this lookup is unavailable; only positions are returned.
 create function public.liya_hidden_curated_starters(p_media_id text)
 returns table("position" integer) language sql stable security definer set search_path = '' as $$
   select h.position from liya_social_private.hidden_curated_starters h
@@ -97,11 +91,8 @@ create policy liya_moderation_people_read on public.liya_people as restrictive f
 create function liya_social_private.stage_profile() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
-  -- Trusted server-side administrative changes are applied directly.
   if (select auth.uid()) is null then return new; end if;
   if new.id <> (select auth.uid()) then raise exception 'invalid profile owner'; end if;
-  -- An INSERT ... ON CONFLICT UPDATE sees the sanitized INSERT as EXCLUDED.
-  -- Preserve the submission already recorded by this same transaction.
   if tg_op = 'UPDATE' and new.display_name = 'Liya member' and new.signature = '' and new.avatar_path is null
      and exists (select 1 from liya_social_private.moderation_profiles p where p.owner_id = new.id and p.submission_txid = txid_current()) then
     new := old;
@@ -192,10 +183,8 @@ create trigger liya_moderate_posts after insert or update or delete on public.li
 create trigger liya_moderate_post_comments after insert or update or delete on public.liya_post_comments for each row execute function liya_social_private.queue_content();
 create trigger liya_moderate_media_comments after insert or update or delete on public.liya_video_comments for each row execute function liya_social_private.queue_content();
 
--- A pending comment should not create a notification for a comment the recipient cannot see.
 drop trigger liya_notify_comment on public.liya_post_comments;
 
--- Restrictive policies combine with existing ownership/blocking policies rather than replacing them.
 create policy liya_moderation_posts_read on public.liya_posts as restrictive for select to authenticated
 using (owner_id = (select auth.uid()) or liya_social_private.moderation_visible('post', id));
 create policy liya_moderation_post_comments_read on public.liya_post_comments as restrictive for select to authenticated
@@ -203,7 +192,6 @@ using (owner_id = (select auth.uid()) or liya_social_private.moderation_visible(
 create policy liya_moderation_media_comments_read on public.liya_video_comments as restrictive for select to authenticated
 using (owner_id = (select auth.uid()) or liya_social_private.moderation_visible('media_comment', id));
 
--- Photo counts use a security-definer helper; apply the same visibility check explicitly.
 create or replace function liya_social_private.photo_counts(p_media_id text)
 returns table(like_count bigint, comment_count bigint)
 language sql stable security definer set search_path = '' as $$
@@ -253,7 +241,6 @@ insert into liya_social_private.moderation_reports(kind,report_id,created_at) se
 insert into liya_social_private.moderation_reports(kind,report_id,created_at) select 'curated',id,created_at from public.liya_content_reports on conflict do nothing;
 insert into liya_social_private.moderation_reports(kind,report_id,created_at) select 'media_comment',id,created_at from public.liya_video_comment_reports on conflict do nothing;
 
--- Authors can see only their own moderation states; no content or other users' reports are exposed.
 create function public.liya_my_moderation_status()
 returns table(kind text, content_id uuid, status text)
 language sql stable security definer set search_path = '' as $$
@@ -266,7 +253,6 @@ $$;
 revoke all on function public.liya_my_moderation_status() from public, anon, authenticated;
 grant execute on function public.liya_my_moderation_status() to authenticated;
 
--- Reporters can read only their own report state and reason, never another user's reports.
 create function public.liya_my_report_status()
 returns table(kind text, report_id uuid, status text, reason text, created_at timestamptz, resolved_at timestamptz)
 language sql stable security definer set search_path = '' as $$
@@ -285,7 +271,6 @@ $$;
 revoke all on function public.liya_my_report_status() from public, anon, authenticated;
 grant execute on function public.liya_my_report_status() to authenticated;
 
--- Private audit trail is removed with the corresponding content or report queue row.
 create table liya_social_private.moderation_events (
  id bigint generated always as identity primary key,
  category text not null check (category in ('content', 'report')),
@@ -311,7 +296,6 @@ revoke all on function liya_social_private.clear_moderation_events() from public
 create trigger liya_clear_content_events after delete on liya_social_private.moderation_content for each row execute function liya_social_private.clear_moderation_events();
 create trigger liya_clear_report_events after delete on liya_social_private.moderation_reports for each row execute function liya_social_private.clear_moderation_events();
 
--- All reviewer actions remain restricted to a trusted database operator.
 create function liya_social_private.review_content(p_kind text, p_id uuid, p_revision bigint, p_decision text, p_actor text)
 returns boolean language plpgsql security definer set search_path = '' as $$
 declare changed integer; old_status text; v_author uuid; v_recipient uuid; v_post uuid;
@@ -367,7 +351,6 @@ end;
 $$;
 revoke all on function liya_social_private.review_report(text, uuid, text, text) from public, anon, authenticated;
 
--- Hide existing or approved content without deleting it; edits re-enter the queue.
 create function liya_social_private.hide_content(p_kind text, p_id uuid, p_actor text)
 returns boolean language plpgsql security definer set search_path = '' as $$
 declare v_owner uuid;
@@ -388,7 +371,6 @@ end;
 $$;
 revoke all on function liya_social_private.hide_content(text, uuid, text) from public, anon, authenticated;
 
--- Hide or restore a reported public profile without deleting its fields or relationships.
 create function liya_social_private.set_profile_hidden(p_owner uuid, p_hidden boolean, p_actor text)
 returns boolean language plpgsql security definer set search_path = '' as $$
 declare changed integer;
@@ -416,7 +398,6 @@ end;
 $$;
 revoke all on function liya_social_private.set_profile_hidden(uuid, boolean, text) from public, anon, authenticated;
 
--- Curated IDs are text, so retain their review history in a separate private table.
 create table liya_social_private.curated_moderation_events (
   id bigint generated always as identity primary key,
   media_id text not null references public.liya_example_media(id) on delete cascade,
@@ -489,8 +470,6 @@ end;
 $$;
 revoke all on function liya_social_private.set_curated_starter_hidden(text, integer, boolean, text) from public, anon, authenticated;
 
--- The current catalog reads editorial conversation prompts directly from this table.
--- Apply the same takedown immediately on a fresh catalog request.
 create policy liya_reviewed_video_prompts on public.liya_curated_video_prompts as restrictive
   for select to authenticated using (
     position not in (select h.position from public.liya_hidden_curated_starters(video_id) h)

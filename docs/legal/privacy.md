@@ -46,9 +46,13 @@ Apple processes App Store payments and provides Liya with transaction informatio
 
 Liya also keeps the appearance choices you unlock, including postcard paper, with the wallet on this device.
 
-## Feature availability
+## Messages and calls
 
-Messaging, calls and AI replies are currently unavailable in this edition. A draft does not mean a message or report was sent.
+Members who follow each other can exchange private messages. Supabase stores sent messages with the sender, recipient and time so the two members can read their conversation. When you report a message, the reported content and your reason are shared with Liya for review.
+
+When you select Voice call or Video call, Liya checks whether you and the other member follow each other. With your permission, the waiting screen uses your microphone to show your sound level. The video waiting screen also uses the front camera so you can see yourself. The sound and camera images are processed on your device and are never saved or sent to anyone. The microphone and camera stop when you leave the waiting screen or put the app in the background. Opening the screen sends no call invitation and creates no call record.
+
+AI replies are currently unavailable in this edition.
 
 ## Your choices and security
 

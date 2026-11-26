@@ -1,4 +1,3 @@
--- Likes are private to their author. Expose only a total for a catalog item.
 create function liya_social_private.media_like_total(p_media_id text)
 returns bigint language sql stable security definer set search_path = '' as $$
   select count(*) from public.liya_media_likes
@@ -8,7 +7,6 @@ $$;
 revoke all on function liya_social_private.media_like_total(text) from public, anon, authenticated;
 grant execute on function liya_social_private.media_like_total(text) to authenticated;
 
--- Count the same comment rows the caller can open, including their own rows.
 create function public.liya_media_engagement(p_media_ids text[])
 returns table(media_id text, like_count bigint, comment_count bigint)
 language sql stable security invoker set search_path = '' as $$
@@ -22,8 +20,6 @@ $$;
 revoke all on function public.liya_media_engagement(text[]) from public, anon, authenticated;
 grant execute on function public.liya_media_engagement(text[]) to authenticated;
 
--- A report must point at a visible comment on that specific photo or video.
--- Keep the original video-only starter keys supported by existing clients.
 alter policy video_comment_reports_insert on public.liya_video_comment_reports
   with check (
     reporter_id = (select auth.uid())

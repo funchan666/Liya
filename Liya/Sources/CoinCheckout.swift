@@ -29,7 +29,7 @@ final class CoinCheckout: ObservableObject {
         }
     }
 
-    private struct Wallet: Codable {
+    private struct CoinLedger: Codable {
         var token = UUID()
         var transactions: [String: [String: Int64]] = [:]
         var welcomePending = true
@@ -54,15 +54,18 @@ final class CoinCheckout: ObservableObject {
     @Published private(set) var loadingProducts = false
     @Published private(set) var productLoadFailed = false
     @Published var welcomeGift: WelcomeGift?
-    @Published private var wallet: Wallet?
-    @Published private var environment = AppStore.Environment.production.rawValue
+    @Published private var wallet: CoinLedger?
+    @Published private var environment: String?
 
     private var updatesTask: Task<Void, Never>?
     private var recovering = false
     private var resolvingEnvironment = false
     private var finishing = Set<String>()
 
-    var balance: Int64? { wallet?.balance(in: environment) }
+    var balance: Int64? {
+        guard let environment else { return nil }
+        return wallet?.balance(in: environment)
+    }
     var canPurchase: Bool { wallet != nil && walletError == nil && !busy && AppStore.canMakePayments }
 
     init() {
@@ -106,6 +109,10 @@ final class CoinCheckout: ObservableObject {
         do {
             switch try await product.purchase(options: [.appAccountToken(wallet.token)]) {
             case .success(let result):
+                if case .verified(let purchase) = result, purchase.productID == pack.id,
+                   purchase.appBundleID == Bundle.main.bundleIdentifier, purchase.appAccountToken == wallet.token {
+                    environment = purchase.environment.rawValue
+                }
                 await deliver(result, showUnmatched: true)
             case .pending:
                 message = "Your purchase is awaiting Apple approval."
@@ -123,7 +130,7 @@ final class CoinCheckout: ObservableObject {
         guard !recovering else { return }
         recovering = true
         defer { recovering = false }
-        if showIssues { clearMessage() }
+        if showIssues { clearMessage(); await identifyStore() }
         if wallet == nil || walletError != nil { loadWallet() }
         guard wallet != nil else { return }
         for await result in Transaction.unfinished {
@@ -142,15 +149,17 @@ final class CoinCheckout: ObservableObject {
     }
 
     func owns(_ appearance: Appearance) -> Bool {
-        wallet?.appearances[environment]?[appearance.rawValue] != nil
+        guard let environment else { return false }
+        return wallet?.appearances[environment]?[appearance.rawValue] != nil
     }
 
     func isActive(_ appearance: Appearance) -> Bool {
-        wallet?.appearances[environment]?[appearance.rawValue] == true
+        guard let environment else { return false }
+        return wallet?.appearances[environment]?[appearance.rawValue] == true
     }
 
     func select(_ appearance: Appearance) {
-        guard var wallet, walletError == nil, !busy else { return }
+        guard let environment, var wallet, walletError == nil, !busy else { return }
         let current = wallet.appearances[environment]?[appearance.rawValue]
         if current == nil && wallet.balance(in: environment) < appearance.cost {
             message = "You don't have enough coins for this appearance."
@@ -187,7 +196,6 @@ final class CoinCheckout: ObservableObject {
         let previous = wallet.transactions[store]?[id]
 
         if transaction.revocationDate != nil {
-            // Record the revocation even if it arrives before the original delivery.
             if previous != 0 {
                 wallet.transactions[store, default: [:]][id] = 0
                 guard save(wallet) else { return }
@@ -203,8 +211,6 @@ final class CoinCheckout: ObservableObject {
             guard save(wallet) else { return }
             message = "Coins added to your wallet."
         }
-        // The same write saves the credit and its transaction ID for safe recovery.
-        environment = store
         let pendingKey = "\(store):\(id)"
         guard finishing.insert(pendingKey).inserted else { return }
         defer { finishing.remove(pendingKey) }
@@ -220,13 +226,12 @@ final class CoinCheckout: ObservableObject {
     private func loadWallet() {
         do {
             let data = try Data(contentsOf: walletURL())
-            let saved = try JSONDecoder().decode(Wallet.self, from: data)
+            let saved = try JSONDecoder().decode(CoinLedger.self, from: data)
             wallet = saved
             walletError = nil
             if saved.welcomePending && welcomeGift == nil { welcomeGift = WelcomeGift() }
         } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
-            // If a previously opened wallet disappears, preserve its token and credits in memory.
-            if save(wallet ?? Wallet()), wallet?.welcomePending == true, welcomeGift == nil {
+            if save(wallet ?? CoinLedger()), wallet?.welcomePending == true, welcomeGift == nil {
                 welcomeGift = WelcomeGift()
             }
         } catch {
@@ -234,7 +239,7 @@ final class CoinCheckout: ObservableObject {
         }
     }
 
-    private func save(_ value: Wallet) -> Bool {
+    private func save(_ value: CoinLedger) -> Bool {
         do {
             let data = try JSONEncoder().encode(value)
             try data.write(to: walletURL(), options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])

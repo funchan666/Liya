@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Repositions a group of controls, not its underlying continuous content.
 struct DuoControlRegion<Content: View>: View {
     @ViewBuilder let content: (CGSize) -> Content
 
@@ -17,8 +16,6 @@ struct DuoControlRegion<Content: View>: View {
         let bounds = CGRect(origin: .zero, size: proxy.size)
         guard bounds.width > 0, bounds.height > 0 else { return bounds }
         if #available(iOS 27.1, *) {
-            // The rectangle calculations below use physical coordinates, so do not
-            // mirror the reported regions a second time in right-to-left layouts.
             let regions = (proxy.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed)
                 + proxy.reservedRegions(kind: .occlusion, layoutDirectionBehavior: .fixed))
                 .filter(\.isActive).map(\.frame)
@@ -35,7 +32,6 @@ struct DuoControlRegion<Content: View>: View {
                     ].filter { $0.width >= 44 && $0.height >= 44 }
                 }
             }
-            // If no usable region fits a control, preserve the original layout rather than hiding it.
             return candidates.max { lhs, rhs in
                 let a = lhs.width * lhs.height, b = rhs.width * rhs.height
                 if a != b { return a < b }

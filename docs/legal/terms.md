@@ -36,9 +36,11 @@ Coin packs are consumable in-app purchases. The App Store shows the price before
 
 Purchased coins have no expiration date. Your balance stays on the device and does not sync through your Liya account. You may lose access to it if you remove Liya or erase the device. You can spend coins to unlock appearances for your mood diary and profile. Daybreak postcard paper is free. Tideglass paper is an optional, one-time unlock for 90 coins on this device. Once unlocked, you can use it again without spending more coins. For billing questions or refund requests, contact [Apple Support](https://support.apple.com/en-us/118223).
 
-## Feature availability
+## Messages and calls
 
-Messaging, calls and AI replies are currently unavailable in this edition. A saved draft is not a delivered message or report.
+You can send private messages to members who follow you back. If either of you unfollows the other, new messages can no longer be sent between you. When you follow each other, you can open the voice or video waiting screen from the member’s profile. With your permission, both screens show your microphone level. The video screen also shows a live view from your front camera. Only you can see the preview, and you can leave at any time.
+
+Use private conversations respectfully. You can report an individual message or block the other member. AI replies are currently unavailable in this edition.
 
 ## Wellbeing
 

@@ -50,3 +50,19 @@ Published the member reporting instructions and data disclosure to the existing 
 
 - Privacy HTML SHA-256: `2b8592bc1caa5c0bae71c28ef8126fec467baa7caa69a77a76e2a6f8fb470610`
 - Terms HTML SHA-256: `1aa5dcbaf1295d3a543d07a376e641311d0d3b2171bb83bd682777ad1f1ce4f5`
+
+## 26 November 2026 journal postcard and review update
+
+Published the home page and both policies to the existing Cloudflare Pages production project. The policies describe the optional postcard note excerpts, on-device postcard paper and review of shared profiles and comments. The home page, terms, privacy policy, stylesheet and app icon were retrieved from the production domain and matched the five release files byte for byte.
+
+## 26 November 2026 member messages and calls
+
+Published the revised privacy policy and terms to the Liya production site. They explain mutual follows, private messages and message reports, voice and video permissions, call invitations and LiveKit. Retrieved all five public site files and matched them byte for byte to the release files.
+
+## 26 November 2026 call waiting screen update
+
+Updated the production privacy policy and terms for the voice and video waiting screens. Both documents describe the mutual follow requirement. The privacy policy explains that opening the screen sends no invitation, captures no audio or video, and creates no call record. The public homepage, both policy pages, stylesheet and app icon matched the five release files byte for byte after deployment.
+
+## 26 November 2026 microphone and front camera previews
+
+Published the revised privacy policy and terms to the Liya production site. Both describe the microphone level on the waiting screens and the front camera preview on the video screen. The privacy policy explains when capture stops and how audio and images stay on the device. Retrieved the production homepage, both policies, stylesheet and icon and confirmed that each matched its release file byte for byte.

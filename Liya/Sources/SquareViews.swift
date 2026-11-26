@@ -17,7 +17,7 @@ struct SquareHome: View {
                         Spacer()
                     }
                     if let error = session.likesError {
-                        Text(error).font(.footnote).foregroundStyle(.red)
+                        Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.red)
                         Button("Retry likes") { Task { await session.refreshLikes() } }.foregroundStyle(liyaAccent)
                     }
                     NavigationLink { ComposeHome(showsBackButton: true) } label: {
@@ -34,14 +34,14 @@ struct SquareHome: View {
                         HStack(alignment: .top, spacing: 10) { wellbeingLinks }
                     }
                     if store.drafts.contains(where: { $0.publishedLocally == true }) {
-                        Text("Unshared posts").font(.headline).foregroundStyle(liyaInk)
+                        Text("Unshared posts").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
                         LazyVStack(spacing: 16) {
                             ForEach(store.drafts.filter { $0.publishedLocally == true }) { post in LocalPostCard(post: post) }
                         }
                     }
-                    Text("From the collection").font(.footnote).foregroundStyle(.secondary)
+                    Text("From the collection").font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
                     if session.catalogLoading {
-                        Text("Loading photos…").font(.footnote).foregroundStyle(.secondary)
+                        Text("Loading photos…").font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
                     } else if let error = session.catalogError {
                         OfflineNote(text: error)
                         Button("Try again") { Task { await session.refreshCatalog() } }.foregroundStyle(liyaAccent)
@@ -89,9 +89,9 @@ struct SquareHome: View {
                         .scaleEffect(x: -1, y: 1).opacity(0.55).accessibilityHidden(true)
                 }
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(LocalizedStringKey(title)).font(.subheadline.weight(.bold)).foregroundStyle(liyaInk)
+                    Text(LocalizedStringKey(title)).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(liyaInk)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text(LocalizedStringKey(subtitle)).font(.caption).foregroundStyle(liyaInk.opacity(0.62))
+                    Text(LocalizedStringKey(subtitle)).font(LiyaType.text(.caption)).foregroundStyle(liyaInk.opacity(0.62))
                         .fixedSize(horizontal: false, vertical: true)
                 }.frame(maxWidth: .infinity, alignment: .leading)
             }.padding(14).frame(maxWidth: .infinity, minHeight: 146, alignment: .topLeading)
@@ -129,13 +129,13 @@ struct MoodDiaryView: View {
                     diaryStat("diary-count", label: "Total record days", value: session.moodEntries.count)
                     diaryStat("diary-happy", label: "Happy days", value: session.moodEntries.filter { $0.feelingKey == "mood-happy" }.count)
                 }
-                JournalPostcardLink()
+                JournalPostcardLink(openedFromDiary: true)
                 NavigationLink { MoodReflectionsView() } label: {
                     HStack(spacing: 10) {
                         Image("mood-calm").resizable().scaledToFit().frame(width: 32, height: 32).accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("Mood reflections").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
-                            Text("Explore your recent entries").font(.caption).foregroundStyle(.secondary)
+                            Text("Mood reflections").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+                            Text("Explore your recent entries").font(LiyaType.text(.caption)).foregroundStyle(.secondary)
                         }
                         Spacer(minLength: 8)
                         Image("back").resizable().scaledToFit().frame(width: 14, height: 14).scaleEffect(x: -1, y: 1).accessibilityHidden(true)
@@ -150,10 +150,10 @@ struct MoodDiaryView: View {
                 monthSelector
                 if !store.entries.isEmpty {
                     NavigationLink("Earlier entries") { DeviceMoodHistory() }
-                        .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                        .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                 }
                 if session.moodLoading {
-                    HStack(spacing: 8) { LiyaLoadingIndicator(size: 24); Text("Loading journal…").font(.footnote).foregroundStyle(.secondary) }
+                    HStack(spacing: 8) { LiyaLoadingIndicator(size: 24); Text("Loading journal…").font(LiyaType.text(.footnote)).foregroundStyle(.secondary) }
                 }
                 if let error = session.moodError {
                     OfflineNote(text: error)
@@ -165,7 +165,7 @@ struct MoodDiaryView: View {
                     moodSelector
                         .disabled(saving || session.moodLoading)
                     TextField("Add a note (optional)", text: Binding(get: { note }, set: { note = $0; saved = false; dirty = true }), axis: .vertical)
-                        .lineLimit(2...5).padding(12).font(.subheadline)
+                        .lineLimit(2...5).padding(12).font(LiyaType.detail)
                         .background(prism ? Color.white.opacity(0.88) : Color(red: 0.97, green: 0.96, blue: 0.99),
                                     in: RoundedRectangle(cornerRadius: 12))
                         .disabled(saving || session.moodLoading)
@@ -181,7 +181,7 @@ struct MoodDiaryView: View {
                             saving = false
                         }
                     }
-                    if saved { Text("Mood recorded").font(.footnote.weight(.medium)).foregroundStyle(liyaAccent) }
+                    if saved { Text("Mood recorded").font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaAccent) }
                 }
                 .padding(14)
                 .background(prism ? Color(red: 0.93, green: 0.88, blue: 1) : Color.white.opacity(0.92),
@@ -198,7 +198,7 @@ struct MoodDiaryView: View {
             Button { moveYear(-1) } label: {
                 Image("back").resizable().scaledToFit().frame(width: 12, height: 12).frame(width: 44, height: 44)
             }.buttonStyle(.plain).accessibilityLabel("Previous year")
-            Text(month.formatted(.dateTime.year())).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+            Text(month.formatted(.dateTime.year())).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
                 .monospacedDigit()
             Button { moveYear(1) } label: {
                 Image("back").resizable().scaledToFit().frame(width: 12, height: 12).scaleEffect(x: -1, y: 1).frame(width: 44, height: 44)
@@ -216,7 +216,7 @@ struct MoodDiaryView: View {
                             let selected = Calendar.current.isDate(candidate, equalTo: month, toGranularity: .month)
                             Button { changeMonth(candidate) } label: {
                                 Text(candidate.formatted(.dateTime.month(.abbreviated)))
-                                    .font(.subheadline.weight(.semibold)).foregroundStyle(selected ? .white : liyaInk.opacity(0.55))
+                                    .font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(selected ? .white : liyaInk.opacity(0.55))
                                     .padding(.horizontal, 16).frame(minHeight: 44)
                                     .background {
                                         if selected { Capsule().fill(liyaGradient) }
@@ -236,7 +236,7 @@ struct MoodDiaryView: View {
 
     private var moodSelector: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("How are you feeling?").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+            Text("How are you feeling?").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(moods.indices, id: \.self) { index in
@@ -293,7 +293,7 @@ struct MoodDiaryView: View {
         Image(image).resizable().aspectRatio(contentMode: .fit)
             .overlay {
                 GeometryReader { size in
-                    Text("\(value)").font(.system(.title2, design: .rounded).weight(.semibold))
+                    Text("\(value)").font(LiyaType.text(.title2, weight: .semibold))
                         .foregroundStyle(.white).monospacedDigit()
                         .padding(.leading, size.size.width * 0.12).padding(.top, size.size.height * 0.49)
                 }
@@ -321,8 +321,8 @@ private struct MoodReflectionsView: View {
                 HStack(alignment: .center, spacing: 14) {
                     Image("diary-happy").resizable().scaledToFit().frame(width: 90, height: 90).accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 5) {
-                        Text("Your days, at a glance").font(.title3.weight(.bold)).foregroundStyle(liyaInk)
-                        Text("A gentle look back at the moods you recorded.").font(.subheadline).foregroundStyle(.secondary)
+                        Text("Your days, at a glance").font(LiyaType.text(.title3, weight: .bold)).foregroundStyle(liyaInk)
+                        Text("A gentle look back at the moods you recorded.").font(LiyaType.detail).foregroundStyle(.secondary)
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading)
                 HStack(spacing: 8) {
@@ -330,43 +330,43 @@ private struct MoodReflectionsView: View {
                     periodButton("Last 30 days", count: 30)
                 }
                 if session.moodLoading {
-                    HStack(spacing: 8) { LiyaLoadingIndicator(size: 24); Text("Loading journal…").font(.footnote).foregroundStyle(.secondary) }
+                    HStack(spacing: 8) { LiyaLoadingIndicator(size: 24); Text("Loading journal…").font(LiyaType.text(.footnote)).foregroundStyle(.secondary) }
                 } else if let error = session.moodError {
                     OfflineNote(text: error)
                     Button("Reload journal") { Task { await session.refreshMoods() } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
                 } else if recentEntries.isEmpty {
                     VStack(spacing: 12) {
                         Image("empty-art").resizable().scaledToFit().frame(width: 78, height: 72).accessibilityHidden(true)
-                        Text("No moods recorded in this period").font(.headline).foregroundStyle(liyaInk).multilineTextAlignment(.center)
+                        Text("No moods recorded in this period").font(LiyaType.text(.headline)).foregroundStyle(liyaInk).multilineTextAlignment(.center)
                         Text("Your reflections will appear after you record a mood.")
-                            .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                            .font(LiyaType.detail).foregroundStyle(.secondary).multilineTextAlignment(.center)
                     }.frame(maxWidth: .infinity).padding(24)
                     NavigationLink { MoodDiaryView() } label: {
-                        Text("Record a mood").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                        Text("Record a mood").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(.white)
                             .frame(maxWidth: .infinity).frame(minHeight: 48).background(liyaGradient, in: Capsule())
                     }.buttonStyle(.plain)
                 } else {
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("Moods you recorded").font(.headline).foregroundStyle(liyaInk)
+                        Text("Moods you recorded").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
                         HStack(spacing: 4) {
                             Text("\(recentEntries.count)").monospacedDigit()
                             Text("recorded days")
-                        }.font(.subheadline).foregroundStyle(.secondary)
+                        }.font(LiyaType.detail).foregroundStyle(.secondary)
                         ForEach(moods.indices, id: \.self) { index in
                             let item = moods[index]
                             let count = recentEntries.filter { $0.feelingKey == item.0 }.count
                             if count > 0 {
                                 HStack(spacing: 10) {
                                     Image(item.0).resizable().scaledToFit().frame(width: 32, height: 32).accessibilityHidden(true)
-                                    Text(LocalizedStringKey(item.1)).font(.subheadline.weight(.medium)).foregroundStyle(liyaInk)
+                                    Text(LocalizedStringKey(item.1)).font(LiyaType.text(.subheadline, weight: .medium)).foregroundStyle(liyaInk)
                                     Spacer()
-                                    Text("\(count)").font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(liyaAccent)
+                                    Text("\(count)").font(LiyaType.text(.subheadline, weight: .semibold)).monospacedDigit().foregroundStyle(liyaAccent)
                                 }.frame(minHeight: 38).accessibilityElement(children: .combine)
                             }
                         }
                     }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
                         .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 20))
-                    Text("Recent entries").font(.headline).foregroundStyle(liyaInk)
+                    Text("Recent entries").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
                     LazyVStack(spacing: 10) {
                         ForEach(recentEntries) { entry in
                             if let day = entry.recordedDate {
@@ -374,11 +374,11 @@ private struct MoodReflectionsView: View {
                                     HStack(alignment: .top, spacing: 12) {
                                         Image(entry.feelingKey).resizable().scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
                                         VStack(alignment: .leading, spacing: 4) {
-                                            Text(day, format: .dateTime.weekday(.wide).month(.abbreviated).day()).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+                                            Text(day, format: .dateTime.weekday(.wide).month(.abbreviated).day()).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
                                             if entry.reflectionText.isEmpty {
-                                                Text(LocalizedStringKey(entry.feelingName)).font(.subheadline).foregroundStyle(.secondary)
+                                                Text(LocalizedStringKey(entry.feelingName)).font(LiyaType.detail).foregroundStyle(.secondary)
                                             } else {
-                                                Text(entry.reflectionText).font(.subheadline).foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.leading)
+                                                Text(entry.reflectionText).font(LiyaType.detail).foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.leading)
                                             }
                                         }
                                         Spacer(minLength: 4)
@@ -396,7 +396,7 @@ private struct MoodReflectionsView: View {
 
     private func periodButton(_ title: String, count: Int) -> some View {
         Button { days = count } label: {
-            Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold))
+            Text(LocalizedStringKey(title)).font(LiyaType.text(.subheadline, weight: .semibold))
                 .foregroundStyle(days == count ? .white : liyaAccent).frame(maxWidth: .infinity).frame(minHeight: 44)
                 .background { if days == count { Capsule().fill(liyaGradient) } else { Capsule().fill(.white.opacity(0.85)) } }
         }.buttonStyle(.plain).accessibilityAddTraits(days == count ? .isSelected : [])
@@ -421,21 +421,21 @@ private struct QuietMomentView: View {
         PageShell(title: "A quiet moment") {
             VStack(alignment: .center, spacing: 20) {
                 Image("mood-calm").resizable().scaledToFit().frame(width: 96, height: 96).accessibilityHidden(true)
-                Text("Make a little room for yourself").font(.title2.weight(.bold)).foregroundStyle(liyaInk).multilineTextAlignment(.center)
+                Text("Make a little room for yourself").font(LiyaType.text(.title2, weight: .bold)).foregroundStyle(liyaInk).multilineTextAlignment(.center)
                 Text("Take a minute to notice the world around you, at your own pace.")
-                    .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    .font(LiyaType.detail).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 VStack(spacing: 14) {
                     Text(LocalizedStringKey(remaining == 0 ? "A moment just for you" : prompt))
-                        .font(.title3.weight(.semibold)).foregroundStyle(liyaInk).multilineTextAlignment(.center)
+                        .font(LiyaType.text(.title3, weight: .semibold)).foregroundStyle(liyaInk).multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                     if remaining == 0 {
-                        Text("Finished").font(.title2.weight(.semibold)).foregroundStyle(liyaAccent)
+                        Text("Finished").font(LiyaType.text(.title2, weight: .semibold)).foregroundStyle(liyaAccent)
                     } else {
                         Text(String(format: "%d:%02d", remaining / 60, remaining % 60))
-                            .font(.title2.weight(.semibold)).monospacedDigit().foregroundStyle(liyaAccent)
+                            .font(LiyaType.text(.title2, weight: .semibold)).monospacedDigit().foregroundStyle(liyaAccent)
                     }
                     Text(LocalizedStringKey(remaining == 0 ? "You can return whenever you need a pause." : "There is no perfect way to do this."))
-                        .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                        .font(LiyaType.text(.footnote)).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 }.frame(maxWidth: .infinity, minHeight: 180).padding(16)
                     .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 22))
                 PrimaryButton(title: running ? "Pause" : (remaining == 60 ? "Begin" : (remaining == 0 ? "Begin again" : "Resume"))) {
@@ -445,7 +445,7 @@ private struct QuietMomentView: View {
                     Button {
                         running = false; deadline = nil; remaining = 60
                     } label: {
-                        Text("Start over").font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent)
+                        Text("Start over").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaAccent)
                             .frame(maxWidth: .infinity).frame(minHeight: 44)
                             .background(.white.opacity(0.85), in: Capsule())
                     }.buttonStyle(.plain)
@@ -495,8 +495,6 @@ struct TreeHoleView: View {
     @EnvironmentObject private var social: SocialStore
     @AppStorage("liya.treeDraft") private var text = ""
     @AppStorage("liya.treeSubmissionID") private var submissionID = ""
-    @AppStorage("liya.treePublicAttempt") private var publicAttempt = ""
-    @AppStorage("liya.treePublicFingerprint") private var publicFingerprint = ""
     @AppStorage("liya.treeHiddenSuggestions") private var hiddenSuggestions = ""
     @AppStorage("liya.treeDraftMood") private var mood = "mood-calm"
     @State private var selectedThought: TreeThought?
@@ -505,7 +503,6 @@ struct TreeHoleView: View {
     @State private var actionError: String?
     @State private var saving = false
     @State private var drifting = false
-    @State private var showCommunitySetup = false
     private let moods = ["mood-teal", "mood-happy", "mood-yellow", "mood-calm", "mood-blue", "mood-upset"]
 
     private var thoughts: [TreeThought] {
@@ -533,21 +530,21 @@ struct TreeHoleView: View {
                         Spacer(minLength: max(30, geometry.size.height * 0.10))
                         moodPicker
                         TextField("What would you like to let out?", text: Binding(get: { text }, set: {
-                            text = $0; submissionID = ""; publicAttempt = ""; publicFingerprint = ""; notice = nil; actionError = nil
+                            text = $0; submissionID = ""; notice = nil; actionError = nil
                         }), axis: .vertical)
                             .lineLimit(4...8).padding(16).foregroundStyle(.white)
                             .tint(.white)
                             .background(Color(red: 0.19, green: 0.22, blue: 0.35).opacity(0.95), in: RoundedRectangle(cornerRadius: 16))
                             .disabled(saving)
-                        if text.count > 4000 { Text("Please keep your thought under 4,000 characters.").font(.footnote).foregroundStyle(.white) }
+                        if text.count > 4000 { Text("Please keep your thought under 4,000 characters.").font(LiyaType.text(.footnote)).foregroundStyle(.white) }
                         PrimaryButton(title: saving ? "Saving…" : "Keep this thought", disabled: saving || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || text.count > 4000) {
                             savePrivate()
                         }
-                        if let error = actionError ?? social.error { Text(error).font(.footnote).foregroundStyle(.white).multilineTextAlignment(.center) }
-                        if let notice { Text(notice).font(.footnote.weight(.medium)).foregroundStyle(.white) }
+                        if let error = actionError { Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.white).multilineTextAlignment(.center) }
+                        if let notice { Text(notice).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(.white) }
                         HStack(spacing: 18) {
                             NavigationLink("My private thoughts") { TreeHistoryView() }
-                        }.font(.footnote.weight(.semibold)).foregroundStyle(.white.opacity(0.9)).frame(minHeight: 44)
+                        }.font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(.white.opacity(0.9)).frame(minHeight: 44)
                     }
                     .padding(.horizontal, 20).padding(.bottom, 24 + tabBarClearance)
                     .frame(maxWidth: 620).frame(maxWidth: .infinity).frame(minHeight: geometry.size.height, alignment: .top)
@@ -555,7 +552,6 @@ struct TreeHoleView: View {
                 }.scrollDismissesKeyboard(.interactively)
             }
         }.navigationBarHidden(true)
-            .navigationDestination(isPresented: $showCommunitySetup) { CommunityJoinView() }
             .task { await social.refresh(session) }
             .onAppear { drifting = !reduceMotion }
             .onLiyaChange(of: reduceMotion) { drifting = !$0 }
@@ -572,10 +568,10 @@ struct TreeHoleView: View {
     private var floatingThoughts: some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack {
-                Text("Thoughts in the tree").font(.caption.weight(.semibold)).foregroundStyle(.white.opacity(0.85))
+                Text("Thoughts in the tree").font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(.white.opacity(0.85))
                 Spacer()
                 if social.loading { LiyaLoadingIndicator(size: 22) }
-                else { Button("Refresh") { Task { await social.refresh(session) } }.font(.caption.bold()).foregroundStyle(.white).frame(minHeight: 44) }
+                else { Button("Refresh") { Task { await social.refresh(session) } }.font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(.white).frame(minHeight: 44) }
             }
             ForEach(0..<3, id: \.self) { row in
                 let rowThoughts = thoughts.enumerated().filter { $0.offset % 3 == row }.map { $0.element }
@@ -586,8 +582,8 @@ struct TreeHoleView: View {
                                 HStack(spacing: 7) {
                                     Image(thought.mood).resizable().scaledToFit().frame(width: 30, height: 30).accessibilityHidden(true)
                                     VStack(alignment: .leading, spacing: 1) {
-                                        Text(thought.body).font(.subheadline.weight(.medium)).lineLimit(1)
-                                        if thought.post == nil { Text("Inspiration").font(.caption2.weight(.semibold)).opacity(0.8) }
+                                        Text(thought.body).font(LiyaType.text(.subheadline, weight: .medium)).lineLimit(1)
+                                        if thought.post == nil { Text("Inspiration").font(LiyaType.text(.caption2, weight: .semibold)).opacity(0.8) }
                                     }
                                     .frame(maxWidth: 205, alignment: .leading)
                                     Image("more").renderingMode(.template).resizable().scaledToFit().foregroundStyle(.white).frame(width: 17, height: 17).accessibilityHidden(true)
@@ -607,7 +603,7 @@ struct TreeHoleView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 ForEach(moods, id: \.self) { item in
-                    Button { mood = item; submissionID = ""; publicAttempt = ""; publicFingerprint = ""; notice = nil } label: {
+                    Button { mood = item; submissionID = ""; notice = nil } label: {
                         Image(item).resizable().scaledToFit().frame(width: 42, height: 42).frame(width: 52, height: 52)
                             .background(mood == item ? Color(red: 0.36, green: 0.29, blue: 0.58) : Color(red: 0.19, green: 0.22, blue: 0.35), in: RoundedRectangle(cornerRadius: 13))
                             .overlay(RoundedRectangle(cornerRadius: 13).stroke(mood == item ? .white.opacity(0.75) : .clear, lineWidth: 1))
@@ -615,22 +611,6 @@ struct TreeHoleView: View {
                         .accessibilityAddTraits(mood == item ? .isSelected : [])
                 }
             }.frame(maxWidth: .infinity)
-        }
-    }
-
-    private func shareThought() {
-        guard let owner = session.userID, social.isJoined(session), !saving else { return }
-        let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let tags = ["tree-hole", mood]
-        let stamp = SocialAttempt.fingerprint(owner: owner, text: value, tags: tags, files: [])
-        if stamp != publicFingerprint || UUID(uuidString: publicAttempt) == nil { publicFingerprint = stamp; publicAttempt = UUID().uuidString }
-        guard let id = UUID(uuidString: publicAttempt) else { return }
-        saving = true; notice = nil; actionError = nil
-        Task {
-            if await social.publish(session, id: id, body: value, tags: tags, attachments: []) {
-                text = ""; submissionID = ""; publicAttempt = ""; publicFingerprint = ""; notice = "Submitted. Check your post for its review status."
-            } else { actionError = social.error ?? "Couldn't confirm sharing. Please try again." }
-            saving = false
         }
     }
 
@@ -642,7 +622,7 @@ struct TreeHoleView: View {
         saving = true; notice = nil; actionError = nil
         Task {
             if await session.saveTreeEntry(id: id, mood: mood, body: value) {
-                text = ""; submissionID = ""; publicAttempt = ""; publicFingerprint = ""; notice = "Saved privately."
+                text = ""; submissionID = ""; notice = "Saved privately."
             } else { actionError = session.treeError ?? "Couldn't confirm saving. Please try again." }
             saving = false
         }
@@ -674,7 +654,7 @@ private struct TreeThoughtOptions: View {
                             Image("back").resizable().scaledToFit().frame(width: 20, height: 20).frame(width: 44, height: 44)
                         }.buttonStyle(.plain).accessibilityLabel(mode == 0 ? "Close" : "Back")
                         Spacer(minLength: 0)
-                        Text(title).font(.headline).foregroundStyle(liyaInk).lineLimit(1)
+                        Text(title).font(LiyaType.text(.headline)).foregroundStyle(liyaInk).lineLimit(1)
                         Spacer(minLength: 0)
                         Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
                     }.padding(.horizontal, 12).modifier(AdaptiveContainerMargins())
@@ -685,17 +665,17 @@ private struct TreeThoughtOptions: View {
                             Image(thought.mood).resizable().scaledToFit().frame(width: 46, height: 46).accessibilityHidden(true)
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(thought.post == nil ? "Inspiration" : "Community thought")
-                                    .font(.caption.weight(.semibold)).foregroundStyle(liyaAccent)
-                                Text(thought.body).font(.subheadline).foregroundStyle(liyaInk)
+                                    .font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(liyaAccent)
+                                Text(thought.body).font(LiyaType.detail).foregroundStyle(liyaInk)
                                     .fixedSize(horizontal: false, vertical: true)
                             }.frame(maxWidth: .infinity, alignment: .leading)
                         }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
                             .background(.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 18))
                         if mode == 1 && !sent {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Why are you reporting this thought?").font(.headline).foregroundStyle(liyaInk)
+                                Text("Why are you reporting this thought?").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
                                 Link("Email support: Liya2026support@liya.vip", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
-                                    .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                                    .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                                 ForEach(reasons, id: \.self) { item in
                                     VideoSafetyReason(title: item, selected: reason == item) {
                                         reason = item; requestID = UUID(); error = nil
@@ -704,17 +684,17 @@ private struct TreeThoughtOptions: View {
                             }
                         } else if mode == 2 {
                             Text("Their posts and messages will no longer be visible to you.")
-                                .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                                .font(LiyaType.detail).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                             if !social.isJoined(session) {
                                 NavigationLink("Set up your profile to block") { CommunityJoinView() }
                                     .foregroundStyle(liyaAccent).frame(minHeight: 44)
                             }
                         } else if mode == 3 {
                             Text("This thought will be removed from the community and your profile.")
-                                .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                                .font(LiyaType.detail).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                         }
-                        if sent { Text("Report received.").font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent) }
-                        if let error { Text(error).font(.footnote).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
+                        if sent { Text("Report received.").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaAccent) }
+                        if let error { Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
                         actions
                     }.frame(maxWidth: 560, alignment: .leading).frame(maxWidth: .infinity)
                         .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 24)
@@ -737,7 +717,7 @@ private struct TreeThoughtOptions: View {
                     VStack(spacing: 8) {
                         PrimaryButton(title: "Report thought") { showMode(1) }
                         Button("Block member") { showMode(2) }
-                            .font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent)
+                            .font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaAccent)
                             .frame(maxWidth: .infinity, minHeight: 44)
                     }
                 }
@@ -804,7 +784,7 @@ private struct TreeHistoryView: View {
                 OfflineNote(text: "Only your account can read these thoughts.")
                 if session.treeLoading { Text("Loading…").foregroundStyle(.secondary) }
                 if let error = session.treeError {
-                    Text(error).font(.footnote).foregroundStyle(.red)
+                    Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.red)
                     Button("Try again") { Task { await session.refreshTreeEntries() } }.foregroundStyle(liyaAccent)
                 } else if !session.treeLoading && session.treeEntries.isEmpty {
                     EmptyState(title: "No thoughts yet", detail: "Your saved thoughts will appear here.")
@@ -813,7 +793,7 @@ private struct TreeHistoryView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Image(entry.mood).resizable().scaledToFit().frame(width: 32, height: 32).accessibilityHidden(true)
                         Text(entry.body).foregroundStyle(liyaInk).frame(maxWidth: .infinity, alignment: .leading)
-                        Button("Delete") { deleting = entry }.font(.footnote.bold()).foregroundStyle(liyaAccent)
+                        Button("Delete") { deleting = entry }.font(LiyaType.text(.footnote, weight: .bold)).foregroundStyle(liyaAccent)
                     }.padding(16).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                 }
             }.padding(.top, 12)
@@ -849,7 +829,7 @@ private struct MoodCalendar: View {
             Text("Select date").font(.system(.subheadline, design: .serif).bold().italic()).foregroundStyle(liyaInk)
             LazyVGrid(columns: columns, spacing: 3) {
                 ForEach(weekdays.indices, id: \.self) { index in
-                    Text(weekdays[index]).font(.caption2.weight(.semibold)).foregroundStyle(liyaInk.opacity(0.45))
+                    Text(weekdays[index]).font(LiyaType.text(.caption2, weight: .semibold)).foregroundStyle(liyaInk.opacity(0.45))
                         .frame(maxWidth: .infinity).frame(height: 20)
                 }
                 ForEach(days.indices, id: \.self) { index in
@@ -862,7 +842,7 @@ private struct MoodCalendar: View {
                                 Circle().fill(selected ? liyaAccent : (future ? Color.gray.opacity(0.08) : liyaAccent.opacity(0.10)))
                                     .frame(width: 35, height: 35)
                                 VStack(spacing: 0) {
-                                    Text("\(Calendar.current.component(.day, from: day))").font(.caption.weight(.medium))
+                                    Text("\(Calendar.current.component(.day, from: day))").font(LiyaType.text(.caption, weight: .medium))
                                         .foregroundStyle(selected ? .white : (future ? liyaInk.opacity(0.3) : liyaAccent))
                                     if let entry {
                                         Image(entry.feelingKey).resizable().scaledToFit().frame(width: 19, height: 19).accessibilityHidden(true)
@@ -887,7 +867,7 @@ private struct DeviceMoodHistory: View {
                 OfflineNote(text: "These earlier entries have not been added to your account.")
                 ForEach(store.entries.sorted { $0.date > $1.date }) { entry in
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(entry.date, style: .date).font(.headline)
+                        Text(entry.date, style: .date).font(LiyaType.text(.headline))
                         Text(entry.note.isEmpty ? entry.mood.replacingOccurrences(of: "mood-", with: "") : entry.note)
                     }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
                         .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
@@ -913,14 +893,14 @@ private struct CollectionPhotoCard: View {
             HStack(spacing: 8) {
                 NavigationLink { CollectionAuthorView(index: index, displayName: displayName, mediaID: mediaID) } label: {
                     HStack(spacing: 10) { CollectionPortrait(index: index, size: 42); VStack(alignment: .leading, spacing: 3) {
-                        Text(displayName).font(.subheadline.weight(.semibold)).lineLimit(1)
-                        Text("Collection").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        Text(displayName).font(LiyaType.text(.subheadline, weight: .semibold)).lineLimit(1)
+                        Text("Collection").font(LiyaType.text(.caption)).foregroundStyle(.secondary).lineLimit(1)
                     } }.foregroundStyle(liyaInk)
                 }.buttonStyle(.plain)
                 Spacer(minLength: 0)
                 CuratedFollowButton(id: mediaID) { following, title in
                     Text(LocalizedStringKey(title))
-                        .font(.caption.weight(.semibold)).foregroundStyle(liyaAccent)
+                        .font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(liyaAccent)
                         .lineLimit(1).minimumScaleFactor(0.8).padding(.horizontal, 12).frame(minHeight: 44)
                         .background(liyaAccent.opacity(following ? 0.15 : 0.08), in: Capsule())
                 }
@@ -938,13 +918,13 @@ private struct CollectionPhotoCard: View {
                 .clipShape(RoundedRectangle(cornerRadius: 17))
                 .frame(maxWidth: .infinity)
             }.buttonStyle(.plain).accessibilityLabel("Open post")
-            PhotoEngagementBar(mediaID: mediaID)
+            MediaEngagementBar(mediaID: mediaID)
         }.modifier(LiyaFeedCardSurface())
             .sheet(item: $options) { CollectionSafetySheet(target: $0) }
     }
 }
 
-private struct PhotoEngagementBar: View {
+struct MediaEngagementBar: View {
     @EnvironmentObject private var session: LiyaSession
     let mediaID: String
     @State private var showsComments = false
@@ -959,7 +939,7 @@ private struct PhotoEngagementBar: View {
                 Button("Retry counts") {
                     Task { await session.refreshMediaEngagement(ids: [mediaID]) }
                 }
-                .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1001,9 +981,9 @@ struct SavedPhotoNotes: View {
                     VStack(alignment: .leading, spacing: 5) {
                         Text(comment.text).foregroundStyle(liyaInk)
                         HStack {
-                            Text(comment.date, style: .date).font(.caption).foregroundStyle(.secondary)
+                            Text(comment.date, style: .date).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
                             Spacer()
-                            Button("Delete") { store.deleteComment(comment.id) }.font(.caption.bold()).foregroundStyle(liyaAccent)
+                            Button("Delete") { store.deleteComment(comment.id) }.font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent)
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
                         .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
@@ -1042,7 +1022,7 @@ struct CollectionPhotoDetail: View {
                         Button { dismiss() } label: { Image("back").resizable().scaledToFit().frame(width: 20, height: 20).frame(width: 44, height: 44) }
                             .buttonStyle(.plain).accessibilityLabel("Back")
                         Spacer(minLength: 0)
-                        Text("Post").font(.headline).foregroundStyle(liyaInk)
+                        Text("Post").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
                         Spacer(minLength: 0)
                         Button {
                             options = CollectionSafetyTarget(mediaID: mediaID, name: displayName, kind: .post, ownerID: session.userID)
@@ -1054,29 +1034,29 @@ struct CollectionPhotoDetail: View {
                     VStack(alignment: .leading, spacing: 16) {
                         if let index, store.hiddenCollectionProfiles.contains(index) {
                             Text("Unblock this profile to see their posts again.")
-                                .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                                .font(LiyaType.detail).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                         } else if let index, CollectionPhotoRoles.isPost(index, in: session.photos) {
                             NavigationLink { CollectionAuthorView(index: index, displayName: displayName, mediaID: mediaID) } label: {
                                 HStack(spacing: 10) {
                                     CollectionPortrait(index: index)
                                     VStack(alignment: .leading, spacing: 3) {
-                                        Text(displayName).font(.subheadline.bold()).foregroundStyle(liyaInk)
-                                        Text("Collection").font(.caption).foregroundStyle(.secondary)
+                                        Text(displayName).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(liyaInk)
+                                        Text("Collection").font(LiyaType.text(.caption)).foregroundStyle(.secondary)
                                     }
                                 }
                             }.buttonStyle(.plain)
                             CollectionPhoto(catalogIndex: index).frame(maxWidth: .infinity).frame(height: 300)
                                 .clipShape(RoundedRectangle(cornerRadius: 14))
-                            PhotoEngagementBar(mediaID: mediaID)
+                            MediaEngagementBar(mediaID: mediaID)
                         } else if session.catalogLoading {
                             LiyaLoadingIndicator(size: 28).frame(maxWidth: .infinity)
                         } else {
-                            Text("This post is no longer available.").font(.subheadline).foregroundStyle(.secondary)
+                            Text("This post is no longer available.").font(LiyaType.detail).foregroundStyle(.secondary)
                         }
                         if let likesError = session.likesError {
-                            Text(likesError).font(.footnote).foregroundStyle(.secondary)
+                            Text(likesError).font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
                             Button("Retry likes") { Task { await session.refreshLikes() } }
-                                .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                                .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                         }
                     }.frame(maxWidth: 620, alignment: .leading).frame(maxWidth: .infinity)
                         .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 30 + tabBarClearance)
@@ -1085,6 +1065,7 @@ struct CollectionPhotoDetail: View {
             }
         }
         .navigationBarHidden(true)
+        .task(id: mediaID) { await session.refreshMediaEngagement(ids: [mediaID]) }
         .sheet(item: $options) { CollectionSafetySheet(target: $0) }
     }
 }

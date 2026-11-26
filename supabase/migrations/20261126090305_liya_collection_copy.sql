@@ -1,5 +1,3 @@
--- Editorial collections use a series title. The people pictured are not member accounts.
--- Keep media, profile bindings, moderation, and genuine member content intact.
 update public.liya_curated_video_creators as feature
 set display_name = copy.series, caption = copy.caption
 from (values
@@ -16,8 +14,6 @@ from (values
 ) as copy(video_id, series, caption)
 where feature.video_id = copy.video_id;
 
--- These are optional writing suggestions displayed only in an empty discussion.
--- They are never inserted into member comments or included in engagement totals.
 update public.liya_curated_video_prompts as prompt
 set display_name = 'Liya', body = copy.body
 from (values

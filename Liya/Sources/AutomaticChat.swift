@@ -54,7 +54,7 @@ struct AutomaticChatView: View {
                     Button { showingConsent = true } label: {
                         HStack(spacing: 4) {
                             Image("setting-privacy").resizable().scaledToFit().frame(width: 22, height: 22).accessibilityHidden(true)
-                            Text("AI privacy").font(.caption.weight(.semibold))
+                            Text("AI privacy").font(LiyaType.text(.caption, weight: .semibold))
                         }.foregroundStyle(.white).padding(.horizontal, 10).frame(minHeight: 44)
                             .background(.white.opacity(0.14), in: Capsule())
                     }.buttonStyle(.plain)
@@ -65,14 +65,14 @@ struct AutomaticChatView: View {
                             if chat.messages.isEmpty {
                                 Image("ai-heading").resizable().scaledToFit().frame(width: 176, height: 60).accessibilityLabel("AI chat")
                                 Text("A little space to talk, at your own pace.")
-                                    .font(.subheadline).foregroundStyle(.white.opacity(0.94))
+                                    .font(LiyaType.detail).foregroundStyle(.white.opacity(0.94))
                             }
                             if chat.loading && chat.messages.isEmpty { LiyaLoadingIndicator(size: 28) }
                             if let error = chat.error {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(LocalizedStringKey(error)).font(.footnote).foregroundStyle(.white)
+                                    Text(LocalizedStringKey(error)).font(LiyaType.text(.footnote)).foregroundStyle(.white)
                                     Button("Try again") { if canSend { submit() } else { Task { await chat.load(session) } } }
-                                        .font(.footnote.bold()).foregroundStyle(.white).frame(minHeight: 44)
+                                        .font(LiyaType.text(.footnote, weight: .bold)).foregroundStyle(.white).frame(minHeight: 44)
                                         .disabled(chat.sending)
                                 }
                             }
@@ -81,11 +81,11 @@ struct AutomaticChatView: View {
                                     if message.role == "user" { Spacer(minLength: 56) }
                                     VStack(alignment: message.role == "user" ? .trailing : .leading, spacing: 5) {
                                         Text(message.role == "user" ? "You" : "Liya AI")
-                                            .font(.caption.weight(.semibold))
+                                            .font(LiyaType.text(.caption, weight: .semibold))
                                             .foregroundStyle(.white.opacity(0.86))
                                             .padding(.horizontal, 4)
                                         Text(message.body)
-                                            .font(.body).foregroundStyle(message.role == "user" ? .white : liyaInk)
+                                            .font(LiyaType.reading).foregroundStyle(message.role == "user" ? .white : liyaInk)
                                             .fixedSize(horizontal: false, vertical: true)
                                             .padding(.horizontal, 16).padding(.vertical, 13)
                                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -96,12 +96,12 @@ struct AutomaticChatView: View {
                                 }.id(message.id)
                             }
                             if chat.waiting {
-                                Text("Liya AI is preparing a reply…").font(.footnote).foregroundStyle(.white.opacity(0.9)).id("waiting")
+                                Text("Liya AI is preparing a reply…").font(LiyaType.text(.footnote)).foregroundStyle(.white.opacity(0.9)).id("waiting")
                             }
                             if chat.messages.isEmpty && !chat.loading && chat.error == nil {
                                 ForEach(["Give me some positive energy", "How can I feel calmer?", "Tell me a heartwarming story"], id: \.self) { prompt in
                                     Button { draft = draft.isEmpty ? prompt : draft + "\n" + prompt } label: {
-                                        Text(prompt).font(.subheadline.weight(.medium)).foregroundStyle(liyaInk)
+                                        Text(prompt).font(LiyaType.text(.subheadline, weight: .medium)).foregroundStyle(liyaInk)
                                             .padding(.horizontal, 16).padding(.vertical, 12)
                                             .background(.white.opacity(0.94), in: Capsule())
                                     }.buttonStyle(.plain)
@@ -120,7 +120,7 @@ struct AutomaticChatView: View {
                     }
                 }
                 VStack(alignment: .leading, spacing: 6) {
-                    if draft.count > 2000 { Text("Please keep your message under 2,000 characters.").font(.footnote).foregroundStyle(.white) }
+                    if draft.count > 2000 { Text("Please keep your message under 2,000 characters.").font(LiyaType.text(.footnote)).foregroundStyle(.white) }
                     HStack(alignment: .bottom, spacing: 10) {
                         TextField("Write a message…", text: $draft, axis: .vertical)
                             .lineLimit(1...4).padding(.horizontal, 16).padding(.vertical, 13)
@@ -130,7 +130,7 @@ struct AutomaticChatView: View {
                         Button {
                             submit()
                         } label: {
-                            Text(chat.sending ? "Sending…" : "Send").font(.subheadline.bold()).foregroundStyle(.white)
+                            Text(chat.sending ? "Sending…" : "Send").font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(.white)
                                 .padding(.horizontal, 18).frame(minHeight: 48)
                                 .background(liyaGradient.opacity(canSend ? 1 : 0.45), in: Capsule())
                         }.buttonStyle(.plain)
@@ -204,14 +204,14 @@ private struct AIPrivacySheet: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         Image("ai-heading").resizable().scaledToFit().frame(width: 145, height: 52).accessibilityHidden(true)
-                        Text("Your AI privacy").font(.title2.bold()).foregroundStyle(liyaInk)
+                        Text("Your AI privacy").font(LiyaType.text(.title2, weight: .bold)).foregroundStyle(liyaInk)
                         Text("AI chat is currently unavailable.")
-                            .font(.subheadline).foregroundStyle(liyaInk.opacity(0.82)).fixedSize(horizontal: false, vertical: true)
+                            .font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.82)).fixedSize(horizontal: false, vertical: true)
                         Text("Liya AI is an automated companion, not a person or professional support.")
-                            .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                            .font(LiyaType.text(.footnote)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                         Button("Read Privacy Policy") { showPolicy = true }
-                            .font(.footnote.weight(.semibold)).underline().foregroundStyle(liyaAccent).frame(minHeight: 44)
-                        if let error = chat.error { Text(LocalizedStringKey(error)).font(.footnote).foregroundStyle(liyaInk) }
+                            .font(LiyaType.text(.footnote, weight: .semibold)).underline().foregroundStyle(liyaAccent).frame(minHeight: 44)
+                        if let error = chat.error { Text(LocalizedStringKey(error)).font(LiyaType.text(.footnote)).foregroundStyle(liyaInk) }
                         if chat.consentGranted {
                             PrimaryButton(title: chat.updatingConsent ? "Updating…" : "Withdraw AI consent", disabled: chat.updatingConsent) {
                                 onWithdraw()
@@ -222,7 +222,7 @@ private struct AIPrivacySheet: View {
                                 Task { if await chat.setConsent(session, granted: true) { dismiss() } }
                             }
                         }
-                        Button("Not now") { dismiss() }.font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent)
+                        Button("Not now") { dismiss() }.font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaAccent)
                             .frame(maxWidth: .infinity, minHeight: 44)
                     }.padding(24).frame(maxWidth: 460).frame(maxWidth: .infinity, alignment: .center)
                 }

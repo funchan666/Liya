@@ -2,7 +2,6 @@ import SwiftUI
 
 @main
 struct LiyaApp: App {
-    @UIApplicationDelegateAdaptor(LiyaAppDelegate.self) private var appDelegate
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var store = LocalStore()
     @StateObject private var checkout = CoinCheckout()
@@ -36,26 +35,20 @@ struct LiyaApp: App {
                         _ = await session.handleAuthURL(url)
                     }
                 }
-                .task {
-                    LiyaVoIP.shared.bind(session: session, calls: calls, store: store)
-                    await LiyaVoIP.shared.updateRegistration()
-                }
                 .task(id: scenePhase) {
                     guard scenePhase == .active else { return }
-                    async let recovery: Void = checkout.recover()
-                    async let storeIdentification: Void = checkout.identifyStore()
-                    _ = await (recovery, storeIdentification)
+                    checkout.recover()
                 }
-                .onLiyaChange(of: session.userID) { _ in
-                    Task { await LiyaVoIP.shared.updateRegistration() }
-                }
-                .onLiyaChange(of: calls.call?.id) { id in
-                    if id != nil { showingLaunch = false }
-                    LiyaVoIP.shared.observeCall(id)
+                .onLiyaChange(of: store.inPreview ? session.userID : nil) { owner in
+                    calls.retainSession(owner)
                 }
                 .onLiyaChange(of: scenePhase) { phase in
                     if phase == .active {
-                        Task { await session.resumeAccount(); await social.refresh(session); social.watchMessages(session); await LiyaVoIP.shared.updateRegistration() }
+                        Task {
+                            await session.resumeAccount()
+                            await social.refresh(session)
+                            social.watchMessages(session)
+                        }
                     }
                 }
         }
@@ -72,7 +65,7 @@ private struct LiyaLaunchOverlay: View {
                         .accessibilityHidden(true)
                     VStack(spacing: 2) {
                         LiyaLoadingIndicator(size: 38).accessibilityHidden(true)
-                        Text("Opening Liya…").font(.footnote.weight(.medium)).foregroundStyle(.white)
+                        Text("Opening Liya…").font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(.white)
                     }
                     .offset(y: 110)
                 }

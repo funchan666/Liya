@@ -7,29 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C8766601EBA24E1680980C5A /* Typefaces in Resources */ = {isa = PBXBuildFile; fileRef = BC3B8B66097D4C539158F32F /* Typefaces */; };
-		26E2D5608ADB547C04EA2231 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 1008727600F4C756AF33B38C /* Supabase */; };
-		A44444444444444444444401 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A44444444444444444444402 /* Localizable.xcstrings */; };
-		9FD5E4EF8A1C427A8B2CF101 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 9FD5E4EF8A1C427A8B2CF102 /* InfoPlist.xcstrings */; };
-		A33333333333333333333301 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A33333333333333333333302 /* LaunchScreen.storyboard */; };
 		073D8EE7810AFCF9F9B31B86 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C1AA7E627810F1A043DB07 /* RootView.swift */; };
 		262EA9226C0699993B1E645E /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F623C35F01064B5675C139C1 /* WalletView.swift */; };
+		26E2D5608ADB547C04EA2231 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 1008727600F4C756AF33B38C /* Supabase */; };
 		2A68D9FBFD459854460E746A /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B3165B5F348D386BDA1F13D /* Components.swift */; };
 		2BA2072B7918FE67B1D32B29 /* LiyaSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D48B8AC7CD59A9EF09A2C00 /* LiyaSession.swift */; };
 		324598B2552C2847BA3FBABB /* CollectionAuthors.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFEE673FE4EB43FAD342B45A /* CollectionAuthors.swift */; };
 		32E3CDDE51E9F1562E13755D /* VideoHome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 362B25F54F99DDE61E68206D /* VideoHome.swift */; };
 		3BAB87846F99325C6B799D94 /* CoinCheckout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B7ED4624CF45B548E99A81 /* CoinCheckout.swift */; };
+		44CF192B0AD54DFFA0D31D68 /* CoinWalletLedger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C8A336B63C14C48B7198FC6 /* CoinWalletLedger.swift */; };
 		3EED5221EF3C25A6D41D15A2 /* CollectionPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3C848B4534F0BB94FF8789 /* CollectionPhoto.swift */; };
 		4E2E82BA3371A18568475440 /* SocialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 342B0A1CBB1A51F8DF16C1CF /* SocialStore.swift */; };
 		54CA158E53B5FE7FA22C7C28 /* DraftMedia.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */; };
 		7B42BD8844C5C09CEF2842B6 /* LiyaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2061D8AD2D04E41E28919D /* LiyaApp.swift */; };
+		7C361BAE46054E808D9DC6BB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = DD4D76344138405A8A47740C /* PrivacyInfo.xcprivacy */; };
 		7FDE4B121440C7BE36374D65 /* SquareViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593E5372186CB54C83F75E59 /* SquareViews.swift */; };
-		98CA115E39D64DE9880B42C1 /* JournalPostcards.swift in Sources */ = {isa = PBXBuildFile; fileRef = B372A225B9524B84A7BE9580 /* JournalPostcards.swift */; };
 		94AA0FDD52D33EF28DE55AE6 /* DuoControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3984E1F4A9E1E136685F9B50 /* DuoControls.swift */; };
+		98CA115E39D64DE9880B42C1 /* JournalPostcards.swift in Sources */ = {isa = PBXBuildFile; fileRef = B372A225B9524B84A7BE9580 /* JournalPostcards.swift */; };
+		9FD5E4EF8A1C427A8B2CF101 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 9FD5E4EF8A1C427A8B2CF102 /* InfoPlist.xcstrings */; };
 		A0627F5AD9573BDC71118145 /* ProfileViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1801B18AF27DF23E012330C7 /* ProfileViews.swift */; };
 		A11111111111111111111101 /* LiyaCalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11111111111111111111102 /* LiyaCalls.swift */; };
-		A22222222222222222222201 /* LiyaVoIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = A22222222222222222222202 /* LiyaVoIP.swift */; };
+		8D787902AA6F4E78946DE2C7 /* WaitingMediaPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0F0196BA8C840A3AC30403C /* WaitingMediaPreview.swift */; };
+		A33333333333333333333301 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A33333333333333333333302 /* LaunchScreen.storyboard */; };
+		A44444444444444444444401 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A44444444444444444444402 /* Localizable.xcstrings */; };
 		C82EF4A543D3DF6A2C874E68 /* LocalPosts.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA69102DD583B62A83217A19 /* LocalPosts.swift */; };
+		C8766601EBA24E1680980C5A /* Typefaces in Resources */ = {isa = PBXBuildFile; fileRef = BC3B8B66097D4C539158F32F /* Typefaces */; };
 		CA27812540BE098620440156 /* MainViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 393130AEC742C97B5E001EAB /* MainViews.swift */; };
 		CC7E2CA079842B58037D651C /* LegalDocumentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A004A2012B0809716BDC4A2 /* LegalDocumentView.swift */; };
 		D13D7EED4D1BD097D1746957 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C619DBBB0211BA6980C958D2 /* Assets.xcassets */; };
@@ -40,11 +42,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		BC3B8B66097D4C539158F32F /* Typefaces */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Typefaces; path = Resources/Typefaces; sourceTree = "<group>"; };
-		A44444444444444444444402 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
-		9FD5E4EF8A1C427A8B2CF102 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
-		A33333333333333333333302 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		07B7ED4624CF45B548E99A81 /* CoinCheckout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinCheckout.swift; sourceTree = "<group>"; };
+		0C8A336B63C14C48B7198FC6 /* CoinWalletLedger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinWalletLedger.swift; sourceTree = "<group>"; };
 		0A49B42E539DC4B03BDB34DE /* Liya.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Liya.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0D3C848B4534F0BB94FF8789 /* CollectionPhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionPhoto.swift; sourceTree = "<group>"; };
 		1801B18AF27DF23E012330C7 /* ProfileViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViews.swift; sourceTree = "<group>"; };
@@ -54,7 +53,6 @@
 		3984E1F4A9E1E136685F9B50 /* DuoControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoControls.swift; sourceTree = "<group>"; };
 		577DC4FDFFFC8D2FE2971E05 /* SocialViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialViews.swift; sourceTree = "<group>"; };
 		593E5372186CB54C83F75E59 /* SquareViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquareViews.swift; sourceTree = "<group>"; };
-		B372A225B9524B84A7BE9580 /* JournalPostcards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalPostcards.swift; sourceTree = "<group>"; };
 		5A004A2012B0809716BDC4A2 /* LegalDocumentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocumentView.swift; sourceTree = "<group>"; };
 		6570BF991B9EBC01B32BA0EE /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
 		6BBDFB333D4488D41A926C30 /* VideoCompression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCompression.swift; sourceTree = "<group>"; };
@@ -62,12 +60,18 @@
 		701485677FE2C405F57264D3 /* AutomaticChat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomaticChat.swift; sourceTree = "<group>"; };
 		7C2061D8AD2D04E41E28919D /* LiyaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaApp.swift; sourceTree = "<group>"; };
 		9B3165B5F348D386BDA1F13D /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		9FD5E4EF8A1C427A8B2CF102 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		A11111111111111111111102 /* LiyaCalls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaCalls.swift; sourceTree = "<group>"; };
-		A22222222222222222222202 /* LiyaVoIP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaVoIP.swift; sourceTree = "<group>"; };
+		B0F0196BA8C840A3AC30403C /* WaitingMediaPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitingMediaPreview.swift; sourceTree = "<group>"; };
+		A33333333333333333333302 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		A44444444444444444444402 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		B372A225B9524B84A7BE9580 /* JournalPostcards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalPostcards.swift; sourceTree = "<group>"; };
 		BA69102DD583B62A83217A19 /* LocalPosts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPosts.swift; sourceTree = "<group>"; };
+		BC3B8B66097D4C539158F32F /* Typefaces */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Typefaces; path = Resources/Typefaces; sourceTree = "<group>"; };
 		BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraftMedia.swift; sourceTree = "<group>"; };
 		BFEE673FE4EB43FAD342B45A /* CollectionAuthors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionAuthors.swift; sourceTree = "<group>"; };
 		C619DBBB0211BA6980C958D2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DD4D76344138405A8A47740C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		E1C1AA7E627810F1A043DB07 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		F623C35F01064B5675C139C1 /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -96,10 +100,11 @@
 		5F92A2190486565EC12E91E7 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				A22222222222222222222202 /* LiyaVoIP.swift */,
 				A11111111111111111111102 /* LiyaCalls.swift */,
+				B0F0196BA8C840A3AC30403C /* WaitingMediaPreview.swift */,
 				701485677FE2C405F57264D3 /* AutomaticChat.swift */,
 				07B7ED4624CF45B548E99A81 /* CoinCheckout.swift */,
+				0C8A336B63C14C48B7198FC6 /* CoinWalletLedger.swift */,
 				9B3165B5F348D386BDA1F13D /* Components.swift */,
 				BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */,
 				3984E1F4A9E1E136685F9B50 /* DuoControls.swift */,
@@ -131,6 +136,7 @@
 				BC3B8B66097D4C539158F32F /* Typefaces */,
 				A44444444444444444444402 /* Localizable.xcstrings */,
 				9FD5E4EF8A1C427A8B2CF102 /* InfoPlist.xcstrings */,
+				DD4D76344138405A8A47740C /* PrivacyInfo.xcprivacy */,
 				A33333333333333333333302 /* LaunchScreen.storyboard */,
 				C619DBBB0211BA6980C958D2 /* Assets.xcassets */,
 			);
@@ -210,6 +216,7 @@
 				C8766601EBA24E1680980C5A /* Typefaces in Resources */,
 				A44444444444444444444401 /* Localizable.xcstrings in Resources */,
 				9FD5E4EF8A1C427A8B2CF101 /* InfoPlist.xcstrings in Resources */,
+				7C361BAE46054E808D9DC6BB /* PrivacyInfo.xcprivacy in Resources */,
 				A33333333333333333333301 /* LaunchScreen.storyboard in Resources */,
 				D13D7EED4D1BD097D1746957 /* Assets.xcassets in Resources */,
 			);
@@ -222,10 +229,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A22222222222222222222201 /* LiyaVoIP.swift in Sources */,
 				A11111111111111111111101 /* LiyaCalls.swift in Sources */,
+				8D787902AA6F4E78946DE2C7 /* WaitingMediaPreview.swift in Sources */,
 				F9095906E366F7A2A10EA0A4 /* AutomaticChat.swift in Sources */,
 				3BAB87846F99325C6B799D94 /* CoinCheckout.swift in Sources */,
+				44CF192B0AD54DFFA0D31D68 /* CoinWalletLedger.swift in Sources */,
 				2A68D9FBFD459854460E746A /* Components.swift in Sources */,
 				54CA158E53B5FE7FA22C7C28 /* DraftMedia.swift in Sources */,
 				94AA0FDD52D33EF28DE55AE6 /* DuoControls.swift in Sources */,
@@ -263,9 +271,10 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Liya/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Liya;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Liya uses the camera to take a profile photo or attach a photo to a moment.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Take photos for your profile, posts, or messages, and see yourself while waiting for a video call.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "The microphone shows your sound level while you wait for a voice or video call. The audio stays on your device.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -296,9 +305,10 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Liya/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Liya;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Liya uses the camera to take a profile photo or attach a photo to a moment.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Take photos for your profile, posts, or messages, and see yourself while waiting for a video call.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "The microphone shows your sound level while you wait for a voice or video call. The audio stays on your device.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -468,7 +478,10 @@
 		4169A5017835DAFD0AC3573A /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/supabase/supabase-swift.git";
-			requirement = { kind = exactVersion; version = 2.55.5; };
+			requirement = {
+				kind = exactVersion;
+				version = 2.55.5;
+			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 

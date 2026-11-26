@@ -67,7 +67,7 @@ struct RootView: View {
         } else {
             ZStack {
                 Group {
-                    tab(.discover) { VideoHome(active: selection == .discover && checkout.welcomeGift == nil) }
+                    tab(.discover) { VideoHome(active: selection == .discover && checkout.welcomeGift == nil && calls.call == nil) }
                     tab(.square) { SquareHome() }
                     tab(.compose) { ComposeHome() }
                     tab(.messages) { MessagesHome() }
@@ -82,7 +82,6 @@ struct RootView: View {
                 guard session.userID != nil else { return }
                 await session.refreshCuratedFollows(store: store)
             }
-            .task(id: session.userID) { await calls.watch(session) }
             .onLiyaChange(of: store.videoRequest) { request in
                 if request != nil { selection = .discover }
             }
@@ -157,7 +156,7 @@ private struct LiyaGlassTabBar: View {
                                 HStack(spacing: 3) {
                                     icon
                                     Text(LocalizedStringKey(item.title))
-                                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                                        .font(LiyaType.text(.subheadline, weight: .semibold))
                                         .foregroundStyle(.primary)
                                 }
                                 .fixedSize()
@@ -241,9 +240,9 @@ private struct WelcomeView: View {
                             } label: {
                                 HStack(spacing: 8) {
                                     Image(decorative: "navigation-profile").resizable().scaledToFit().frame(width: 26, height: 26)
-                                    Text("Saved account").font(.footnote.weight(.semibold))
+                                    Text("Saved account").font(LiyaType.text(.footnote, weight: .semibold))
                                     if name != String(localized: "Saved account", locale: locale) {
-                                        Text(verbatim: name).font(.footnote).lineLimit(1).truncationMode(.middle)
+                                        Text(verbatim: name).font(LiyaType.text(.footnote)).lineLimit(1).truncationMode(.middle)
                                     }
                                 }
                                 .foregroundStyle(liyaInk)
@@ -255,19 +254,19 @@ private struct WelcomeView: View {
                             .padding(.top, 8)
                         }
                         if let errorMessage = session.errorMessage {
-                            Text(LocalizedStringKey(errorMessage)).font(.footnote).foregroundStyle(.white)
+                            Text(LocalizedStringKey(errorMessage)).font(LiyaType.text(.footnote)).foregroundStyle(.white)
                                 .multilineTextAlignment(.center).padding(.top, 8)
                         }
                         if let notice = session.welcomeNotice {
-                            Text(LocalizedStringKey(notice)).font(.footnote.weight(.medium)).foregroundStyle(.white)
+                            Text(LocalizedStringKey(notice)).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(.white)
                                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true).padding(.top, 8)
                         }
                         if session.showAppleRevocationHelp {
                             Text("If you used Sign in with Apple, you can also stop using Apple with Liya in your Apple Account settings.")
-                                .font(.footnote).foregroundStyle(.white)
+                                .font(LiyaType.text(.footnote)).foregroundStyle(.white)
                                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true).padding(.top, 8)
                             Link("How to manage Sign in with Apple", destination: URL(string: "https://support.apple.com/en-us/102571")!)
-                                .font(.footnote.weight(.semibold)).underline().foregroundStyle(.white).frame(minHeight: 44)
+                                .font(LiyaType.text(.footnote, weight: .semibold)).underline().foregroundStyle(.white).frame(minHeight: 44)
                         }
                         agreementRow.padding(.top, 10)
                     }
@@ -360,7 +359,6 @@ private struct WelcomeView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 56)
             .overlay {
-                // Apple-provided English button artwork; the native button handles authorization.
                 Color.white
                     .overlay {
                         Image("apple-continue-english")
@@ -404,7 +402,7 @@ private struct WelcomeView: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 Text("I agree to the following (tap to read):")
-                    .font(.footnote).foregroundStyle(liyaInk)
+                    .font(LiyaType.text(.footnote)).foregroundStyle(liyaInk)
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 4) {
                         policyLink(.terms)
@@ -416,7 +414,7 @@ private struct WelcomeView: View {
                         policyLink(.privacy)
                     }
                 }
-                .font(.footnote.weight(.semibold))
+                .font(LiyaType.text(.footnote, weight: .semibold))
                 .buttonStyle(.plain)
                 .frame(minHeight: 44, alignment: .leading)
             }
@@ -429,10 +427,10 @@ private struct WelcomeView: View {
     private var agreementReminder: some View {
         VStack(spacing: 14) {
             Text("Before we begin")
-                .font(.title3.bold()).foregroundStyle(liyaInk)
+                .font(LiyaType.text(.title3, weight: .bold)).foregroundStyle(liyaInk)
                 .multilineTextAlignment(.center)
             Text("Please read and agree to our Terms of Service and Privacy Policy before continuing.")
-                .font(.subheadline).foregroundStyle(liyaInk.opacity(0.8))
+                .font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.8))
                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 18) {
@@ -444,7 +442,7 @@ private struct WelcomeView: View {
                     policyLink(.privacy, fromReminder: true)
                 }
             }
-            .font(.footnote.weight(.semibold))
+            .font(LiyaType.text(.footnote, weight: .semibold))
             .buttonStyle(.plain).frame(minHeight: 44)
             WelcomeAction(title: "Back to agreement", image: "consent-button", foreground: .white) {
                 showAgreementReminder = false
@@ -527,13 +525,13 @@ struct EmailAccountView: View {
                                 if mode == .newPassword { Task { if await session.cancelPasswordRecovery() { dismiss() } } }
                                 else { dismiss() }
                             }
-                            .font(.subheadline.weight(.semibold)).foregroundStyle(liyaAccent)
+                            .font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaAccent)
                             .frame(minWidth: 44, minHeight: 44)
                             .disabled(session.isSigningIn)
                         }
-                        Text(LocalizedStringKey(title)).font(.system(.largeTitle, design: .rounded).weight(.bold)).foregroundStyle(liyaInk)
+                        Text(LocalizedStringKey(title)).font(LiyaType.text(.largeTitle, weight: .bold)).foregroundStyle(liyaInk)
                         Text(mode == .signIn ? "Sign in to pick up where you left off." : mode == .signUp ? "Create an account for your moments and connections." : mode == .reset ? "We'll send a link to your email address." : "Use a password you haven't used before.")
-                            .font(.subheadline).foregroundStyle(liyaInk.opacity(0.7))
+                            .font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.7))
                             .fixedSize(horizontal: false, vertical: true)
                         VStack(alignment: .leading, spacing: 16) {
                             if mode != .newPassword {
@@ -562,11 +560,11 @@ struct EmailAccountView: View {
                             }
                         }
                         if let message = validation ?? session.errorMessage {
-                            Text(message).font(.footnote.weight(.medium)).foregroundStyle(.red)
+                            Text(message).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(.red)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         if let notice = session.authNotice {
-                            Text(notice).font(.footnote.weight(.medium)).foregroundStyle(liyaInk)
+                            Text(notice).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaInk)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         WelcomeAction(title: session.isSigningIn ? "Please wait…" : actionTitle, image: "consent-button", foreground: .white, isLoading: session.isSigningIn) { submit() }
@@ -582,7 +580,7 @@ struct EmailAccountView: View {
                                 } else if mode == .reset {
                                     Button("Sign in") { changeMode(.signIn) }.frame(minHeight: 44)
                                 }
-                            }.font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent)
+                            }.font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent)
                                 .disabled(session.isSigningIn)
                         }
                     }
@@ -603,7 +601,7 @@ struct EmailAccountView: View {
     }
 
     private func fieldLabel(_ title: String) -> some View {
-        Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+        Text(LocalizedStringKey(title)).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
     }
 
     private func changeMode(_ next: Mode) {
@@ -676,7 +674,7 @@ private struct WelcomeAccountSheet: View {
                 case .replace: Text("Sign out of \(choice.name) to continue?")
                 }
                 if let errorMessage {
-                    Text(LocalizedStringKey(errorMessage)).font(.footnote).foregroundStyle(.secondary)
+                    Text(LocalizedStringKey(errorMessage)).font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
                 }
                 WelcomeAction(title: working ? "Please wait…" : actionTitle, image: "consent-button",
                               foreground: .white, isLoading: working) {

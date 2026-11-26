@@ -37,10 +37,10 @@ struct ProfileDetailLayout<Hero: View, Actions: View, Content: View>: View {
                                     .frame(height: 64).allowsHitTesting(false)
                             }
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(name).font(.title2.bold()).foregroundStyle(liyaInk)
+                            Text(name).font(LiyaType.text(.title2, weight: .bold)).foregroundStyle(liyaInk)
                                 .fixedSize(horizontal: false, vertical: true)
                             if !introduction.isEmpty {
-                                Text(introduction).font(.subheadline).foregroundStyle(.secondary)
+                                Text(introduction).font(LiyaType.detail).foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             actions
@@ -58,7 +58,7 @@ struct ProfileDetailLayout<Hero: View, Actions: View, Content: View>: View {
                                 .frame(width: 20, height: 20).frame(width: 44, height: 44)
                         }.buttonStyle(.plain).accessibilityLabel("Back")
                         Spacer(minLength: 0)
-                        Text(name).font(.headline).foregroundStyle(.white).lineLimit(1)
+                        Text(name).font(LiyaType.text(.headline)).foregroundStyle(.white).lineLimit(1)
                             .shadow(color: .black.opacity(0.7), radius: 4)
                         Spacer(minLength: 0)
                         Button(action: showOptions) {
@@ -83,7 +83,7 @@ struct ProfileContentTabs: View {
         HStack(spacing: 28) {
             ForEach(Array(["Post", "Video"].enumerated()).filter { $0.offset == 0 ? showPost : showVideo }, id: \.offset) { index, title in
                 Button { selection = index } label: {
-                    Text(title).font(.subheadline.weight(selection == index ? .bold : .medium))
+                    Text(title).font(LiyaType.text(.subheadline, weight: selection == index ? .bold : .medium))
                         .foregroundStyle(selection == index ? liyaAccent : .secondary)
                         .underline(selection == index, color: liyaAccent)
                         .frame(minWidth: 44, minHeight: 44)
@@ -98,7 +98,7 @@ struct ProfileActionLabel: View {
     let title: String
     var warm = false
     var body: some View {
-        Text(title).font(.subheadline.bold()).foregroundStyle(.white)
+        Text(title).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(.white)
             .lineLimit(1).minimumScaleFactor(0.8)
             .frame(maxWidth: .infinity).frame(minHeight: 46)
             .background {
@@ -125,19 +125,231 @@ struct ProfileDetailActionLabel: View {
         }
     }
     var body: some View {
-        HStack(spacing: 7) {
-            Image(icon).resizable().scaledToFit().frame(width: 30, height: 30).accessibilityHidden(true)
-            Text(LocalizedStringKey(title)).font(.subheadline.weight(.semibold))
-                .lineLimit(1).minimumScaleFactor(0.8)
+        HStack(spacing: 8) {
+            Image(icon).resizable().scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
+            Text(LocalizedStringKey(title)).font(LiyaType.text(.subheadline, weight: .bold))
+                .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
         }
-        .foregroundStyle(style == .following ? liyaAccent : liyaInk)
-        .frame(maxWidth: .infinity, minHeight: 54)
-        .padding(.horizontal, 8)
-        .background(style == .following ? Color(red: 0.93, green: 0.90, blue: 1.0) : Color.white.opacity(0.84),
-                    in: RoundedRectangle(cornerRadius: 17))
-        .overlay(RoundedRectangle(cornerRadius: 17).stroke(liyaAccent.opacity(style == .following ? 0.28 : 0.10), lineWidth: 1))
-        .opacity(isEnabled ? 1 : 0.5)
+        .foregroundStyle(style == .message ? Color.white : liyaInk)
+        .padding(.horizontal, 9).padding(.vertical, 5)
+        .frame(maxWidth: .infinity, minHeight: style == .voice || style == .video ? 48 : 54)
+        .background {
+            if style == .message {
+                Capsule().fill(Color(red: 0.27, green: 0.19, blue: 0.50))
+            } else if style == .follow || style == .following {
+                Capsule().fill(style == .following ? Color(red: 0.93, green: 0.90, blue: 1.0) : .white)
+                    .overlay { Capsule().strokeBorder(liyaAccent.opacity(0.18)) }
+            }
+        }
+        .contentShape(Rectangle())
+        .opacity(isEnabled ? 1 : 0.55)
         .accessibilityAddTraits(style == .following ? .isSelected : [])
+    }
+}
+
+enum ProfileContactAction: String, Identifiable {
+    case message, voice, video
+    var id: Self { self }
+}
+
+struct MutualFollowNotice: View {
+    let action: ProfileContactAction
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        SafetyPanel(title: "Follow each other first", subject: nil, back: nil, close: { dismiss() }) {
+            Image("profile-action-follow").resizable().scaledToFit()
+        } content: {
+            Text(detail).font(LiyaType.reading).foregroundStyle(liyaInk.opacity(0.84))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+            Button { dismiss() } label: {
+                Text("Got it").font(LiyaType.action).foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .background(Color(red: 0.27, green: 0.19, blue: 0.50), in: Capsule())
+            }.buttonStyle(.plain)
+        }
+    }
+
+    private var detail: LocalizedStringKey {
+        switch action {
+        case .message: return "You can send this message once you both follow each other."
+        case .voice: return "You can start a voice call once you both follow each other."
+        case .video: return "You can start a video call once you both follow each other."
+        }
+    }
+}
+
+enum ProfileContactRecipient {
+    case member(UUID)
+    case collection(Int)
+}
+
+private enum ProfileContactFeedback: Identifiable {
+    case mutual(ProfileContactAction)
+    case unavailable(ProfileContactAction, reason: String, offersSettings: Bool = false)
+    var id: String {
+        switch self {
+        case .mutual(let action): return action.rawValue
+        case .unavailable(let action, let reason, _): return action.rawValue + reason
+        }
+    }
+}
+
+struct ProfileContactActions<Follow: View>: View {
+    let recipient: ProfileContactRecipient
+    let name: String
+    @ViewBuilder let follow: () -> Follow
+    @EnvironmentObject private var calls: LiyaCalls
+    @EnvironmentObject private var social: SocialStore
+    @EnvironmentObject private var session: LiyaSession
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var notice: ProfileContactFeedback?
+    @State private var dialTask: Task<Void, Never>?
+    @State private var checking: ProfileContactAction?
+    @State private var waitingCallID: UUID?
+
+    var body: some View {
+        VStack(spacing: 8) {
+            actionLayout {
+                follow()
+                NavigationLink {
+                    switch recipient {
+                    case .member(let id): CommunityConversationView(personID: id)
+                    case .collection(let index): CommunityConversationView(collectionIndex: index, displayName: name)
+                    }
+                } label: {
+                    ProfileDetailActionLabel(title: "Message", style: .message)
+                }.buttonStyle(.plain)
+            }
+            actionLayout {
+                callButton(.voice)
+                if typeSize.isAccessibilitySize {
+                    Divider().accessibilityHidden(true)
+                } else {
+                    Divider().frame(height: 25).accessibilityHidden(true)
+                }
+                callButton(.video)
+            }
+            .modifier(ContactBarSurface())
+        }
+        .sheet(item: $notice) { feedback in
+            switch feedback {
+            case .mutual(let action):
+                MutualFollowNotice(action: action)
+            case .unavailable(let action, let reason, let offersSettings):
+                SafetyPanel(title: "Call unavailable", subject: nil, back: nil, close: { notice = nil }) {
+                    Image(action == .video ? "profile-action-video" : "profile-action-voice").resizable().scaledToFit()
+                } content: {
+                    Text(LocalizedStringKey(reason)).font(LiyaType.reading).foregroundStyle(liyaInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                    actionLayout {
+                        feedbackButton("Close") { notice = nil }
+                        if offersSettings, let settings = URL(string: UIApplication.openSettingsURLString) {
+                            feedbackButton("Open Settings") {
+                                notice = nil
+                                openURL(settings)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .onDisappear { cancelPendingCheck() }
+        .onLiyaChange(of: scenePhase) { phase in
+            if phase == .background { cancelPendingCheck() }
+        }
+        .fullScreenCover(item: waitingCall) { call in
+            LiyaCallScreen(call: call).interactiveDismissDisabled()
+        }
+    }
+
+    private var waitingCall: Binding<LiyaCall?> {
+        Binding {
+            guard let current = calls.call, current.id == waitingCallID else { return nil }
+            return current
+        } set: { updated in
+            if updated == nil, let id = waitingCallID { calls.cancel(id) }
+            waitingCallID = updated?.id
+        }
+    }
+
+    private var actionLayout: AnyLayout {
+        typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 6)) : AnyLayout(HStackLayout(spacing: 8))
+    }
+
+    private func feedbackButton(_ title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title).font(LiyaType.action).foregroundStyle(liyaInk)
+                .padding(.horizontal, 8).frame(maxWidth: .infinity, minHeight: 48)
+                .modifier(ContactBarSurface()).contentShape(Capsule())
+        }.buttonStyle(.plain)
+    }
+
+    private func cancelPendingCheck() {
+        dialTask?.cancel()
+        dialTask = nil
+        checking = nil
+    }
+
+    private func callButton(_ action: ProfileContactAction) -> some View {
+        let video = action == .video
+        return Button {
+            switch recipient {
+            case .member(let id):
+                guard checking == nil else { return }
+                checking = action
+                dialTask = Task {
+                    let result = await calls.start(session, social: social, peer: id, kind: video ? .video : .voice, displayName: name)
+                    guard !Task.isCancelled else {
+                        if case .started(let id) = result { calls.cancel(id) }
+                        return
+                    }
+                    checking = nil
+                    dialTask = nil
+                    switch result {
+                    case .started(let id): waitingCallID = id
+                    case .cancelled: break
+                    case .notMutual: notice = .mutual(action)
+                    case .failure(let reason):
+                        notice = .unavailable(action, reason: reason)
+                    case .permissionDenied(let reason):
+                        notice = .unavailable(action, reason: reason, offersSettings: true)
+                    }
+                }
+            case .collection:
+                notice = .mutual(action)
+            }
+        } label: {
+            ProfileDetailActionLabel(title: video ? "Video call" : "Voice call", style: video ? .video : .voice)
+                .opacity(checking == action ? 0.26 : 1)
+                .overlay { if checking == action { LiyaLoadingIndicator(size: 22).accessibilityHidden(true) } }
+        }.buttonStyle(.plain).disabled(checking != nil)
+    }
+}
+
+struct ContactBarSurface: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    let shape = RoundedRectangle(cornerRadius: 21, style: .continuous)
+
+    @ViewBuilder func body(content: Content) -> some View {
+        if reduceTransparency {
+            content.background(Color.white, in: shape)
+                .overlay { shape.strokeBorder(liyaInk.opacity(0.12)).allowsHitTesting(false) }
+        } else {
+            #if compiler(>=6.2)
+            if #available(iOS 26, *) {
+                content.glassEffect(.regular.tint(Color.white.opacity(0.58)), in: shape)
+            } else {
+                content.background(.regularMaterial, in: shape)
+            }
+            #else
+            content.background(.regularMaterial, in: shape)
+            #endif
+        }
     }
 }
 
@@ -162,16 +374,13 @@ struct ProfileSingleVideoRow<Thumbnail: View>: View {
     private var videoDetails: some View {
         VStack(alignment: .leading, spacing: 8) {
             Image("profile-action-video").resizable().scaledToFit().frame(width: 34, height: 30).accessibilityHidden(true)
-            Text("Video").font(.headline).foregroundStyle(liyaInk)
-            Text("Watch this moment").font(.subheadline.weight(.medium)).foregroundStyle(liyaAccent)
+            Text("Video").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
+            Text("Watch this moment").font(LiyaType.text(.subheadline, weight: .medium)).foregroundStyle(liyaAccent)
                 .fixedSize(horizontal: false, vertical: true)
         }.frame(minWidth: 100, maxWidth: .infinity, alignment: .leading)
     }
 }
 
-// These IDs are fixed independently of catalog order so that a portrait can
-// never also appear as another collection post. Photo 012 is the bundled
-// default profile portrait and therefore belongs to the portrait pool too.
 enum CollectionPhotoRoles {
     private static let postIDs = (1...20).filter { $0 != 12 }.map { String(format: "example-photo-%03d", $0) }
     private static let portraitIDs = ["example-photo-012"] + (21...40).map { String(format: "example-photo-%03d", $0) }
@@ -187,13 +396,17 @@ enum CollectionPhotoRoles {
         guard photos.indices.contains(index) else { return nil }
         let portraitID: String
         if photos[index].id == "example-photo-012" {
-            // An existing comment may still refer to this former post identity.
             portraitID = "example-photo-040"
         } else {
             guard isPost(index, in: photos), let position = postIDs.firstIndex(of: photos[index].id) else { return nil }
             portraitID = authorPortraitIDs[position]
         }
-        guard let portraitIndex = photos.firstIndex(where: { $0.id == portraitID }) else { return nil }
+        return portraitIndex(forMediaID: portraitID, in: photos)
+    }
+
+    static func portraitIndex(forMediaID portraitID: String, in photos: [CatalogMediaAsset]) -> Int? {
+        guard authorPortraitIDs.contains(portraitID) || portraitID == "example-photo-040",
+              let portraitIndex = photos.firstIndex(where: { $0.id == portraitID }) else { return nil }
         let postKeys = Set(photos.filter { postIDs.contains($0.id) }.map(\.storageObjectPath))
         return postKeys.contains(photos[portraitIndex].storageObjectPath) ? nil : portraitIndex
     }
@@ -296,12 +509,13 @@ struct CollectionAuthorView: View {
     private func profile(at index: Int) -> some View {
         let photoID = session.photos.indices.contains(index) ? session.photos[index].id : nil
         let pairedCreator = photoID.flatMap { session.curatedCreator(for: $0) }
-        let name = pairedCreator?.name ?? displayName ?? "Liya collection"
+        let name = photoID.map { session.curatedDisplayName(for: $0) } ?? displayName ?? "Liya collection"
         let bio = introduction ?? pairedCreator?.caption ?? ""
         let videos = session.videos.indices.filter { videoIndex in
             guard let photoID, let creator = session.curatedVideoCreators[session.videos[videoIndex].id] else { return false }
             return creator.photoID == photoID
         }
+        let videoIDs = videos.map { session.videos[$0].id }
         return ProfileDetailLayout(name: name, introduction: bio, showOptions: {
             guard let photoID else { return }
             options = CollectionSafetyTarget(mediaID: photoID, name: name, kind: .profile, ownerID: session.userID)
@@ -312,33 +526,36 @@ struct CollectionAuthorView: View {
                 Color.clear
             }
         } actions: {
-                CuratedFollowButton(id: photoID ?? "") { following, title in
-                    ProfileDetailActionLabel(title: title, style: following ? .following : .follow)
-                }.disabled(store.hiddenCollectionProfiles.contains(index))
+            if let photoID, !store.hiddenCollectionProfiles.contains(index) {
+                ProfileContactActions(recipient: .collection(index), name: name) {
+                    CuratedFollowButton(id: photoID) { following, title in
+                        ProfileDetailActionLabel(title: title, style: following ? .following : .follow)
+                    }
+                }
+            }
         } content: {
                     if store.hiddenCollectionProfiles.contains(index) {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Profile blocked").font(.headline).foregroundStyle(liyaInk)
-                            Text("Unblock this profile to see their posts again.").font(.subheadline).foregroundStyle(.secondary)
+                            Text("Profile blocked").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
+                            Text("Unblock this profile to see their posts again.").font(LiyaType.detail).foregroundStyle(.secondary)
                         }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 12)
                     } else if !videos.isEmpty {
-                            Text("Videos").font(.headline).foregroundStyle(liyaInk).padding(.top, 8)
-                            if videos.count == 1, let videoIndex = videos.first {
+                        Text("Videos").font(LiyaType.text(.headline)).foregroundStyle(liyaInk).padding(.top, 8)
+                        ForEach(videos, id: \.self) { videoIndex in
+                            VStack(alignment: .leading, spacing: 6) {
                                 Button { store.videoRequest = VideoRequest(index: videoIndex); dismiss() } label: {
                                     ProfileSingleVideoRow { CuratedVideoThumbnail(index: videoIndex) }
                                 }.buttonStyle(.plain).accessibilityLabel("Play video")
-                            } else {
-                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
-                                ForEach(videos, id: \.self) { videoIndex in
-                                    Button { store.videoRequest = VideoRequest(index: videoIndex); dismiss() } label: {
-                                        CuratedVideoThumbnail(index: videoIndex).frame(height: 145).clipped().clipShape(RoundedRectangle(cornerRadius: 10))
-                                    }.buttonStyle(.plain).accessibilityLabel("Play video")
-                                }
+                                MediaEngagementBar(mediaID: session.videos[videoIndex].id)
                             }
-                            }
+                        }
                     }
         }
-            .sheet(item: $options) { CollectionSafetySheet(target: $0) }
+        .task(id: videoIDs) {
+            guard !store.hiddenCollectionProfiles.contains(index), !videoIDs.isEmpty else { return }
+            await session.refreshMediaEngagement(ids: videoIDs)
+        }
+        .sheet(item: $options) { CollectionSafetySheet(target: $0) }
     }
 }
 
@@ -360,38 +577,6 @@ private struct CuratedVideoThumbnail: View {
                 generator.maximumSize = CGSize(width: 400, height: 400)
                 if let frame = try? await generator.image(at: .zero), !Task.isCancelled { image = UIImage(cgImage: frame.image) }
             }
-    }
-}
-
-struct CollectionProfileNote: View {
-    @EnvironmentObject private var store: LocalStore
-    @EnvironmentObject private var session: LiyaSession
-    let index: Int
-    @State private var text = ""
-    @State private var loaded = false
-    private var name: String {
-        guard session.photos.indices.contains(index) else { return "Liya collection" }
-        let id = session.photos[index].id
-        return session.curatedDisplayName(for: id)
-    }
-    var body: some View {
-        PageShell(title: "Private note") {
-            VStack(alignment: .leading, spacing: 18) {
-                NavigationLink { CollectionAuthorView(index: index) } label: {
-                    HStack(spacing: 12) {
-                        CollectionPortrait(index: index, size: 48)
-                        Text(name).font(.headline).foregroundStyle(liyaInk)
-                        Spacer(minLength: 0)
-                    }.padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 18))
-                }.buttonStyle(.plain)
-                TextField("Your note", text: $text, axis: .vertical)
-                    .lineLimit(3...10).padding(14)
-                    .background(.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 18))
-            }.padding(.top, 12)
-        }
-        .onAppear { if !loaded { text = store.messageDrafts[String(index)] ?? ""; loaded = true } }
-        .onLiyaChange(of: text) { value in if loaded { store.saveMessageDraft(value, index: index) } }
-        .onDisappear { if loaded { store.saveMessageDraft(text, index: index) } }
     }
 }
 
@@ -447,7 +632,7 @@ struct CollectionSafetySheet: View {
             if step == .received || step == .draftSaved {
                 if step == .draftSaved {
                     Text("Your report is saved in Settings under Unsent reports.")
-                        .font(.subheadline).foregroundStyle(liyaInk.opacity(0.75))
+                        .font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.75))
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 SafetySubmitButton(title: "Done") { dismiss() }
@@ -465,7 +650,7 @@ struct CollectionSafetySheet: View {
                     }
                 case .confirmBlock:
                     Text("Their photo posts will be hidden. You can unblock them in Settings.")
-                        .font(.body).foregroundStyle(liyaInk.opacity(0.8)).fixedSize(horizontal: false, vertical: true)
+                        .font(LiyaType.reading).foregroundStyle(liyaInk.opacity(0.8)).fixedSize(horizontal: false, vertical: true)
                     SafetySubmitButton(title: "Block profile", destructive: true) { setBlocked(true) }
                     SafetySecondaryButton(title: "Cancel") { step = .menu }
                 case .report:
@@ -474,7 +659,7 @@ struct CollectionSafetySheet: View {
                     EmptyView()
                 }
             } else {
-                Text("This profile is no longer available.").font(.body).foregroundStyle(liyaInk)
+                Text("This profile is no longer available.").font(LiyaType.reading).foregroundStyle(liyaInk)
                 SafetySubmitButton(title: "Done") { dismiss() }
             }
         }
@@ -483,7 +668,7 @@ struct CollectionSafetySheet: View {
 
     private var reportForm: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Choose a reason").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk)
+            Text("Choose a reason").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
             SafetyReasonList(selected: reason) { choice in
                 guard !sending, choice != reason else { return }
                 reason = choice
@@ -492,7 +677,7 @@ struct CollectionSafetySheet: View {
             }.disabled(sending)
             if failed {
                 Text("Couldn't confirm the report. Please try again.")
-                    .font(.footnote.weight(.medium)).foregroundStyle(liyaInk)
+                    .font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaInk)
                     .fixedSize(horizontal: false, vertical: true)
             }
             SafetySubmitButton(title: sending ? "Sending…" : "Send report", busy: sending,
@@ -514,7 +699,7 @@ struct CollectionSafetySheet: View {
 
     private var supportLink: some View {
         Link("Contact support", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
-            .font(.footnote.weight(.semibold)).foregroundStyle(liyaAccent)
+            .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent)
             .fixedSize(horizontal: true, vertical: false).frame(minHeight: 44)
     }
 
@@ -552,7 +737,7 @@ struct SegmentedTabs: View {
         HStack(spacing: 4) {
             ForEach(items.indices, id: \.self) { index in
                 Button { selection = index } label: {
-                    Text(LocalizedStringKey(items[index])).font(.subheadline.bold()).foregroundStyle(selection == index ? .white : liyaAccent)
+                    Text(LocalizedStringKey(items[index])).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(selection == index ? .white : liyaAccent)
                         .frame(maxWidth: .infinity).frame(minHeight: 42)
                         .background { if selection == index { Capsule().fill(liyaGradient) } }
                 }.buttonStyle(.plain).accessibilityAddTraits(selection == index ? .isSelected : [])

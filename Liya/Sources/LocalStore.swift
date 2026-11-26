@@ -105,7 +105,6 @@ final class LocalStore: ObservableObject {
         if let data = defaults.data(forKey: "liya.avatar"), let saved = try? JSONDecoder().decode(DraftAttachment.self, from: data) { avatar = saved }
     }
 
-    /// Preserve material from an earlier account without assigning it to a new local identity.
     func prepareLocalSpace(_ owner: UUID) {
         if !defaults.bool(forKey: "liya.local.legacySeparated") {
             let archive = UUID()
@@ -116,7 +115,6 @@ final class LocalStore: ObservableObject {
         restoreAccountMaterial(owner)
     }
 
-    /// Older versions kept the active drafts outside of the owner's archive.
     func identifyPreviousCloudSpace(_ savedOwner: UUID?) {
         guard activeCloudOwner == nil, !defaults.bool(forKey: "liya.local.signedIn"),
               accountMaterialKeys.contains(where: { defaults.object(forKey: $0) != nil }) else { return }
@@ -128,8 +126,6 @@ final class LocalStore: ObservableObject {
         }
     }
 
-    /// The former offline identity did not verify an email address. Preserve
-    /// its material separately rather than assigning it to a cloud account.
     func prepareCloudSpace(_ owner: UUID) {
         identifyPreviousCloudSpace(nil)
         if let previous = activeCloudOwner, previous != owner {
@@ -145,7 +141,14 @@ final class LocalStore: ObservableObject {
         defaults.set(owner.uuidString, forKey: "liya.activeCloudSpaceOwner")
     }
 
-    /// A restored credential can be switched before its local space is ever opened.
+    func earlierJournalDays(for owner: UUID) -> [JournalDayEntry] {
+        guard activeCloudOwner == owner else { return [] }
+        return entries.map { entry in
+            JournalDayEntry(journalOwnerID: owner, dayStamp: JournalDayEntry.dayKey(entry.date),
+                            entryStatus: "saved", feelingKey: entry.mood, reflectionText: entry.note)
+        }
+    }
+
     func archiveCloudSpace(leaving owner: UUID) {
         if defaults.bool(forKey: "liya.local.signedIn"),
            let raw = defaults.string(forKey: "liya.local.identity"),
@@ -157,15 +160,12 @@ final class LocalStore: ObservableObject {
         }
     }
 
-    /// Keep unsent material separate from the next account without deleting it.
     func archiveAccountMaterial(_ owner: UUID) {
         detachedOwner = owner
         let snapshot = accountMaterialKeys.reduce(into: [String: Any]()) { result, key in
             if let value = defaults.object(forKey: key) { result[key] = value }
         }
         let archiveKey = "liya.archivedAccount.\(owner.uuidString.lowercased())"
-        // Opening an account consumes its archive. A surviving archive may still
-        // contain drafts even if the restored credential has no active workspace.
         if !snapshot.isEmpty && (activeCloudOwner == owner || defaults.dictionary(forKey: archiveKey) == nil) {
             defaults.set(snapshot, forKey: archiveKey)
         }

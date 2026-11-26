@@ -1,4 +1,3 @@
--- Shared comments on curated videos. Preset comments remain clearly identified in the app.
 create table public.liya_video_comments (
   id uuid primary key,
   media_id text not null references public.liya_example_media(id) on delete cascade,
@@ -22,7 +21,6 @@ create policy video_comments_delete on public.liya_video_comments for delete to 
 create trigger liya_sync_video_comments after insert or delete on public.liya_video_comments
   for each statement execute function liya_social_private.signal_feed();
 
--- Reports retain a snapshot even if the original comment is later removed.
 create table public.liya_video_comment_reports (
   id uuid primary key,
   reporter_id uuid not null references auth.users(id) on delete cascade,

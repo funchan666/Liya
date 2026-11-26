@@ -4,13 +4,7 @@ struct ComposeHome: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.liyaTabBarClearance) private var tabBarClearance
     @EnvironmentObject private var store: LocalStore
-    @EnvironmentObject private var session: LiyaSession
-    @EnvironmentObject private var social: SocialStore
     @State private var savedMessage: String?
-    @State private var publishing = false
-    @State private var showCommunitySetup = false
-    @AppStorage("liya.postAttempt") private var postAttempt = ""
-    @AppStorage("liya.postFingerprint") private var postFingerprint = ""
     let showsBackButton: Bool
 
     init(showsBackButton: Bool = false) {
@@ -20,10 +14,10 @@ struct ComposeHome: View {
     private var hasContent: Bool {
         !store.composeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !store.composeAttachments.isEmpty
     }
-    private var canShare: Bool {
-        !publishing && !store.composeLoading && !social.loading && store.composeText.count <= 4000 && hasContent
+    private var canKeepMoment: Bool {
+        !store.composeLoading && store.composeText.count <= 4000 && hasContent
     }
-    private var canSave: Bool { !publishing && !store.composeLoading && hasContent }
+    private var canSave: Bool { !store.composeLoading && hasContent }
 
     var body: some View {
         ZStack {
@@ -46,50 +40,47 @@ struct ComposeHome: View {
                         Image("publish-title").resizable().scaledToFit().frame(width: 150, height: 46).accessibilityLabel("Create")
                     }
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Share a moment").font(.title3.bold()).foregroundStyle(liyaInk)
+                        Text("Keep a moment").font(LiyaType.text(.title3, weight: .bold)).foregroundStyle(liyaInk)
                         TextField("What's on your mind?", text: Binding(get: { store.composeText }, set: { store.composeText = $0; savedMessage = nil }), axis: .vertical)
                             .lineLimit(5...12).padding(16)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 16))
-                            .disabled(publishing)
                         if store.composeText.count > 4000 {
                             Text("Please keep your post under 4,000 characters.")
-                                .font(.footnote).foregroundStyle(.red)
+                                .font(LiyaType.text(.footnote)).foregroundStyle(.red)
                         }
                     }
-                    PostTagSelector(selection: $store.composeTags).disabled(publishing)
-                    DraftMediaPicker(attachments: $store.composeAttachments, loading: $store.composeLoading, note: "Add up to 9 photos or videos.", compactButtons: true).disabled(publishing)
-                    if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
+                    PostTagSelector(selection: $store.composeTags)
+                    DraftMediaPicker(attachments: $store.composeAttachments, loading: $store.composeLoading, note: "Add up to 9 photos or videos.", compactButtons: true)
                     Button {
                         store.saveDraft(store.composeText.trimmingCharacters(in: .whitespacesAndNewlines), attachments: store.composeAttachments, published: true, tags: store.composeTags)
                         store.composeText = ""; store.composeAttachments = []; store.composeTags = []; savedMessage = "Moment saved."
                     } label: {
                         HStack(spacing: 8) {
-                            if publishing { LiyaLoadingIndicator(size: 24) }
-                            else { Image("profile-home-posts").resizable().scaledToFit().frame(width: 34, height: 34).accessibilityHidden(true) }
-                            Text(LocalizedStringKey(publishing ? "Saving…" : "Save moment")).font(.subheadline.weight(.bold))
-                        }.foregroundStyle(canShare ? Color.white : liyaInk.opacity(0.58))
+                            Image("profile-home-posts").resizable().scaledToFit().frame(width: 34, height: 34).accessibilityHidden(true)
+                            Text("Save moment").font(LiyaType.text(.subheadline, weight: .bold))
+                        }.foregroundStyle(canKeepMoment ? Color.white : liyaInk.opacity(0.58))
                             .frame(maxWidth: .infinity, minHeight: 56)
                             .background {
-                                if canShare { RoundedRectangle(cornerRadius: 18).fill(liyaGradient) }
+                                if canKeepMoment { RoundedRectangle(cornerRadius: 18).fill(liyaGradient) }
                                 else { RoundedRectangle(cornerRadius: 18).fill(Color.white.opacity(0.82)) }
                             }
-                            .overlay(RoundedRectangle(cornerRadius: 18).stroke(liyaAccent.opacity(canShare ? 0 : 0.15), lineWidth: 1))
-                    }.buttonStyle(.plain).disabled(!canShare)
+                            .overlay(RoundedRectangle(cornerRadius: 18).stroke(liyaAccent.opacity(canKeepMoment ? 0 : 0.15), lineWidth: 1))
+                    }.buttonStyle(.plain).disabled(!canKeepMoment)
                     Button {
                         store.saveDraft(store.composeText.trimmingCharacters(in: .whitespacesAndNewlines), attachments: store.composeAttachments, tags: store.composeTags)
                         store.composeText = ""; store.composeAttachments = []; store.composeTags = []; savedMessage = "Draft saved."
                     } label: {
                         HStack(spacing: 8) {
                             Image("profile-home-edit").resizable().scaledToFit().frame(width: 34, height: 34).accessibilityHidden(true)
-                            Text("Save draft").font(.subheadline.weight(.semibold))
+                            Text("Save draft").font(LiyaType.text(.subheadline, weight: .semibold))
                         }.foregroundStyle(canSave ? liyaAccent : liyaInk.opacity(0.58))
                             .frame(maxWidth: .infinity, minHeight: 56)
                             .background(.white.opacity(0.82), in: RoundedRectangle(cornerRadius: 18))
                             .overlay(RoundedRectangle(cornerRadius: 18).stroke(liyaAccent.opacity(canSave ? 0.23 : 0.10), lineWidth: 1))
                     }.buttonStyle(.plain)
                         .disabled(!canSave)
-                    if let savedMessage { Text(savedMessage).font(.footnote).foregroundStyle(liyaAccent) }
+                    if let savedMessage { Text(savedMessage).font(LiyaType.text(.footnote)).foregroundStyle(liyaAccent) }
                     NavigationLink { DraftsView() } label: {
                         HStack { Text("Your drafts").fontWeight(.semibold); Spacer(); Text("\(store.drafts.filter { $0.publishedLocally != true }.count)") }
                             .foregroundStyle(liyaInk).padding(16).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
@@ -98,7 +89,6 @@ struct ComposeHome: View {
             }.scrollDismissesKeyboard(.interactively)
             }
         }.navigationBarHidden(true)
-            .navigationDestination(isPresented: $showCommunitySetup) { CommunityJoinView() }
     }
 }
 
@@ -108,13 +98,12 @@ struct DraftsView: View {
     @EnvironmentObject private var social: SocialStore
     @State private var deletingDraft: MomentDraft?
     @State private var previewVideo: DraftAttachment?
-    @State private var publishingDraft: UUID?
     private var unpublished: [MomentDraft] { store.drafts.filter { $0.publishedLocally != true } }
     var body: some View {
         PageShell(title: "Your drafts") {
             VStack(spacing: 12) {
                 OfflineNote(text: "Drafts are private and aren't synced to your account.")
-                if let error = social.error { Text(error).font(.footnote).foregroundStyle(.red) }
+                if let error = social.error { Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
                 if unpublished.isEmpty {
                     EmptyState(title: "No drafts yet", detail: "Save a thought to find it here later.")
                 } else {
@@ -130,16 +119,16 @@ struct DraftsView: View {
                                 } } }
                             }
                             HStack {
-                                Text(draft.date, style: .date).font(.caption).foregroundStyle(.secondary)
+                                Text(draft.date, style: .date).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
                                 Spacer()
-                                NavigationLink("Edit") { EditDraftView(draft: draft) }.font(.footnote.bold()).foregroundStyle(liyaAccent)
+                                NavigationLink("Edit") { EditDraftView(draft: draft) }.font(LiyaType.text(.footnote, weight: .bold)).foregroundStyle(liyaAccent)
                                 Button("Save moment") { store.publishLocally(draft.id) }
-                                    .font(.footnote.bold()).foregroundStyle(liyaAccent)
-                                Button("Delete") { deletingDraft = draft }.font(.footnote.bold()).foregroundStyle(liyaAccent)
+                                    .font(LiyaType.text(.footnote, weight: .bold)).foregroundStyle(liyaAccent)
+                                Button("Delete") { deletingDraft = draft }.font(LiyaType.text(.footnote, weight: .bold)).foregroundStyle(liyaAccent)
                             }
                             if isShared(draft), let owner = session.userID,
                                let status = social.moderationText(kind: "post", id: SocialAttempt.draftPostID(owner: owner, draft: draft)) {
-                                Text(status).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                                Text(status).font(LiyaType.text(.footnote)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                             }
                         }.padding(16).background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 14))
                     }
@@ -212,13 +201,14 @@ struct MessagesHome: View {
             LiyaBackground()
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Image("message-title").resizable().scaledToFit().frame(width: 160, height: 46).accessibilityLabel("Messages")
+                    ViewThatFits(in: .horizontal) {
+                        HStack { inboxTitle; Spacer(minLength: 14); membersLink }
+                        VStack(alignment: .leading, spacing: 8) { inboxTitle; membersLink }
+                    }
                     SegmentedTabs(items: ["Message", "Interaction"], selection: $section)
                     if section == 0 {
-                        if messageIndexes.isEmpty {
-                            EmptyState(title: "No messages yet", detail: "")
-                        }
-                        if !messageIndexes.isEmpty { Text("Private notes").font(.headline).foregroundStyle(liyaInk) }
+                        CommunityInboxThreads(hasDrafts: !messageIndexes.isEmpty)
+                        if !messageIndexes.isEmpty { Text("Drafts").font(LiyaType.sectionHeading).foregroundStyle(liyaInk) }
                         ForEach(messageIndexes, id: \.self) { index in
                             HStack(spacing: 12) {
                                 NavigationLink { CollectionAuthorView(index: index) } label: {
@@ -226,14 +216,14 @@ struct MessagesHome: View {
                                 }.buttonStyle(.plain).accessibilityLabel("View profile")
                                 VStack(alignment: .leading, spacing: 4) {
                                     NavigationLink { CollectionAuthorView(index: index) } label: {
-                                            Text(verbatim: collectionName(index)).font(.subheadline.bold()).foregroundStyle(liyaInk)
+                                            Text(verbatim: collectionName(index)).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(liyaInk)
                                     }.buttonStyle(.plain)
-                                    NavigationLink { CollectionProfileNote(index: index) } label: {
-                                            Text("Draft · \(store.messageDrafts[String(index)] ?? "")").font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                                    NavigationLink { CommunityConversationView(collectionIndex: index, displayName: collectionName(index)) } label: {
+                                            Text("Draft · \(store.messageDrafts[String(index)] ?? "")").font(LiyaType.text(.caption)).foregroundStyle(.secondary).lineLimit(2)
                                     }.buttonStyle(.plain)
                                 }
                                 Spacer()
-                                NavigationLink("Open") { CollectionProfileNote(index: index) }.font(.caption.bold()).foregroundStyle(liyaAccent)
+                                NavigationLink("Open") { CommunityConversationView(collectionIndex: index, displayName: collectionName(index)) }.font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent)
                                 Button { deleteMessage = DraftMessageSelection(id: index) } label: {
                                     Image("close").resizable().scaledToFit().frame(width: 22, height: 22).frame(width: 44, height: 44)
                                 }.buttonStyle(.plain).accessibilityLabel("Delete message draft")
@@ -242,10 +232,10 @@ struct MessagesHome: View {
                     } else {
                         CommunityActivityView(hasLocalActivity: hasLocalActivity || !session.likesReady)
                         if hasLocalActivity {
-                            Text("Your activity").font(.headline).foregroundStyle(liyaInk).padding(.top, 4)
+                            Text("Your activity").font(LiyaType.text(.headline)).foregroundStyle(liyaInk).padding(.top, 4)
                         }
                         if let error = session.likesError {
-                            Text(error).font(.footnote).foregroundStyle(.red)
+                            Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.red)
                             Button("Retry likes") { Task { await session.refreshLikes() } }.foregroundStyle(liyaAccent)
                         }
                         ForEach(session.photos.indices, id: \.self) { index in
@@ -280,12 +270,29 @@ struct MessagesHome: View {
                     await social.refreshNotifications(session)
                 }
             }
+        }.task(id: session.userID) {
+            if session.userID != nil { await social.refreshMessages(session) }
         }.navigationBarHidden(true).sheet(item: $deleteMessage) { item in
             LocalConfirmation(title: "Delete message draft?", message: "This unsent draft will be permanently removed.", action: "Delete") {
                 store.saveMessageDraft("", index: item.id); deleteMessage = nil
             } cancel: { deleteMessage = nil }
             .presentationDetents([.medium])
         }
+    }
+
+    private var inboxTitle: some View {
+        Image("message-title").resizable().scaledToFit().frame(width: 160, height: 46).accessibilityLabel("Messages")
+    }
+
+    private var membersLink: some View {
+        NavigationLink { CommunityMembersView() } label: {
+            HStack(spacing: 6) {
+                Image("profile-home-people").resizable().scaledToFit().frame(width: 24, height: 24).accessibilityHidden(true)
+                Text("Members").font(LiyaType.text(.subheadline, weight: .bold))
+            }
+            .foregroundStyle(liyaInk).padding(.horizontal, 12).frame(minHeight: 44)
+            .modifier(ContactBarSurface())
+        }.buttonStyle(.plain)
     }
 
     private func collectionName(_ index: Int) -> String {
@@ -301,14 +308,14 @@ struct MessagesHome: View {
             }.buttonStyle(.plain).accessibilityLabel("View \(collectionName(index)) profile")
             VStack(alignment: .leading, spacing: 4) {
                 NavigationLink { CollectionAuthorView(index: index, displayName: collectionName(index)) } label: {
-                    Text(collectionName(index)).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk).lineLimit(1)
+                    Text(collectionName(index)).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk).lineLimit(1)
                 }.buttonStyle(.plain)
                 NavigationLink {
                     photoActivityDestination(index: index, note: note)
                 } label: {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(title).font(.caption.weight(.medium)).foregroundStyle(.secondary)
-                        if let note { Text(note).font(.caption).foregroundStyle(liyaInk).lineLimit(2) }
+                        Text(title).font(LiyaType.text(.caption, weight: .medium)).foregroundStyle(.secondary)
+                        if let note { Text(note).font(LiyaType.text(.caption)).foregroundStyle(liyaInk).lineLimit(2) }
                     }.frame(maxWidth: .infinity, minHeight: 38, alignment: .leading).contentShape(Rectangle())
                 }.buttonStyle(.plain)
             }.frame(maxWidth: .infinity, alignment: .leading)
@@ -347,15 +354,15 @@ struct MessagesHome: View {
             VStack(alignment: .leading, spacing: 4) {
                 if let avatarIndex {
                     NavigationLink { CollectionAuthorView(index: avatarIndex, displayName: authorName, mediaID: creator?.photoID) } label: {
-                        Text(authorName).font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk).lineLimit(1)
+                        Text(authorName).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk).lineLimit(1)
                     }.buttonStyle(.plain)
                 } else {
-                    Text("Liya collection").font(.subheadline.weight(.semibold)).foregroundStyle(liyaInk).lineLimit(1)
+                    Text("Liya collection").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk).lineLimit(1)
                 }
                 Button { store.videoRequest = VideoRequest(index: index, openNotes: note != nil) } label: {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(title).font(.caption.weight(.medium)).foregroundStyle(.secondary)
-                        if let note { Text(note).font(.caption).foregroundStyle(liyaInk).lineLimit(2) }
+                        Text(title).font(LiyaType.text(.caption, weight: .medium)).foregroundStyle(.secondary)
+                        if let note { Text(note).font(LiyaType.text(.caption)).foregroundStyle(liyaInk).lineLimit(2) }
                     }.frame(maxWidth: .infinity, minHeight: 38, alignment: .leading).contentShape(Rectangle())
                 }.buttonStyle(.plain)
             }.frame(maxWidth: .infinity, alignment: .leading)
