@@ -19,3 +19,7 @@ Take a quiet minute with three prompts about what you can see, hear, and feel. K
 Explore the collection of photographs and short videos. Follow the profiles you enjoy, leave a like, or comment on a detail that caught your eye. Members who follow each other can exchange private messages, photos, and videos. You can report a comment or block a member from inside Liya.
 
 Daybreak postcard paper is included. Spend coins on Tideglass paper, the Mood Prism diary palette, or the Profile Glow accent. Your welcome coins cover all three styles. Additional coin packs are optional.
+
+## App Review Notes
+
+To test streaming over a cellular connection, open this [12-second excerpt from the coastal video in Liya](https://hymfjhuglaqoftrcxfjx.supabase.co/storage/v1/object/public/liya-playback-samples/coast.mp4).

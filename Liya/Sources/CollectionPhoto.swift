@@ -6,13 +6,11 @@ struct CollectionPhoto: View {
     let catalogIndex: Int
     var contentMode: ContentMode = .fit
     var avatarName: String? = nil
-    @State private var url: URL?
-    @State private var failed = false
 
     var body: some View {
         Group {
-            if let url {
-                NetworkPhoto(url: url) { phase in
+            if let media = session.collectionMedia(in: session.photos, at: catalogIndex) {
+                NetworkPhoto(media: media) { phase in
                     switch phase {
                     case .success(let image): image.resizable().aspectRatio(contentMode: contentMode)
                     case .failure: unavailable
@@ -20,19 +18,11 @@ struct CollectionPhoto: View {
                     @unknown default: unavailable
                     }
                 }
-            } else if failed {
+            } else if session.catalogHasLoaded || session.catalogError != nil {
                 unavailable
             } else {
                 placeholder
             }
-        }
-        .task(id: "\(session.imageGeneration)-\(catalogIndex)") {
-            url = nil; failed = false
-            do {
-                let signedURL = try await session.mediaURL(kind: "photo", index: catalogIndex)
-                guard !Task.isCancelled else { return }
-                url = signedURL
-            } catch { if !Task.isCancelled { failed = true } }
         }
     }
 

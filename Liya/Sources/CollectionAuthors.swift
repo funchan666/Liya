@@ -579,11 +579,14 @@ private struct CuratedVideoThumbnail: View {
         }.frame(maxWidth: .infinity, maxHeight: .infinity).clipped()
             .task(id: "\(session.catalogGeneration)-\(index)") {
                 image = nil
-                guard let url = try? await session.mediaURL(kind: "video", index: index), !Task.isCancelled else { return }
-                let generator = AVAssetImageGenerator(asset: AVURLAsset(url: url))
+                guard let file = session.collectionMedia(in: session.videos, at: index),
+                      let asset = try? session.movieReader.asset(for: file) else { return }
+                let generator = AVAssetImageGenerator(asset: asset)
                 generator.appliesPreferredTrackTransform = true
                 generator.maximumSize = CGSize(width: 400, height: 400)
-                if let frame = try? await generator.image(at: .zero), !Task.isCancelled { image = UIImage(cgImage: frame.image) }
+                if let frame = try? await generator.image(at: .zero), !Task.isCancelled, session.userID == file.viewer {
+                    image = UIImage(cgImage: frame.image)
+                }
             }
     }
 }

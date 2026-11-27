@@ -42,12 +42,6 @@ struct SocialAvatar: View {
     @EnvironmentObject private var social: SocialStore
     let personID: UUID
     var commentAuthor: SocialPerson? = nil
-    private struct PortraitSource: Equatable {
-        let viewer: UUID
-        let member: UUID
-        let path: String
-    }
-    @State private var signedPortrait: (source: PortraitSource, url: URL)?
 
     private var person: SocialPerson? {
         guard let viewer = session.userID, viewer == social.connectionsOwner, !social.blocked.contains(personID) else { return nil }
@@ -55,10 +49,10 @@ struct SocialAvatar: View {
         return social.person(personID)
     }
 
-    private var source: PortraitSource? {
-        guard let viewer = session.userID, let path = person?.avatarPath,
+    private var portrait: LiyaMediaFile? {
+        guard let path = person?.avatarPath,
               path.hasPrefix(personID.uuidString.lowercased() + "/avatars/") else { return nil }
-        return PortraitSource(viewer: viewer, member: personID, path: path)
+        return session.memberMedia(path: path)
     }
 
     @ViewBuilder private var placeholder: some View {
@@ -71,19 +65,13 @@ struct SocialAvatar: View {
 
     var body: some View {
         Group {
-            if let source, let signedPortrait, signedPortrait.source == source {
-                NetworkPhoto(url: signedPortrait.url) { phase in
+            if let portrait {
+                NetworkPhoto(media: portrait) { phase in
                     if let image = phase.image { image.resizable().scaledToFill() }
                     else { placeholder }
-                }.id(signedPortrait.url)
+                }
             } else { placeholder }
         }.clipped().accessibilityHidden(true)
-            .task(id: source) { [source] in
-                signedPortrait = nil
-                guard let source, let url = try? await social.mediaURL(session, path: source.path),
-                      !Task.isCancelled, source.viewer == session.userID else { return }
-                signedPortrait = (source, url)
-            }
     }
 }
 
@@ -892,39 +880,33 @@ struct SocialMediaStrip: View {
 struct SocialMediaThumbnail: View {
     @Environment(\.liyaWords) private var words
     @EnvironmentObject private var session: LiyaSession
-    @EnvironmentObject private var social: SocialStore
     let item: SocialMediaItem
-    @State private var url: URL?
-    @State private var videoCover: UIImage?
-    @State private var failed = false
+    private var media: LiyaMediaFile? { session.memberMedia(path: item.path) }
+    @State private var videoCover: (file: LiyaMediaFile, image: UIImage)?
     init(item: SocialMediaItem) { self.item = item }
     var body: some View {
         ZStack {
             Color.black.opacity(0.08)
             if item.kind == "video" {
-                if let videoCover { Image(uiImage: videoCover).resizable().scaledToFill() }
+                if let videoCover, videoCover.file == media { Image(uiImage: videoCover.image).resizable().scaledToFill() }
                 HostedArtwork("play", labelWhileMissing: "Play video").scaledToFit().frame(width: 44, height: 44)
             }
-            else if let url {
-                NetworkPhoto(url: url) { phase in
+            else if let media {
+                NetworkPhoto(media: media) { phase in
                     if let image = phase.image { image.resizable().scaledToFill() }
                     else if phase.error != nil { Text(verbatim: words("Photo unavailable")).font(LiyaType.text(.caption)) }
                     else { Color.clear }
                 }
-            } else if failed { Text(verbatim: words("Photo unavailable")).font(LiyaType.text(.caption)) }
-        }.task(id: item.path) {
-            videoCover = nil; url = nil; failed = false
-            do {
-                let value = try await social.mediaURL(session, path: item.path)
-                guard !Task.isCancelled else { return }
-                if item.kind == "video" {
-                    let generator = AVAssetImageGenerator(asset: AVURLAsset(url: value))
-                    generator.appliesPreferredTrackTransform = true
-                    generator.maximumSize = CGSize(width: 400, height: 400)
-                    if let frame = try? await generator.image(at: .zero), !Task.isCancelled { videoCover = UIImage(cgImage: frame.image) }
-                } else { url = value }
+            } else { Text(verbatim: words("Photo unavailable")).font(LiyaType.text(.caption)) }
+        }.task(id: media) {
+            videoCover = nil
+            guard item.kind == "video", let media, let asset = try? session.movieReader.asset(for: media) else { return }
+            let generator = AVAssetImageGenerator(asset: asset)
+            generator.appliesPreferredTrackTransform = true
+            generator.maximumSize = CGSize(width: 400, height: 400)
+            if let frame = try? await generator.image(at: .zero), !Task.isCancelled, session.userID == media.viewer {
+                videoCover = (media, UIImage(cgImage: frame.image))
             }
-            catch { if !Task.isCancelled { failed = true } }
         }
     }
 }
@@ -932,11 +914,11 @@ struct SocialMediaThumbnail: View {
 struct SocialMediaPreview: View {
     @Environment(\.liyaWords) private var words
     @EnvironmentObject private var session: LiyaSession
-    @EnvironmentObject private var social: SocialStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var phase
     let item: SocialMediaItem
-    @State private var url: URL?
+    private var media: LiyaMediaFile? { session.memberMedia(path: item.path) }
+    @State private var playingFile: LiyaMediaFile?
     @State private var player: AVPlayer?
     @State private var failed = false
     @State private var playing = false
@@ -944,12 +926,12 @@ struct SocialMediaPreview: View {
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            if let player {
+            if let player, playingFile == media {
                 PlayerView(player: player).frame(maxWidth: .infinity, maxHeight: .infinity)
                     .ignoresSafeArea(.container).accessibilityHidden(true)
             }
-            else if let url {
-                NetworkPhoto(url: url) { phase in
+            else if item.kind != "video", let media {
+                NetworkPhoto(media: media) { phase in
                     if let image = phase.image { image.resizable().scaledToFit() }
                     else if phase.error != nil { Text(verbatim: words("Media unavailable")).foregroundStyle(.white) }
                     else { Text(verbatim: words("Loading…")).foregroundStyle(.white) }
@@ -973,11 +955,21 @@ struct SocialMediaPreview: View {
                     }
                 }.buttonStyle(.plain).padding(20).frame(width: size.width, height: size.height)
             }
-        }.task {
+        }.task(id: media) {
+            player?.pause()
+            player = nil
+            playingFile = nil
+            playing = false
+            failed = false
+            guard let media else { failed = true; return }
+            guard item.kind == "video" else { return }
             do {
-                let value = try await social.mediaURL(session, path: item.path)
-                guard !Task.isCancelled else { return }
-                if item.kind == "video" { player = AVPlayer(url: value) } else { url = value }
+                let asset = try session.movieReader.asset(for: media)
+                let playable = try await asset.load(.isPlayable)
+                guard !Task.isCancelled, session.userID == media.viewer else { return }
+                guard playable else { failed = true; return }
+                playingFile = media
+                player = AVPlayer(playerItem: AVPlayerItem(asset: asset))
             } catch { if !Task.isCancelled { failed = true } }
         }.onLiyaChange(of: phase) { if $0 != .active { player?.pause(); playing = false } }
             .onReceive(NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime)) { notification in

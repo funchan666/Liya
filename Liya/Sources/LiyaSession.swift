@@ -45,7 +45,11 @@ final class LiyaSession: ObservableObject {
     @Published private(set) var moodError: String?
     @Published private(set) var moodLoading = false
     @Published private(set) var profile: CloudProfile?
-    @Published private(set) var profileAvatarURL: URL?
+    var profileAvatar: LiyaMediaFile? {
+        guard let profile, profile.id == userID, let path = profile.avatarPath else { return nil }
+        return memberMedia(path: path)
+    }
+    lazy var movieReader = LiyaMovieReader(session: self)
     @Published private(set) var profileError: String?
     @Published private(set) var profileLoading = false
     @Published private(set) var likedMediaIDs: Set<String> = []
@@ -410,11 +414,43 @@ final class LiyaSession: ObservableObject {
         }
     }
 
-    func mediaURL(kind: String, index: Int) async throws -> URL {
-        let media = kind == "photo" ? photos : videos
-        guard media.indices.contains(index) else { throw SessionError.mediaUnavailable }
-        return try await client.storage.from("liya-example-media")
-            .createSignedURL(path: media[index].storageObjectPath, expiresIn: 3600)
+    func collectionMedia(in catalog: [CatalogMediaAsset], at index: Int) -> LiyaMediaFile? {
+        guard catalog.indices.contains(index) else { return nil }
+        return LiyaMediaFile(bucket: .collection, path: catalog[index].storageObjectPath, viewer: userID)
+    }
+
+    func memberMedia(path: String) -> LiyaMediaFile? {
+        LiyaMediaFile(bucket: .member, path: path, viewer: userID)
+    }
+
+    func mediaResponse(for file: LiyaMediaFile, range: ClosedRange<Int64>? = nil) async throws -> (Data, HTTPURLResponse) {
+        guard userID == file.viewer else { throw CancellationError() }
+        var request = URLRequest(url: file.storageURL)
+        request.setValue(Self.publishableKey, forHTTPHeaderField: "apikey")
+        if let range {
+            request.setValue("bytes=\(range.lowerBound)-\(range.upperBound)", forHTTPHeaderField: "Range")
+            request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
+        }
+        var identity = try await client.auth.session
+        for attempt in 0...1 {
+            guard userID == file.viewer, !isSigningOut, !isDeletingAccount,
+                  identity.user.id == file.viewer, !identity.user.isAnonymous else { throw CancellationError() }
+            request.setValue("Bearer \(identity.accessToken)", forHTTPHeaderField: "Authorization")
+            let (bytes, reply) = try await LiyaMediaNetwork.response(for: request)
+            try Task.checkCancellation()
+            guard userID == file.viewer, !isSigningOut, !isDeletingAccount,
+                  let current = client.auth.currentSession, current.user.id == file.viewer else { throw CancellationError() }
+            if attempt == 0, reply.statusCode == 401 {
+                if current.accessToken == identity.accessToken { identity = try await client.auth.refreshSession() }
+                else { identity = try await client.auth.session }
+                continue
+            }
+            guard reply.statusCode == 200 || (range != nil && (reply.statusCode == 206 || reply.statusCode == 416)) else {
+                throw URLError(.badServerResponse)
+            }
+            return (bytes, reply)
+        }
+        throw URLError(.userAuthenticationRequired)
     }
 
     func resumeAccount() async {
@@ -442,13 +478,13 @@ final class LiyaSession: ObservableObject {
             request.httpBody = try JSONEncoder().encode(["request_id": requestID.uuidString])
             let config = URLSessionConfiguration.ephemeral
             config.timeoutIntervalForRequest = 90; config.timeoutIntervalForResource = 120
-            let connection = URLSession(configuration: config, delegate: DeleteRedirectGuard(), delegateQueue: nil)
+            let connection = URLSession(configuration: config, delegate: LiyaRedirectGuard(), delegateQueue: nil)
             defer { connection.invalidateAndCancel() }
             let (data, reply) = try await connection.data(for: request)
             let result = try JSONDecoder().decode(DeletionResponse.self, from: data)
             guard let http = reply as? HTTPURLResponse, (200..<300).contains(http.statusCode), result.code == 0, result.data.status == "deleted" else { throw SessionError.deletionUnconfirmed }
             userID = nil
-            profile = nil; profileAvatarURL = nil; moodEntries = []; treeEntries = []
+            profile = nil; moodEntries = []; treeEntries = []
             photos = []; videos = []; curatedVideoCreators = [:]; curatedTreePrompts = []
             catalogGeneration = UUID(); imageGeneration = UUID()
             try? await client.auth.signOut(scope: .local)
@@ -487,7 +523,7 @@ final class LiyaSession: ObservableObject {
             serverConfirmed = false
         }
         userID = nil
-        profile = nil; profileAvatarURL = nil; moodEntries = []; treeEntries = []
+        profile = nil; moodEntries = []; treeEntries = []
         photos = []; videos = []; curatedVideoCreators = [:]; curatedTreePrompts = []
         catalogGeneration = UUID(); imageGeneration = UUID()
         likesReady = false; likesError = nil
@@ -561,12 +597,8 @@ final class LiyaSession: ObservableObject {
             let value: CloudProfile = try await client.from("liya_profiles")
                 .select("id,display_name,signature,tags,avatar_path")
                 .eq("id", value: owner.uuidString).single().execute().value
-            let url: URL?
-            if let path = value.avatarPath {
-                url = try await client.storage.from("liya-user-media").createSignedURL(path: path, expiresIn: 3600)
-            } else { url = nil }
             guard userID == owner, profileGeneration == generation else { return }
-            profile = value; profileAvatarURL = url
+            profile = value
         } catch {
             if userID == owner && profileGeneration == generation { profileError = "Couldn't load your profile. Please try again." }
         }
@@ -591,11 +623,7 @@ final class LiyaSession: ObservableObject {
                 .eq("id", value: owner.uuidString).select("id,display_name,signature,tags,avatar_path").single().execute().value
             guard userID == owner else { return false }
             profile = saved
-            profileAvatarURL = nil
             profileError = nil
-            if let path = saved.avatarPath {
-                profileAvatarURL = try? await client.storage.from("liya-user-media").createSignedURL(path: path, expiresIn: 3600)
-            }
             return true
         } catch {
             profileError = "Couldn't save your profile. Please try again."
@@ -1083,7 +1111,7 @@ private struct CuratedFollowWrite: Encodable {
     let is_following: Bool
 }
 
-private enum SessionError: Error { case invalidBootstrap, savedSessionUnavailable, mediaUnavailable, moodUnavailable, treeUnavailable, deletionUnconfirmed }
+private enum SessionError: Error { case invalidBootstrap, savedSessionUnavailable, moodUnavailable, treeUnavailable, deletionUnconfirmed }
 
 private struct DeletionResponse: Decodable {
     struct Result: Decodable { let status: String }
@@ -1091,7 +1119,7 @@ private struct DeletionResponse: Decodable {
     let data: Result
 }
 
-private final class DeleteRedirectGuard: NSObject, URLSessionTaskDelegate {
+final class LiyaRedirectGuard: NSObject, URLSessionTaskDelegate {
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
         completionHandler(nil)
     }

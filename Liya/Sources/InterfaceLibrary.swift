@@ -21,27 +21,38 @@ enum LiyaMediaNetwork {
         return URLSession(configuration: config)
     }()
 
-    static func data(at url: URL, digest: String? = nil) async throws -> Data {
-        guard url.scheme == "https", url.host == projectURL.host else { throw URLError(.badURL) }
+    static func response(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        guard let url = request.url, url.scheme == projectURL.scheme, url.host == projectURL.host,
+              url.port == projectURL.port else { throw URLError(.badURL) }
+        let authenticated = request.value(forHTTPHeaderField: "Authorization") != nil
+        guard !authenticated || url.path.hasPrefix("/storage/v1/object/authenticated/") else { throw URLError(.badURL) }
+        let redirectGuard: LiyaRedirectGuard? = authenticated ? LiyaRedirectGuard() : nil
         for attempt in 0...1 {
             do {
-                let (data, response) = try await session.data(from: url)
-                guard let http = response as? HTTPURLResponse, http.url?.scheme == "https",
-                      http.url?.host == projectURL.host else { throw URLError(.badServerResponse) }
+                try Task.checkCancellation()
+                let (data, response) = try await session.data(for: request, delegate: redirectGuard)
+                guard let http = response as? HTTPURLResponse, http.url?.scheme == projectURL.scheme,
+                      http.url?.host == projectURL.host, http.url?.port == projectURL.port,
+                      !authenticated || http.url == url else { throw URLError(.badServerResponse) }
                 if attempt == 0, http.statusCode == 429 || (500...599).contains(http.statusCode) {
                     try await Task.sleep(nanoseconds: 700_000_000)
                     continue
                 }
-                guard (200..<300).contains(http.statusCode), !data.isEmpty else { throw URLError(.badServerResponse) }
-                if let digest, SHA256.hash(data: data).map({ String(format: "%02x", $0) }).joined() != digest {
-                    throw URLError(.cannotDecodeContentData)
-                }
-                return data
+                return (data, http)
             } catch let error as URLError where attempt == 0 && (error.code == .timedOut || error.code == .networkConnectionLost) {
                 try await Task.sleep(nanoseconds: 700_000_000)
             }
         }
         throw URLError(.badServerResponse)
+    }
+
+    static func data(at url: URL, digest: String? = nil) async throws -> Data {
+        let (data, reply) = try await response(for: URLRequest(url: url))
+        guard (200..<300).contains(reply.statusCode), !data.isEmpty else { throw URLError(.badServerResponse) }
+        if let digest, SHA256.hash(data: data).map({ String(format: "%02x", $0) }).joined() != digest {
+            throw URLError(.cannotDecodeContentData)
+        }
+        return data
     }
 }
 
@@ -258,29 +269,33 @@ struct HostedArtwork: View {
 }
 
 struct NetworkPhoto<Content: View>: View {
-    let url: URL?
+    let media: LiyaMediaFile
     @ViewBuilder let content: (AsyncImagePhase) -> Content
+    @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var library: InterfaceLibrary
     @Environment(\.scenePhase) private var scenePhase
-    @State private var loadedURL: URL?
+    @State private var loadedMedia: LiyaMediaFile?
+    @State private var loadedGeneration: UUID?
     @State private var result: AsyncImagePhase = .empty
 
-    init(url: URL?, @ViewBuilder content: @escaping (AsyncImagePhase) -> Content) {
-        self.url = url
+    init(media: LiyaMediaFile, @ViewBuilder content: @escaping (AsyncImagePhase) -> Content) {
+        self.media = media
         self.content = content
     }
 
     var body: some View {
-        content(loadedURL == url ? result : .empty)
-            .task(id: "\(url?.absoluteString ?? "")/\(library.connectionRevision)/\(scenePhase == .background)") {
-                guard scenePhase != .background, let url else { return }
-                if loadedURL == url, result.image != nil { return }
-                loadedURL = url
+        content(loadedMedia == media && loadedGeneration == session.imageGeneration && session.userID == media.viewer ? result : .empty)
+            .task(id: "\(media.viewer)/\(media.bucket.rawValue)/\(media.path)/\(session.imageGeneration)/\(library.connectionRevision)/\(scenePhase == .background)") {
+                guard scenePhase != .background, session.userID == media.viewer else { return }
+                let generation = session.imageGeneration
+                if loadedMedia == media, loadedGeneration == generation, result.image != nil { return }
+                loadedMedia = media
+                loadedGeneration = generation
                 result = .empty
                 do {
-                    let bytes = try await LiyaMediaNetwork.data(at: url)
+                    let (bytes, _) = try await session.mediaResponse(for: media)
                     guard let image = UIImage(data: bytes) else { throw URLError(.cannotDecodeContentData) }
-                    guard !Task.isCancelled else { return }
+                    guard !Task.isCancelled, session.userID == media.viewer, session.imageGeneration == generation else { return }
                     result = .success(Image(uiImage: image))
                 } catch {
                     if !Task.isCancelled { result = .failure(error) }

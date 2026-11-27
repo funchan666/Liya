@@ -29,11 +29,10 @@ final class VideoPreview: ObservableObject {
         loadTask = Task { [weak self, weak session] in
             guard let self, let session else { return }
             do {
-                let url = try await session.mediaURL(kind: "video", index: newIndex)
-                guard !Task.isCancelled else { return }
-                let asset = AVURLAsset(url: url)
+                guard let media = session.collectionMedia(in: session.videos, at: newIndex) else { throw URLError(.resourceUnavailable) }
+                let asset = try session.movieReader.asset(for: media)
                 let playable = try await asset.load(.isPlayable)
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled, session.userID == media.viewer else { return }
                 guard playable else {
                     self.loading = false
                     self.unavailable = true

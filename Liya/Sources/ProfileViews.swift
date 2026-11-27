@@ -171,8 +171,8 @@ struct ProfileHome: View {
     private func profileHero(width: CGFloat, height: CGFloat, topInset: CGFloat) -> some View {
         ZStack {
             Group {
-                if let url = session.profileAvatarURL {
-                    NetworkPhoto(url: url) { phase in
+                if let avatar = session.profileAvatar {
+                    NetworkPhoto(media: avatar) { phase in
                         if let image = phase.image { image.resizable().scaledToFill() } else { Color.clear }
                     }
                 } else if let index = session.photos.firstIndex(where: { $0.id == "example-photo-012" }) {
@@ -433,8 +433,8 @@ struct EditProfileView: View {
 
     @ViewBuilder private var profilePhoto: some View {
         if let avatar { MediaThumbnail(item: avatar) }
-        else if let url = session.profileAvatarURL {
-            NetworkPhoto(url: url) { phase in
+        else if let avatar = session.profileAvatar {
+            NetworkPhoto(media: avatar) { phase in
                 if let image = phase.image { image.resizable().scaledToFill() } else { Color.clear }
             }
         } else if let index = session.photos.firstIndex(where: { $0.id == "example-photo-012" }) {

@@ -954,11 +954,5 @@ final class SocialStore: ObservableObject {
  }
  func refreshNotifications(_ session: LiyaSession) async { notifications = []; notificationsLoading = false }
  func markRead(_ session: LiyaSession, id: Int64) async { }
- func mediaURL(_ session: LiyaSession, path: String) async throws -> URL {
-     guard let owner = session.userID else { throw OfflineError.unavailable }
-     let url = try await session.client.storage.from("liya-user-media").createSignedURL(path: path, expiresIn: 300)
-     guard owner == session.userID else { throw CancellationError() }
-     return url
- }
  private enum OfflineError: Error { case unavailable }
 }

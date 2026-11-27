@@ -6,6 +6,7 @@
 	objects = {
 
 		073D8EE7810AFCF9F9B31B86 = {isa = PBXBuildFile; fileRef = E1C1AA7E627810F1A043DB07; };
+		9ED74DB705F540A1A5D53531 = {isa = PBXBuildFile; fileRef = B0458821BE464675B68465A4; };
 		262EA9226C0699993B1E645E = {isa = PBXBuildFile; fileRef = F623C35F01064B5675C139C1; };
 		26E2D5608ADB547C04EA2231 = {isa = PBXBuildFile; productRef = 1008727600F4C756AF33B38C; };
 		2A68D9FBFD459854460E746A = {isa = PBXBuildFile; fileRef = 9B3165B5F348D386BDA1F13D; };
@@ -40,6 +41,7 @@
 		0A49B42E539DC4B03BDB34DE = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Liya.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0C8A336B63C14C48B7198FC6 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinWalletLedger.swift; sourceTree = "<group>"; };
 		0D3C848B4534F0BB94FF8789 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionPhoto.swift; sourceTree = "<group>"; };
+		B0458821BE464675B68465A4 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredMedia.swift; sourceTree = "<group>"; };
 		BF1B0CB8F75E48C18811D756 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterfaceLibrary.swift; sourceTree = "<group>"; };
 		1801B18AF27DF23E012330C7 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViews.swift; sourceTree = "<group>"; };
 		342B0A1CBB1A51F8DF16C1CF = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialStore.swift; sourceTree = "<group>"; };
@@ -97,6 +99,7 @@
 				3984E1F4A9E1E136685F9B50,
 				BFEE673FE4EB43FAD342B45A,
 				0D3C848B4534F0BB94FF8789,
+				B0458821BE464675B68465A4,
 				BF1B0CB8F75E48C18811D756,
 				5A004A2012B0809716BDC4A2,
 				7C2061D8AD2D04E41E28919D,
@@ -214,6 +217,7 @@
 				94AA0FDD52D33EF28DE55AE6,
 				324598B2552C2847BA3FBABB,
 				3EED5221EF3C25A6D41D15A2,
+				9ED74DB705F540A1A5D53531,
 				E37D8954D1F041569B81F4BF,
 				CC7E2CA079842B58037D651C,
 				7B42BD8844C5C09CEF2842B6,
