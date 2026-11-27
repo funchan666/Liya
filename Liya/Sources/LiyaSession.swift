@@ -37,7 +37,7 @@ final class LiyaSession: ObservableObject {
     @Published private(set) var curatedTreePrompts: [ReflectionPrompt] = []
     @Published private(set) var catalogError: String?
     @Published private(set) var catalogLoading = false
-    private var catalogHasLoaded = false
+    @Published private(set) var catalogHasLoaded = false
     private var catalogRequest: UUID?
     @Published private(set) var catalogGeneration = UUID()
     @Published private(set) var imageGeneration = UUID()
