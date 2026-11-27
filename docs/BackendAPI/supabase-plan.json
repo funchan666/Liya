@@ -3,9 +3,7 @@
   "stage": "A",
   "target": "Liya",
   "organization": {
-    "id": "bbgxzldmycrpigmbnhch",
-    "name": "funchan666's Org",
-    "connection": "Pleat"
+    "id": "bbgxzldmycrpigmbnhch"
   },
   "creation_attempt": {
     "id": "liya-a-20261030-01",
@@ -285,8 +283,8 @@
     "Validate call cleanup, account isolation, background incoming-call and audio behavior only with explicit authorization"
   ],
   "legal": {
-    "terms": "legal/terms.pdf",
-    "privacy": "legal/privacy.pdf",
+    "terms": "https://hymfjhuglaqoftrcxfjx.supabase.co/storage/v1/object/public/liya-legal/terms-20261104-v2.pdf",
+    "privacy": "https://hymfjhuglaqoftrcxfjx.supabase.co/storage/v1/object/public/liya-legal/privacy-20261104-v2.pdf",
     "status": "AI-disclosure version published and public PDF verified; further changes only on explicit user request",
     "proposed_support_email": "support@liya.com",
     "proposed_support_email_status": "not confirmed or enabled",

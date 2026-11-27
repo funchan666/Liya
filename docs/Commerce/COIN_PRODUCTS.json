@@ -1,6 +1,6 @@
 {
   "currency": "USD",
-  "note": "Target US prices for App Store Connect setup. StoreKit supplies the actual localized storefront price. New IDs are proposals, not confirmed registered products.",
+  "note": "These nine identifiers match the Liya wallet. The USD values are the intended US storefront prices. StoreKit supplies the localized price at checkout. App Store Connect product registration and availability are unverified.",
   "products": [
     {"id":"ceyarlaxiuojqsbi","usd":"0.99","coins":450,"origin":"provided"},
     {"id":"gxaojqvpvmykrgif","usd":"1.99","coins":950,"origin":"provided"},

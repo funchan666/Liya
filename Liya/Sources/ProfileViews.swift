@@ -3,6 +3,8 @@ import PhotosUI
 import UIKit
 
 struct ProfileHome: View {
+    @Environment(\.locale) private var locale
+    @Environment(\.liyaWords) private var words
     @Environment(\.liyaTabActive) private var tabActive
     @Environment(\.dynamicTypeSize) private var typeSize
     @EnvironmentObject private var checkout: CoinCheckout
@@ -38,15 +40,15 @@ struct ProfileHome: View {
                 VStack(alignment: .leading, spacing: 0) {
                     profileHero(width: geometry.size.width, height: heroHeight, topInset: geometry.safeAreaInsets.top)
                     VStack(alignment: .leading, spacing: 12) {
-                    Text(session.profile.flatMap { $0.displayName.isEmpty ? nil : $0.displayName } ?? "Your profile")
+                    Text(session.profile.flatMap { $0.displayName.isEmpty ? nil : $0.displayName } ?? words("Your profile"))
                         .font(LiyaType.text(.title2, weight: .bold)).foregroundStyle(checkout.isActive(.profileGlow) ? liyaAccent : liyaInk)
                     profileRelations
-                    Text(session.profile.flatMap { $0.signature.isEmpty ? nil : $0.signature } ?? "Add a little about yourself.")
+                    Text(session.profile.flatMap { $0.signature.isEmpty ? nil : $0.signature } ?? words("Add a little about yourself."))
                         .font(LiyaType.detail).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     if let tags = session.profile?.tags, !tags.isEmpty { Text(tags.map { "# " + $0 }.joined(separator: "   ")).font(LiyaType.text(.caption)).foregroundStyle(liyaAccent) }
                     if let error = session.profileError {
-                        Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.red)
-                        Button("Retry profile") { Task { await session.refreshProfile() } }.foregroundStyle(liyaAccent)
+                        Text(verbatim: words(error)).font(LiyaType.text(.footnote)).foregroundStyle(.red)
+                        Button(words("Retry profile")) { Task { await session.refreshProfile() } }.foregroundStyle(liyaAccent)
                     }
                     HStack(spacing: 10) {
                         NavigationLink { SettingsView() } label: { ProfileHomeActionLabel(title: "Settings", icon: "profile-home-settings") }
@@ -71,12 +73,12 @@ struct ProfileHome: View {
                             ForEach(Array(communityVideos.enumerated()), id: \.offset) { _, item in
                                 Button { previewCommunityVideo = item } label: {
                                     SocialMediaThumbnail(item: item).frame(height: 145).frame(maxWidth: .infinity).clipped().clipShape(RoundedRectangle(cornerRadius: 10))
-                                }.buttonStyle(.plain).accessibilityLabel("Play video")
+                                }.buttonStyle(.plain).accessibilityLabel(words("Play video"))
                             }
                             ForEach(videos) { item in
                                 Button { previewVideo = item } label: {
                                     MediaThumbnail(item: item).frame(height: 145).frame(maxWidth: .infinity).clipped().clipShape(RoundedRectangle(cornerRadius: 10))
-                                }.buttonStyle(.plain).accessibilityLabel("Preview video")
+                                }.buttonStyle(.plain).accessibilityLabel(words("Preview video"))
                             }
                         }
                     }
@@ -137,19 +139,19 @@ struct ProfileHome: View {
 
     private func profileEmpty(title: String, detail: String) -> some View {
         VStack(spacing: 10) {
-            Image("empty-art").resizable().scaledToFit().frame(width: 104, height: 96).accessibilityHidden(true)
-            Text(LocalizedStringKey(title)).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
-            Text(LocalizedStringKey(detail)).font(LiyaType.detail).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            HostedArtwork("empty-art").scaledToFit().frame(width: 104, height: 96).accessibilityHidden(true)
+            Text(verbatim: words(title)).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
+            Text(verbatim: words(detail)).font(LiyaType.detail).foregroundStyle(.secondary).multilineTextAlignment(.center)
         }.frame(maxWidth: .infinity).padding(.vertical, 30).padding(.horizontal, 20)
     }
 
     private func profileNotice(_ title: String, retry: @escaping () async -> Void) -> some View {
         HStack(spacing: 12) {
-            Image("empty-art").resizable().scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
-            Text(LocalizedStringKey(title)).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaInk).fixedSize(horizontal: false, vertical: true)
+            HostedArtwork("empty-art").scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
+            Text(verbatim: words(title)).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaInk).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 4)
             Button { Task { await retry() } } label: {
-                Text("Try again").font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(liyaAccent)
+                Text(verbatim: words("Try again")).font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(liyaAccent)
                     .padding(.horizontal, 12).frame(minHeight: 44)
                     .background(liyaAccent.opacity(0.09), in: Capsule())
             }.buttonStyle(.plain)
@@ -170,7 +172,9 @@ struct ProfileHome: View {
         ZStack {
             Group {
                 if let url = session.profileAvatarURL {
-                    AsyncImage(url: url) { image in image.resizable().scaledToFill() } placeholder: { Color.clear }
+                    NetworkPhoto(url: url) { phase in
+                        if let image = phase.image { image.resizable().scaledToFill() } else { Color.clear }
+                    }
                 } else if let index = session.photos.firstIndex(where: { $0.id == "example-photo-012" }) {
                     CollectionPhoto(catalogIndex: index, contentMode: .fill)
                 } else {
@@ -190,16 +194,16 @@ struct ProfileHome: View {
             .overlay(alignment: .top) {
                 DuoControlRegion { _ in
                     HStack(spacing: 8) {
-                        Image("profile-title").resizable().scaledToFit().frame(width: 145, height: 44).accessibilityLabel("Profile")
+                        HostedArtwork("profile-title").scaledToFit().frame(width: 145, height: 44).accessibilityLabel(words("Profile"))
                         Spacer(minLength: 0)
                         NavigationLink { WalletView() } label: {
                             HStack(spacing: 6) {
-                                Image("wallet-coin").resizable().scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
+                                HostedArtwork("wallet-coin").scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
                                 Group {
                                     if let balance = checkout.balance {
                                         Text(balance, format: .number)
                                     } else {
-                                        Text("My wallet")
+                                        Text(verbatim: words("My wallet"))
                                     }
                                 }
                                 .font(LiyaType.text(.subheadline, weight: .bold))
@@ -214,8 +218,8 @@ struct ProfileHome: View {
                                 }
                                 .overlay(Capsule().stroke(.white.opacity(0.35), lineWidth: 1))
                         }.buttonStyle(.plain)
-                        .accessibilityLabel(Text("My wallet"))
-                        .accessibilityValue(checkout.balance.map { Text("\($0.formatted()) coins") } ?? Text(verbatim: ""))
+                        .accessibilityLabel(Text(verbatim: words("My wallet")))
+                        .accessibilityValue(checkout.balance.map { Text(verbatim: words.inserting($0.formatted(.number.locale(locale)), into: "%@ coins")) } ?? Text(verbatim: ""))
                     }.padding(.horizontal, 20).modifier(AdaptiveContainerMargins())
                 }.frame(height: 48).padding(.top, topInset + 4)
             }
@@ -223,15 +227,16 @@ struct ProfileHome: View {
 }
 
 private struct ProfileHomeRelationLabel: View {
+    @Environment(\.liyaWords) private var words
     @Environment(\.locale) private var locale
-    let title: LocalizedStringKey
+    let title: String
     let icon: String
     let count: Int?
     let loading: Bool
 
     var body: some View {
         HStack(spacing: 9) {
-            Image(icon).resizable().scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
+            HostedArtwork(icon).scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 if let count {
                     Text(count, format: .number)
@@ -240,7 +245,7 @@ private struct ProfileHomeRelationLabel: View {
                 } else if loading {
                     LiyaLoadingIndicator(size: 16).accessibilityHidden(true)
                 }
-                Text(title).font(LiyaType.text(.subheadline, weight: .medium))
+                Text(verbatim: words(title)).font(LiyaType.text(.subheadline, weight: .medium))
                     .foregroundStyle(count == nil ? liyaInk : liyaInk.opacity(0.72))
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -249,18 +254,19 @@ private struct ProfileHomeRelationLabel: View {
         .frame(maxWidth: .infinity, minHeight: 50, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(title))
+        .accessibilityLabel(Text(verbatim: words(title)))
         .accessibilityValue(Text(verbatim: count.map { $0.formatted(.number.locale(locale)) } ?? ""))
     }
 }
 
 private struct ProfileHomeActionLabel: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     let icon: String
     var body: some View {
         HStack(spacing: 8) {
-            Image(icon).resizable().scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
-            Text(title).font(LiyaType.text(.subheadline, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
+            HostedArtwork(icon).scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
+            Text(verbatim: words(title)).font(LiyaType.text(.subheadline, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
         }
         .foregroundStyle(liyaInk).frame(maxWidth: .infinity, minHeight: 54).padding(.horizontal, 8)
         .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 17))
@@ -269,6 +275,7 @@ private struct ProfileHomeActionLabel: View {
 }
 
 private struct ProfileHomeTabs: View {
+    @Environment(\.liyaWords) private var words
     @Binding var selection: Int
     var body: some View {
         HStack(spacing: 10) {
@@ -281,8 +288,8 @@ private struct ProfileHomeTabs: View {
     private func tab(_ title: String, icon: String, index: Int) -> some View {
         Button { selection = index } label: {
             HStack(spacing: 6) {
-                Image(icon).resizable().scaledToFit().frame(width: 25, height: 25).accessibilityHidden(true)
-                Text(title).font(LiyaType.text(.subheadline, weight: selection == index ? .semibold : .medium))
+                HostedArtwork(icon).scaledToFit().frame(width: 25, height: 25).accessibilityHidden(true)
+                Text(verbatim: words(title)).font(LiyaType.text(.subheadline, weight: selection == index ? .semibold : .medium))
                     .lineLimit(1).minimumScaleFactor(0.8)
             }
             .foregroundStyle(selection == index ? liyaAccent : liyaInk.opacity(0.65))
@@ -293,6 +300,7 @@ private struct ProfileHomeTabs: View {
 }
 
 struct EditProfileView: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var store: LocalStore
     @Environment(\.dismiss) private var dismiss
@@ -313,19 +321,19 @@ struct EditProfileView: View {
             VStack(alignment: .leading, spacing: 20) {
                 photoSection
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("About you").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
+                    Text(verbatim: words("About you")).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Nickname").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
-                        TextField("What should we call you?", text: $name)
+                        Text(verbatim: words("Nickname")).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+                        TextField(words("What should we call you?"), text: $name)
                             .padding(14).frame(minHeight: 48)
                             .background(Color(red: 0.97, green: 0.97, blue: 0.99), in: RoundedRectangle(cornerRadius: 12))
-                        if name.count > 80 { Text("Keep your nickname under 80 characters.").font(LiyaType.text(.footnote)).foregroundStyle(.red) }
+                        if name.count > 80 { Text(verbatim: words("Keep your nickname under 80 characters.")).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
                     }
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Labels").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+                            Text(verbatim: words("Labels")).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
                             Spacer()
-                            Text("\(tags.count)/6").font(LiyaType.text(.caption)).foregroundStyle(.secondary).monospacedDigit()
+                            Text(verbatim: words.inserting(String(tags.count), into: "%@/6")).font(LiyaType.text(.caption)).foregroundStyle(.secondary).monospacedDigit()
                         }
                         if !tags.isEmpty {
                             ScrollView(.horizontal, showsIndicators: false) {
@@ -333,38 +341,38 @@ struct EditProfileView: View {
                                     ForEach(tags, id: \.self) { tag in
                                         Button { tags.removeAll { $0 == tag } } label: {
                                             HStack(spacing: 5) {
-                                                Text("# \(tag)").font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(liyaAccent)
-                                                Image("close").resizable().scaledToFit().frame(width: 15, height: 15).accessibilityHidden(true)
+                                                Text(verbatim: words.inserting(tag, into: "# %@")).font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(liyaAccent)
+                                                HostedArtwork("close").scaledToFit().frame(width: 15, height: 15).accessibilityHidden(true)
                                             }.padding(.horizontal, 10).frame(minHeight: 44)
                                                 .background(liyaAccent.opacity(0.09), in: Capsule())
-                                        }.buttonStyle(.plain).accessibilityLabel("Remove label \(tag)")
+                                        }.buttonStyle(.plain).accessibilityLabel(words.inserting(tag, into: "Remove label %@"))
                                     }
                                 }
                             }
                         }
                         HStack(spacing: 8) {
-                            TextField("Add a label", text: $tagInput)
+                            TextField(words("Add a label"), text: $tagInput)
                                 .padding(14).frame(minHeight: 48)
                                 .background(Color(red: 0.97, green: 0.97, blue: 0.99), in: RoundedRectangle(cornerRadius: 12))
-                            Button("Add") { addTag() }
+                            Button(words("Add")) { addTag() }
                                 .font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaAccent)
                                 .frame(minWidth: 48, minHeight: 48)
                                 .disabled(tags.count >= 6 || tagInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         }
                     }
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Introduction").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
-                        TextField("Share a little about yourself", text: $signature, axis: .vertical)
+                        Text(verbatim: words("Introduction")).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+                        TextField(words("Share a little about yourself"), text: $signature, axis: .vertical)
                             .lineLimit(3...6).padding(14)
                             .background(Color(red: 0.97, green: 0.97, blue: 0.99), in: RoundedRectangle(cornerRadius: 12))
-                        if signature.count > 500 { Text("Keep your introduction under 500 characters.").font(LiyaType.text(.footnote)).foregroundStyle(.red) }
+                        if signature.count > 500 { Text(verbatim: words("Keep your introduction under 500 characters.")).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
                     }
                 }.padding(18).frame(maxWidth: .infinity, alignment: .leading)
                     .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 18))
-                if let error { Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
-                if let error = session.profileError { Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
+                if let error { Text(verbatim: words(error)).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
+                if let error = session.profileError { Text(verbatim: words(error)).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
                 if session.profile == nil {
-                    Button("Retry loading profile") { Task { await session.refreshProfile(); initialize() } }
+                    Button(words("Retry loading profile")) { Task { await session.refreshProfile(); initialize() } }
                         .font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                 }
                 PrimaryButton(title: saving ? "Saving…" : "Save profile", disabled: loading || saving || session.profile == nil || !initialized || name.count > 80 || signature.count > 500) {
@@ -404,14 +412,14 @@ struct EditProfileView: View {
                 profilePhoto
                     .frame(width: 80, height: 80).clipped().clipShape(Circle()).accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("Profile photo").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
-                    Text("Your account profile is private.").font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
+                    Text(verbatim: words("Profile photo")).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
+                    Text(verbatim: words("Your account profile is private.")).font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }.frame(maxWidth: .infinity, alignment: .leading)
             }
             HStack(spacing: 10) {
                 PhotosPicker(selection: $selection, matching: .images) {
-                    Text(loading ? "Loading…" : "Choose photo")
+                    Text(verbatim: words(loading ? "Loading…" : "Choose photo"))
                         .font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(liyaAccent)
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .background(liyaAccent.opacity(0.09), in: RoundedRectangle(cornerRadius: 14))
@@ -426,7 +434,9 @@ struct EditProfileView: View {
     @ViewBuilder private var profilePhoto: some View {
         if let avatar { MediaThumbnail(item: avatar) }
         else if let url = session.profileAvatarURL {
-            AsyncImage(url: url) { image in image.resizable().scaledToFill() } placeholder: { Color.clear }
+            NetworkPhoto(url: url) { phase in
+                if let image = phase.image { image.resizable().scaledToFill() } else { Color.clear }
+            }
         } else if let index = session.photos.firstIndex(where: { $0.id == "example-photo-012" }) {
             CollectionPhoto(catalogIndex: index, contentMode: .fill)
         } else { Color.clear }
@@ -444,14 +454,15 @@ struct EditProfileView: View {
 }
 
 struct DeviceProfileView: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var store: LocalStore
     var body: some View {
         PageShell(title: "Previous profile") {
             VStack(alignment: .leading, spacing: 14) {
                 OfflineNote(text: "This earlier profile has not been uploaded.")
                 if let avatar = store.avatar { MediaThumbnail(item: avatar).frame(width: 88, height: 88).clipped() }
-                Text(store.nickname.isEmpty ? "No nickname" : store.nickname).font(LiyaType.text(.headline))
-                Text(store.signature.isEmpty ? "No introduction" : store.signature)
+                Text(store.nickname.isEmpty ? words("No nickname") : store.nickname).font(LiyaType.text(.headline))
+                Text(store.signature.isEmpty ? words("No introduction") : store.signature)
                 Text(store.profileTags.map { "# " + $0 }.joined(separator: "   ")).font(LiyaType.text(.caption))
             }.padding(.top, 12)
         }
@@ -459,6 +470,7 @@ struct DeviceProfileView: View {
 }
 
 struct SettingsView: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
@@ -482,16 +494,16 @@ struct SettingsView: View {
                     SettingsDivider()
                     NavigationLink { SettingsSupportView() } label: { SettingsRow("Help & legal", image: "setting-help") }
                 }
-                if let error = session.signOutError { Text(LocalizedStringKey(error)).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
+                if let error = session.signOutError { Text(verbatim: words(error)).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
                 Button { confirmSignOut = true } label: {
                     HStack(spacing: 8) {
                         if session.isSigningOut { LiyaLoadingIndicator(size: 24).accessibilityHidden(true) }
-                        Text(LocalizedStringKey(session.isSigningOut ? "Signing out…" : "Sign out")).font(LiyaType.text(.subheadline, weight: .semibold))
+                        Text(verbatim: words(session.isSigningOut ? "Signing out…" : "Sign out")).font(LiyaType.text(.subheadline, weight: .semibold))
                     }.foregroundStyle(liyaAccent).frame(maxWidth: .infinity, minHeight: 50)
                         .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 16))
                 }.disabled(session.isSigningOut || session.isDeletingAccount)
                 NavigationLink { AccountView() } label: {
-                    Text("Delete account").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(.red.opacity(0.85))
+                    Text(verbatim: words("Delete account")).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(.red.opacity(0.85))
                         .frame(maxWidth: .infinity, minHeight: 50).background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 16))
                 }.disabled(session.isSigningOut || session.isDeletingAccount)
             }.buttonStyle(.plain).padding(.top, 16).modifier(AdaptiveContainerMargins())
@@ -506,6 +518,7 @@ struct SettingsView: View {
 }
 
 private struct LanguageSettingsView: View {
+    @Environment(\.liyaWords) private var words
     private struct Option: Identifiable {
         let id: String
         let nativeName: String
@@ -522,8 +535,8 @@ private struct LanguageSettingsView: View {
     var body: some View {
         PageShell(title: "Language") {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Choose your language").font(LiyaType.text(.title3, weight: .bold)).foregroundStyle(liyaInk)
-                Text("Your selection applies to supported screens. Some content may remain in English.")
+                Text(verbatim: words("Choose your language")).font(LiyaType.text(.title3, weight: .bold)).foregroundStyle(liyaInk)
+                Text(verbatim: words("Your selection applies to supported screens. Some content may remain in English."))
                     .font(LiyaType.text(.footnote)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 VStack(spacing: 8) {
                     ForEach(options) { option in
@@ -531,10 +544,9 @@ private struct LanguageSettingsView: View {
                             HStack(spacing: 12) {
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(verbatim: option.nativeName).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
-                                    if option.id != "en" { Text(LocalizedStringKey(option.englishName)).font(LiyaType.text(.caption)).foregroundStyle(.secondary) }
+                                    if option.id != "en" { Text(verbatim: words(option.englishName)).font(LiyaType.text(.caption)).foregroundStyle(.secondary) }
                                 }.frame(maxWidth: .infinity, alignment: .leading)
-                                Image(language == option.id ? "consent-on" : "consent-off")
-                                    .resizable().scaledToFit().frame(width: 28, height: 28).accessibilityHidden(true)
+                                HostedArtwork(language == option.id ? "consent-on" : "consent-off").scaledToFit().frame(width: 28, height: 28).accessibilityHidden(true)
                             }.padding(.horizontal, 16).frame(maxWidth: .infinity, minHeight: 64)
                                 .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 16))
                         }.buttonStyle(.plain).accessibilityAddTraits(language == option.id ? .isSelected : [])
@@ -581,11 +593,12 @@ private struct SettingsSupportView: View {
 }
 
 private struct SettingsGroup<Content: View>: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     @ViewBuilder var content: Content
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(LocalizedStringKey(title)).font(LiyaType.text(.caption, weight: .semibold)).tracking(0.8).textCase(.uppercase)
+            Text(verbatim: words(title)).font(LiyaType.text(.caption, weight: .semibold)).tracking(0.8).textCase(.uppercase)
                 .foregroundStyle(liyaInk.opacity(0.55)).padding(.horizontal, 4)
             VStack(spacing: 0) { content }
                 .background(.white.opacity(0.86), in: RoundedRectangle(cornerRadius: 18))
@@ -601,6 +614,7 @@ private struct SettingsDivider: View {
 }
 
 private struct SettingsRow: View {
+    @Environment(\.liyaWords) private var words
     @Environment(\.layoutDirection) private var layoutDirection
     let title: String
     var image: String?
@@ -610,82 +624,89 @@ private struct SettingsRow: View {
     var body: some View {
         HStack(spacing: 12) {
             if let image {
-                Image(image).resizable().scaledToFit().frame(width: 32, height: 32).accessibilityHidden(true)
+                HostedArtwork(image).scaledToFit().frame(width: 32, height: 32).accessibilityHidden(true)
             }
-            Text(LocalizedStringKey(title)).font(LiyaType.text(.subheadline, weight: .medium)).foregroundStyle(liyaInk)
+            Text(verbatim: words(title)).font(LiyaType.text(.subheadline, weight: .medium)).foregroundStyle(liyaInk)
                 .frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true)
-            Image("back").resizable().scaledToFit().scaleEffect(x: layoutDirection == .rightToLeft ? 1 : -1, y: 1)
+            HostedArtwork("back").scaledToFit().scaleEffect(x: layoutDirection == .rightToLeft ? 1 : -1, y: 1)
                 .frame(width: 12, height: 12).opacity(0.42).accessibilityHidden(true)
         }.padding(.horizontal, 16).padding(.vertical, 10).frame(minHeight: 56).contentShape(Rectangle())
     }
 }
 
 struct AccountView: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var social: SocialStore
     @EnvironmentObject private var calls: LiyaCalls
     @State private var confirming = false
     @State private var checking = false
+    private let deletionNotice = "Permanently remove your account and its data."
+
     var body: some View {
         PageShell(title: "Account & Security") {
             VStack(alignment: .leading, spacing: 20) {
                 HStack(spacing: 14) {
-                    Image("setting-lock").resizable().scaledToFit().frame(width: 48, height: 48).accessibilityHidden(true)
+                    HostedArtwork("setting-lock").scaledToFit().frame(width: 48, height: 48).accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Your local space").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
-                        Text("Online account services are unavailable.").font(LiyaType.detail).foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
+                        Text(verbatim: words("Your account")).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
+                        if session.userID != nil, let label = session.savedAccountLabel(fallback: ""), !label.isEmpty {
+                            Text(verbatim: label).font(LiyaType.detail).foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true).privacySensitive()
+                        }
                     }.frame(maxWidth: .infinity, alignment: .leading)
                 }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
                     .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 18))
 
-                Text("Your earlier online account is not affected by changes to this local space.")
-                    .font(LiyaType.text(.footnote)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Account actions").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+                    Text(verbatim: words("Account actions")).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
                         .padding(.horizontal, 4)
                     Button { confirming = true } label: {
                         HStack(spacing: 12) {
-                            Image("setting-privacy").resizable().scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
+                            HostedArtwork("setting-privacy").scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(LocalizedStringKey(session.isDeletingAccount ? "Deleting account…" : (checking ? "Preparing…" : "Delete account")))
+                                Text(verbatim: words(session.isDeletingAccount || checking ? "Deleting account…" : "Delete account"))
                                     .font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(.red.opacity(0.85))
-                                Text("Online account deletion is unavailable right now.")
+                                Text(verbatim: words(deletionNotice))
                                     .font(LiyaType.text(.caption)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                             }.frame(maxWidth: .infinity, alignment: .leading)
                             if session.isDeletingAccount || checking { LiyaLoadingIndicator(size: 26).accessibilityHidden(true) }
                         }.padding(16).frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
                             .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 18))
-                    }.buttonStyle(.plain).disabled(session.isDeletingAccount || checking || session.userID == nil)
+                    }.buttonStyle(.plain).disabled(session.isDeletingAccount || session.isSigningOut || checking || session.userID == nil)
                 }
-                if let error = session.deletionError { Text(LocalizedStringKey(error)).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
+                if let error = session.deletionError { Text(verbatim: words(error)).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
             }.padding(.top, 16).modifier(AdaptiveContainerMargins())
-        }.sheet(isPresented: $confirming) {
-            LocalConfirmation(title: "Delete this account?", message: "Online account deletion is unavailable. Your earlier online account will not be deleted.", action: "Delete account") {
-                confirming = false; checking = true
+        }
+        .onLiyaChange(of: session.userID) { _ in confirming = false }
+        .sheet(isPresented: $confirming) {
+            LocalConfirmation(title: "Delete this account?", message: deletionNotice, action: "Delete account") {
+                confirming = false
+                guard let owner = session.userID, !checking else { return }
+                checking = true
                 Task {
-                    guard let owner = session.userID else { checking = false; return }
+                    defer { checking = false }
+                    guard session.userID == owner else { return }
                     if await session.deleteAccount() {
                         calls.reset()
                         social.clearAccount()
                         store.inPreview = false
                         store.archiveAccountMaterial(owner)
                     }
-                    checking = false
                 }
-            } cancel: { confirming = false }.presentationDetents([.medium])
+            } cancel: { confirming = false }.presentationDetents([.medium, .large])
         }
     }
 }
 
 struct PrivacyView: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var store: LocalStore
     var body: some View {
         PageShell(title: "Privacy") {
             VStack(alignment: .leading, spacing: 18) {
-                Text("Manage the people and content you see.")
+                Text(verbatim: words("Manage the people and content you see."))
                     .font(LiyaType.detail).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 SettingsGroup(title: "Safety") {
                     NavigationLink { CommunityRelationList(title: "Blocked members", relation: "blocked") } label: {
@@ -704,7 +725,7 @@ struct PrivacyView: View {
                         SettingsRow("Unsent reports", image: "report")
                     }
                 }.buttonStyle(.plain)
-                Text("Collection profile blocks and unsent reports are not synced.")
+                Text(verbatim: words("Collection profile blocks and unsent reports are not synced."))
                     .font(LiyaType.text(.footnote)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }.padding(.top, 16).modifier(AdaptiveContainerMargins())
         }
@@ -712,6 +733,7 @@ struct PrivacyView: View {
 }
 
 private struct SubmittedReportsView: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     @State private var reports: [SubmittedReport] = []
@@ -723,27 +745,27 @@ private struct SubmittedReportsView: View {
     var body: some View {
         PageShell(title: "Submitted reports") {
             VStack(alignment: .leading, spacing: 12) {
-                Text("See the current status of reports you submitted from this account.")
+                Text(verbatim: words("See the current status of reports you submitted from this account."))
                     .font(LiyaType.text(.footnote)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                Button("Refresh") { Task { await load() } }
+                Button(words("Refresh")) { Task { await load() } }
                     .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44).disabled(loading)
-                if loading { LiyaLoadingIndicator(size: 28).accessibilityLabel("Loading reports") }
+                if loading { LiyaLoadingIndicator(size: 28).accessibilityLabel(words("Loading reports")) }
                 if let error {
-                    Text(error).font(LiyaType.text(.footnote)).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
-                    Button("Try again") { Task { await load() } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
+                    Text(verbatim: words(error)).font(LiyaType.text(.footnote)).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
+                    Button(words("Try again")) { Task { await load() } }.foregroundStyle(liyaAccent).frame(minHeight: 44)
                 } else if !loading && reports.isEmpty {
                     EmptyState(title: "No submitted reports", detail: "Reports sent from this account will appear here.")
                 }
                 ForEach(reportOwner == session.userID ? reports : []) { report in
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(LocalizedStringKey(reportTitle(report.kind))).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(liyaInk)
-                        Text(LocalizedStringKey(report.reason)).font(LiyaType.detail).foregroundStyle(liyaInk)
-                        Text(LocalizedStringKey(reportStatus(report.status))).font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent)
+                        Text(verbatim: words(reportTitle(report.kind))).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(liyaInk)
+                        Text(verbatim: words(report.reason)).font(LiyaType.detail).foregroundStyle(liyaInk)
+                        Text(verbatim: words(reportStatus(report.status))).font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent)
                         Text(reportDate(report.createdAt)).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
                     }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
                         .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                 }
-                Link("Email support: Liya2026support@liya.vip", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
+                Link(words("Email support: Liya2026support@liya.vip"), destination: URL(string: "mailto:Liya2026support@liya.vip")!)
                     .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
             }.padding(.top, 16).modifier(AdaptiveContainerMargins())
         }.task(id: session.userID) { await load() }
@@ -796,6 +818,7 @@ private struct SubmittedReportsView: View {
 }
 
 private struct HiddenCollectionProfilesView: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     @Environment(\.locale) private var locale
@@ -804,20 +827,20 @@ private struct HiddenCollectionProfilesView: View {
         PageShell(title: "Hidden collection profiles") {
             VStack(spacing: 12) {
                 if store.hiddenCollectionProfiles.isEmpty {
-                    EmptyState(title: String(localized: "No hidden profiles", locale: locale),
-                               detail: String(localized: "Profiles you hide will appear here.", locale: locale))
+                    EmptyState(title: words("No hidden profiles"),
+                               detail: words("Profiles you hide will appear here."))
                 }
                 ForEach(store.hiddenCollectionProfiles.sorted(), id: \.self) { index in
                     let photoID = session.photos.indices.contains(index) ? session.photos[index].id : nil
                     let name = photoID.map { session.curatedDisplayName(for: $0) }
-                        ?? String(localized: "Liya collection", locale: locale)
+                        ?? words("Liya collection")
                     HStack(spacing: 12) {
                         NavigationLink { CollectionAuthorView(index: index, displayName: name, mediaID: photoID) } label: {
                             HStack { CollectionPortrait(index: index); Text(verbatim: name).foregroundStyle(liyaInk) }
                         }.buttonStyle(.plain)
                         Spacer()
                         Button { store.setBlocked(index, blocked: false) } label: {
-                            Text("Unblock").font(LiyaType.text(.footnote, weight: .bold)).foregroundStyle(liyaAccent)
+                            Text(verbatim: words("Unblock")).font(LiyaType.text(.footnote, weight: .bold)).foregroundStyle(liyaAccent)
                                 .padding(.horizontal, 12).frame(minHeight: 44)
                                 .background(liyaAccent.opacity(0.08), in: Capsule())
                         }.buttonStyle(.plain)
@@ -829,6 +852,7 @@ private struct HiddenCollectionProfilesView: View {
 }
 
 struct ReportDraftsView: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var store: LocalStore
     var body: some View {
         PageShell(title: "Unsent reports") {
@@ -837,9 +861,9 @@ struct ReportDraftsView: View {
                 if store.reports.isEmpty { EmptyState(title: "No report drafts", detail: "Unsent drafts will appear here.") }
                 ForEach(store.reports) { report in
                     HStack {
-                        VStack(alignment: .leading) { Text(report.videoIndex.map { "Example video \($0 + 1)" } ?? "Example \(report.targetType == "post" ? "post" : "profile") \(report.photoIndex + 1)").font(LiyaType.text(.headline)); Text(report.reason).font(LiyaType.detail) }
+                        VStack(alignment: .leading) { Text(report.videoIndex.map { "Example video \($0 + 1)" } ?? "Example \(report.targetType == "post" ? "post" : "profile") \(report.photoIndex + 1)").font(LiyaType.text(.headline)); Text(verbatim: words(report.reason)).font(LiyaType.detail) }
                         Spacer()
-                        Button("Delete") { store.deleteReport(report.id) }.font(LiyaType.text(.footnote, weight: .bold)).foregroundStyle(liyaAccent)
+                        Button(words("Delete")) { store.deleteReport(report.id) }.font(LiyaType.text(.footnote, weight: .bold)).foregroundStyle(liyaAccent)
                     }.foregroundStyle(liyaInk).padding(16).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                 }
             }.padding(.top, 12)
@@ -848,15 +872,15 @@ struct ReportDraftsView: View {
 }
 
 struct InformationView: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     let message: String
     var body: some View {
         PageShell(title: title) {
             VStack(alignment: .leading, spacing: 14) {
-                Image(title == "About Liya" ? "app-mark" : "setting-help")
-                    .resizable().scaledToFit().frame(width: 56, height: 56).accessibilityHidden(true)
-                Text(LocalizedStringKey(title)).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
-                Text(LocalizedStringKey(message)).font(LiyaType.detail).foregroundStyle(.secondary)
+                HostedArtwork(title == "About Liya" ? "app-mark" : "setting-help").scaledToFit().frame(width: 56, height: 56).accessibilityHidden(true)
+                Text(verbatim: words(title)).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
+                Text(verbatim: words(message)).font(LiyaType.detail).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }.padding(20).frame(maxWidth: .infinity, alignment: .leading)
                 .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 18))

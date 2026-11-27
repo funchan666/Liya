@@ -3,6 +3,7 @@ import AVFoundation
 import UIKit
 
 struct ProfileDetailLayout<Hero: View, Actions: View, Content: View>: View {
+    @Environment(\.liyaWords) private var words
     @Environment(\.dismiss) private var dismiss
     @Environment(\.profileDetailVisible) private var detailVisible
     let name: String
@@ -54,17 +55,17 @@ struct ProfileDetailLayout<Hero: View, Actions: View, Content: View>: View {
                 DuoControlRegion { _ in
                     HStack {
                         Button { dismiss() } label: {
-                            Image("back").renderingMode(.template).resizable().scaledToFit().foregroundStyle(.white)
+                            HostedArtwork("back", renderingMode: .template).scaledToFit().foregroundStyle(.white)
                                 .frame(width: 20, height: 20).frame(width: 44, height: 44)
-                        }.buttonStyle(.plain).accessibilityLabel("Back")
+                        }.buttonStyle(.plain).accessibilityLabel(words("Back"))
                         Spacer(minLength: 0)
                         Text(name).font(LiyaType.text(.headline)).foregroundStyle(.white).lineLimit(1)
                             .shadow(color: .black.opacity(0.7), radius: 4)
                         Spacer(minLength: 0)
                         Button(action: showOptions) {
-                            Image("more").renderingMode(.template).resizable().scaledToFit().foregroundStyle(.white)
+                            HostedArtwork("more", renderingMode: .template).scaledToFit().foregroundStyle(.white)
                                 .frame(width: 20, height: 20).frame(width: 44, height: 44)
-                        }.buttonStyle(.plain).accessibilityLabel("More options")
+                        }.buttonStyle(.plain).accessibilityLabel(words("More options"))
                     }.padding(.horizontal, 12).modifier(AdaptiveContainerMargins())
                 }.frame(height: 44)
             }
@@ -76,6 +77,7 @@ struct ProfileDetailLayout<Hero: View, Actions: View, Content: View>: View {
 }
 
 struct ProfileContentTabs: View {
+    @Environment(\.liyaWords) private var words
     @Binding var selection: Int
     var showPost = true
     var showVideo = true
@@ -83,7 +85,7 @@ struct ProfileContentTabs: View {
         HStack(spacing: 28) {
             ForEach(Array(["Post", "Video"].enumerated()).filter { $0.offset == 0 ? showPost : showVideo }, id: \.offset) { index, title in
                 Button { selection = index } label: {
-                    Text(title).font(LiyaType.text(.subheadline, weight: selection == index ? .bold : .medium))
+                    Text(verbatim: words(title)).font(LiyaType.text(.subheadline, weight: selection == index ? .bold : .medium))
                         .foregroundStyle(selection == index ? liyaAccent : .secondary)
                         .underline(selection == index, color: liyaAccent)
                         .frame(minWidth: 44, minHeight: 44)
@@ -95,10 +97,11 @@ struct ProfileContentTabs: View {
 }
 
 struct ProfileActionLabel: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     var warm = false
     var body: some View {
-        Text(title).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(.white)
+        Text(verbatim: words(title)).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(.white)
             .lineLimit(1).minimumScaleFactor(0.8)
             .frame(maxWidth: .infinity).frame(minHeight: 46)
             .background {
@@ -112,6 +115,7 @@ struct ProfileActionLabel: View {
 }
 
 struct ProfileDetailActionLabel: View {
+    @Environment(\.liyaWords) private var words
     enum Style: Equatable { case follow, following, message, voice, video }
     @Environment(\.isEnabled) private var isEnabled
     let title: String
@@ -126,8 +130,8 @@ struct ProfileDetailActionLabel: View {
     }
     var body: some View {
         HStack(spacing: 8) {
-            Image(icon).resizable().scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
-            Text(LocalizedStringKey(title)).font(LiyaType.text(.subheadline, weight: .bold))
+            HostedArtwork(icon).scaledToFit().frame(width: 31, height: 31).accessibilityHidden(true)
+            Text(verbatim: words(title)).font(LiyaType.text(.subheadline, weight: .bold))
                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
         }
         .foregroundStyle(style == .message ? Color.white : liyaInk)
@@ -153,25 +157,26 @@ enum ProfileContactAction: String, Identifiable {
 }
 
 struct MutualFollowNotice: View {
+    @Environment(\.liyaWords) private var words
     let action: ProfileContactAction
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         SafetyPanel(title: "Follow each other first", subject: nil, back: nil, close: { dismiss() }) {
-            Image("profile-action-follow").resizable().scaledToFit()
+            HostedArtwork("profile-action-follow").scaledToFit()
         } content: {
-            Text(detail).font(LiyaType.reading).foregroundStyle(liyaInk.opacity(0.84))
+            Text(verbatim: words(detail)).font(LiyaType.reading).foregroundStyle(liyaInk.opacity(0.84))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
             Button { dismiss() } label: {
-                Text("Got it").font(LiyaType.action).foregroundStyle(.white)
+                Text(verbatim: words("Got it")).font(LiyaType.action).foregroundStyle(.white)
                     .frame(maxWidth: .infinity, minHeight: 48)
                     .background(Color(red: 0.27, green: 0.19, blue: 0.50), in: Capsule())
             }.buttonStyle(.plain)
         }
     }
 
-    private var detail: LocalizedStringKey {
+    private var detail: String {
         switch action {
         case .message: return "You can send this message once you both follow each other."
         case .voice: return "You can start a voice call once you both follow each other."
@@ -197,6 +202,7 @@ private enum ProfileContactFeedback: Identifiable {
 }
 
 struct ProfileContactActions<Follow: View>: View {
+    @Environment(\.liyaWords) private var words
     let recipient: ProfileContactRecipient
     let name: String
     @ViewBuilder let follow: () -> Follow
@@ -241,9 +247,9 @@ struct ProfileContactActions<Follow: View>: View {
                 MutualFollowNotice(action: action)
             case .unavailable(let action, let reason, let offersSettings):
                 SafetyPanel(title: "Call unavailable", subject: nil, back: nil, close: { notice = nil }) {
-                    Image(action == .video ? "profile-action-video" : "profile-action-voice").resizable().scaledToFit()
+                    HostedArtwork(action == .video ? "profile-action-video" : "profile-action-voice").scaledToFit()
                 } content: {
-                    Text(LocalizedStringKey(reason)).font(LiyaType.reading).foregroundStyle(liyaInk)
+                    Text(verbatim: words(reason)).font(LiyaType.reading).foregroundStyle(liyaInk)
                         .fixedSize(horizontal: false, vertical: true)
                     actionLayout {
                         feedbackButton("Close") { notice = nil }
@@ -281,9 +287,9 @@ struct ProfileContactActions<Follow: View>: View {
             ? AnyLayout(VStackLayout(spacing: 6)) : AnyLayout(HStackLayout(spacing: 8))
     }
 
-    private func feedbackButton(_ title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+    private func feedbackButton(_ title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(title).font(LiyaType.action).foregroundStyle(liyaInk)
+            Text(verbatim: words(title)).font(LiyaType.action).foregroundStyle(liyaInk)
                 .padding(.horizontal, 8).frame(maxWidth: .infinity, minHeight: 48)
                 .modifier(ContactBarSurface()).contentShape(Capsule())
         }.buttonStyle(.plain)
@@ -354,6 +360,7 @@ struct ContactBarSurface: ViewModifier {
 }
 
 struct ProfileSingleVideoRow<Thumbnail: View>: View {
+    @Environment(\.liyaWords) private var words
     let thumbnail: Thumbnail
     init(@ViewBuilder thumbnail: () -> Thumbnail) { self.thumbnail = thumbnail() }
     var body: some View {
@@ -373,9 +380,9 @@ struct ProfileSingleVideoRow<Thumbnail: View>: View {
     }
     private var videoDetails: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Image("profile-action-video").resizable().scaledToFit().frame(width: 34, height: 30).accessibilityHidden(true)
-            Text("Video").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
-            Text("Watch this moment").font(LiyaType.text(.subheadline, weight: .medium)).foregroundStyle(liyaAccent)
+            HostedArtwork("profile-action-video").scaledToFit().frame(width: 34, height: 30).accessibilityHidden(true)
+            Text(verbatim: words("Video")).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
+            Text(verbatim: words("Watch this moment")).font(LiyaType.text(.subheadline, weight: .medium)).foregroundStyle(liyaAccent)
                 .fixedSize(horizontal: false, vertical: true)
         }.frame(minWidth: 100, maxWidth: .infinity, alignment: .leading)
     }
@@ -483,6 +490,7 @@ struct CuratedFollowButton<Label: View>: View {
 }
 
 struct CollectionAuthorView: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     @Environment(\.dismiss) private var dismiss
@@ -536,16 +544,16 @@ struct CollectionAuthorView: View {
         } content: {
                     if store.hiddenCollectionProfiles.contains(index) {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Profile blocked").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
-                            Text("Unblock this profile to see their posts again.").font(LiyaType.detail).foregroundStyle(.secondary)
+                            Text(verbatim: words("Profile blocked")).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
+                            Text(verbatim: words("Unblock this profile to see their posts again.")).font(LiyaType.detail).foregroundStyle(.secondary)
                         }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 12)
                     } else if !videos.isEmpty {
-                        Text("Videos").font(LiyaType.text(.headline)).foregroundStyle(liyaInk).padding(.top, 8)
+                        Text(verbatim: words("Videos")).font(LiyaType.text(.headline)).foregroundStyle(liyaInk).padding(.top, 8)
                         ForEach(videos, id: \.self) { videoIndex in
                             VStack(alignment: .leading, spacing: 6) {
                                 Button { store.videoRequest = VideoRequest(index: videoIndex); dismiss() } label: {
                                     ProfileSingleVideoRow { CuratedVideoThumbnail(index: videoIndex) }
-                                }.buttonStyle(.plain).accessibilityLabel("Play video")
+                                }.buttonStyle(.plain).accessibilityLabel(words("Play video"))
                                 MediaEngagementBar(mediaID: session.videos[videoIndex].id)
                             }
                         }
@@ -567,7 +575,7 @@ private struct CuratedVideoThumbnail: View {
         ZStack {
             Color.black.opacity(0.12)
             if let image { Image(uiImage: image).resizable().scaledToFill() }
-            Image("play").resizable().scaledToFit().frame(width: 36, height: 36).accessibilityHidden(true)
+            HostedArtwork("play").scaledToFit().frame(width: 36, height: 36).accessibilityHidden(true)
         }.frame(maxWidth: .infinity, maxHeight: .infinity).clipped()
             .task(id: "\(session.catalogGeneration)-\(index)") {
                 image = nil
@@ -591,6 +599,7 @@ struct CollectionSafetyTarget: Identifiable {
 }
 
 struct CollectionSafetySheet: View {
+    @Environment(\.liyaWords) private var words
     private enum Step { case menu, report, confirmBlock, received, draftSaved }
 
     @EnvironmentObject private var store: LocalStore
@@ -626,12 +635,12 @@ struct CollectionSafetySheet: View {
             if let index {
                 CollectionPortrait(index: index, size: 46)
             } else {
-                Image("profile-home-people").resizable().scaledToFit().frame(width: 46, height: 46)
+                HostedArtwork("profile-home-people").scaledToFit().frame(width: 46, height: 46)
             }
         } content: {
             if step == .received || step == .draftSaved {
                 if step == .draftSaved {
-                    Text("Your report is saved in Settings under Unsent reports.")
+                    Text(verbatim: words("Your report is saved in Settings under Unsent reports."))
                         .font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.75))
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -649,7 +658,7 @@ struct CollectionSafetySheet: View {
                         }
                     }
                 case .confirmBlock:
-                    Text("Their photo posts will be hidden. You can unblock them in Settings.")
+                    Text(verbatim: words("Their photo posts will be hidden. You can unblock them in Settings."))
                         .font(LiyaType.reading).foregroundStyle(liyaInk.opacity(0.8)).fixedSize(horizontal: false, vertical: true)
                     SafetySubmitButton(title: "Block profile", destructive: true) { setBlocked(true) }
                     SafetySecondaryButton(title: "Cancel") { step = .menu }
@@ -659,7 +668,7 @@ struct CollectionSafetySheet: View {
                     EmptyView()
                 }
             } else {
-                Text("This profile is no longer available.").font(LiyaType.reading).foregroundStyle(liyaInk)
+                Text(verbatim: words("This profile is no longer available.")).font(LiyaType.reading).foregroundStyle(liyaInk)
                 SafetySubmitButton(title: "Done") { dismiss() }
             }
         }
@@ -668,7 +677,7 @@ struct CollectionSafetySheet: View {
 
     private var reportForm: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Choose a reason").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+            Text(verbatim: words("Choose a reason")).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
             SafetyReasonList(selected: reason) { choice in
                 guard !sending, choice != reason else { return }
                 reason = choice
@@ -676,7 +685,7 @@ struct CollectionSafetySheet: View {
                 failed = false
             }.disabled(sending)
             if failed {
-                Text("Couldn't confirm the report. Please try again.")
+                Text(verbatim: words("Couldn't confirm the report. Please try again."))
                     .font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaInk)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -698,7 +707,7 @@ struct CollectionSafetySheet: View {
     }
 
     private var supportLink: some View {
-        Link("Contact support", destination: URL(string: "mailto:Liya2026support@liya.vip")!)
+        Link(words("Contact support"), destination: URL(string: "mailto:Liya2026support@liya.vip")!)
             .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent)
             .fixedSize(horizontal: true, vertical: false).frame(minHeight: 44)
     }
@@ -731,13 +740,14 @@ struct CollectionSafetySheet: View {
 }
 
 struct SegmentedTabs: View {
+    @Environment(\.liyaWords) private var words
     let items: [String]
     @Binding var selection: Int
     var body: some View {
         HStack(spacing: 4) {
             ForEach(items.indices, id: \.self) { index in
                 Button { selection = index } label: {
-                    Text(LocalizedStringKey(items[index])).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(selection == index ? .white : liyaAccent)
+                    Text(verbatim: words(items[index])).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(selection == index ? .white : liyaAccent)
                         .frame(maxWidth: .infinity).frame(minHeight: 42)
                         .background { if selection == index { Capsule().fill(liyaGradient) } }
                 }.buttonStyle(.plain).accessibilityAddTraits(selection == index ? .isSelected : [])

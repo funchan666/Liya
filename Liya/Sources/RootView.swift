@@ -115,6 +115,7 @@ struct RootView: View {
 }
 
 private struct LiyaGlassTabBar: View {
+    @Environment(\.liyaWords) private var words
     @Binding var selection: LiyaTab
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -145,7 +146,7 @@ private struct LiyaGlassTabBar: View {
         return HStack(spacing: gap) {
             ForEach(LiyaTab.allCases, id: \.rawValue) { item in
                 let selected = selection == item
-                let icon = Image(item.image).renderingMode(.original).resizable().scaledToFit()
+                let icon = HostedArtwork(item.image, labelWhileMissing: selected && !dynamicTypeSize.isAccessibilitySize ? nil : item.title).scaledToFit()
                     .frame(width: selected ? 36 : 32, height: selected ? 36 : 32)
                 Button {
                     selection = item
@@ -155,7 +156,7 @@ private struct LiyaGlassTabBar: View {
                             ViewThatFits(in: .horizontal) {
                                 HStack(spacing: 3) {
                                     icon
-                                    Text(LocalizedStringKey(item.title))
+                                    Text(verbatim: words(item.title))
                                         .font(LiyaType.text(.subheadline, weight: .semibold))
                                         .foregroundStyle(.primary)
                                 }
@@ -172,7 +173,7 @@ private struct LiyaGlassTabBar: View {
                     .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(Text(LocalizedStringKey(item.title)))
+                .accessibilityLabel(Text(verbatim: words(item.title)))
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
         }
@@ -205,6 +206,7 @@ private struct TabGlassSurface: ViewModifier {
 }
 
 private struct WelcomeView: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var store: LocalStore
     @Environment(\.locale) private var locale
@@ -222,10 +224,10 @@ private struct WelcomeView: View {
                     VStack(spacing: 0) {
                         Spacer().frame(height: max(180, size.height * 0.38))
                         VStack(spacing: 6) {
-                            Text("Share how you feel")
+                            Text(verbatim: words("Share how you feel"))
                                 .font(LiyaType.journalTitle)
                                 .foregroundStyle(.white)
-                            Text("Every mood belongs here.")
+                            Text(verbatim: words("Every mood belongs here."))
                                 .font(LiyaType.detail)
                                 .foregroundStyle(.white.opacity(0.9))
                         }
@@ -234,14 +236,14 @@ private struct WelcomeView: View {
                         .accessibilityElement(children: .combine)
                         Spacer(minLength: 22)
                         signInActions.frame(maxWidth: 350)
-                        if let name = session.savedAccountLabel {
+                        if let name = session.savedAccountLabel(fallback: words("Saved account")) {
                             Button {
                                 accountChoice = WelcomeAccountChoice(name: name, action: .resume)
                             } label: {
                                 HStack(spacing: 8) {
-                                    Image(decorative: "navigation-profile").resizable().scaledToFit().frame(width: 26, height: 26)
-                                    Text("Saved account").font(LiyaType.text(.footnote, weight: .semibold))
-                                    if name != String(localized: "Saved account", locale: locale) {
+                                    HostedArtwork(decorative: "navigation-profile").scaledToFit().frame(width: 26, height: 26)
+                                    Text(verbatim: words("Saved account")).font(LiyaType.text(.footnote, weight: .semibold))
+                                    if name != words("Saved account") {
                                         Text(verbatim: name).font(LiyaType.text(.footnote)).lineLimit(1).truncationMode(.middle)
                                     }
                                 }
@@ -254,18 +256,18 @@ private struct WelcomeView: View {
                             .padding(.top, 8)
                         }
                         if let errorMessage = session.errorMessage {
-                            Text(LocalizedStringKey(errorMessage)).font(LiyaType.text(.footnote)).foregroundStyle(.white)
+                            Text(verbatim: words(errorMessage)).font(LiyaType.text(.footnote)).foregroundStyle(.white)
                                 .multilineTextAlignment(.center).padding(.top, 8)
                         }
                         if let notice = session.welcomeNotice {
-                            Text(LocalizedStringKey(notice)).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(.white)
+                            Text(verbatim: words(notice)).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(.white)
                                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true).padding(.top, 8)
                         }
                         if session.showAppleRevocationHelp {
-                            Text("If you used Sign in with Apple, you can also stop using Apple with Liya in your Apple Account settings.")
+                            Text(verbatim: words("If you used Sign in with Apple, you can also stop using Apple with Liya in your Apple Account settings."))
                                 .font(LiyaType.text(.footnote)).foregroundStyle(.white)
                                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true).padding(.top, 8)
-                            Link("How to manage Sign in with Apple", destination: URL(string: "https://support.apple.com/en-us/102571")!)
+                            Link(words("How to manage Sign in with Apple"), destination: URL(string: "https://support.apple.com/en-us/102571")!)
                                 .font(LiyaType.text(.footnote, weight: .semibold)).underline().foregroundStyle(.white).frame(minHeight: 44)
                         }
                         agreementRow.padding(.top, 10)
@@ -346,7 +348,7 @@ private struct WelcomeView: View {
                     let signIn: @MainActor () async -> Void = {
                         if await session.appleSignIn(token: token, nonce: nonce, subject: subject) { finishSignIn() }
                     }
-                    if let name = session.savedAccountLabel, !session.matchesSavedApple(subject) {
+                    if let name = session.savedAccountLabel(fallback: words("Saved account")), !session.matchesSavedApple(subject) {
                         accountChoice = WelcomeAccountChoice(name: name, action: .replace(signIn))
                     } else {
                         Task { await signIn() }
@@ -361,8 +363,7 @@ private struct WelcomeView: View {
             .overlay {
                 Color.white
                     .overlay {
-                        Image("apple-continue-english")
-                            .resizable().scaledToFit()
+                        HostedArtwork("apple-continue-english", labelWhileMissing: "Continue with Apple").environment(\.locale, Locale(identifier: "en")).foregroundStyle(.black).scaledToFit()
                             .frame(maxWidth: 300, maxHeight: 54)
                     }
                     .allowsHitTesting(false)
@@ -391,22 +392,21 @@ private struct WelcomeView: View {
     private var agreementRow: some View {
         HStack(alignment: .top, spacing: 4) {
             Button { agreed.toggle() } label: {
-                Image(agreed ? "consent-on" : "consent-off")
-                    .resizable().scaledToFit().frame(width: 34, height: 34)
+                HostedArtwork(agreed ? "consent-on" : "consent-off").scaledToFit().frame(width: 34, height: 34)
                     .frame(width: 44, height: 44)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Agree to the Terms of Service and Privacy Policy")
-            .accessibilityValue(agreed ? "Agreed" : "Not agreed")
+            .accessibilityLabel(words("Agree to the Terms of Service and Privacy Policy"))
+            .accessibilityValue(words(agreed ? "Agreed" : "Not agreed"))
             .accessibilityAddTraits(agreed ? .isSelected : [])
 
             VStack(alignment: .leading, spacing: 0) {
-                Text("I agree to the following (tap to read):")
+                Text(verbatim: words("I agree to the following (tap to read):"))
                     .font(LiyaType.text(.footnote)).foregroundStyle(liyaInk)
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 4) {
                         policyLink(.terms)
-                        Text("and").foregroundStyle(liyaInk)
+                        Text(verbatim: words("and")).foregroundStyle(liyaInk)
                         policyLink(.privacy)
                     }.fixedSize(horizontal: true, vertical: false)
                     VStack(alignment: .leading, spacing: 0) {
@@ -426,10 +426,10 @@ private struct WelcomeView: View {
 
     private var agreementReminder: some View {
         VStack(spacing: 14) {
-            Text("Before we begin")
+            Text(verbatim: words("Before we begin"))
                 .font(LiyaType.text(.title3, weight: .bold)).foregroundStyle(liyaInk)
                 .multilineTextAlignment(.center)
-            Text("Please read and agree to our Terms of Service and Privacy Policy before continuing.")
+            Text(verbatim: words("Please read and agree to our Terms of Service and Privacy Policy before continuing."))
                 .font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.8))
                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
             ViewThatFits(in: .horizontal) {
@@ -458,11 +458,11 @@ private struct WelcomeView: View {
             if fromReminder { showAgreementReminder = false }
             policy = page
         } label: {
-            Text(LocalizedStringKey(page.title)).underline()
+            Text(verbatim: words(page.title)).underline()
                 .foregroundStyle(Color(red: 0.18, green: 0.12, blue: 0.48))
                 .frame(minHeight: 44)
         }
-        .accessibilityHint("Opens \(page.title) for reading")
+        .accessibilityHint(words.inserting(page.title, into: "Opens %@ for reading"))
     }
 }
 
@@ -471,8 +471,7 @@ private struct WelcomePanelBackground: View {
         GeometryReader { geometry in
             let artworkHeight = geometry.size.width * 958 / 778
             VStack(spacing: 0) {
-                Image("panel-background")
-                    .resizable().scaledToFit()
+                HostedArtwork("panel-background").scaledToFit()
                     .frame(width: geometry.size.width, height: artworkHeight)
                 Color.white
             }
@@ -486,6 +485,7 @@ private struct WelcomePanelBackground: View {
 }
 
 struct EmailAccountView: View {
+    @Environment(\.liyaWords) private var words
     enum Mode { case signIn, signUp, reset, newPassword }
     let onSuccess: () -> Void
     @EnvironmentObject private var session: LiyaSession
@@ -521,7 +521,7 @@ struct EmailAccountView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         HStack {
                             Spacer()
-                            Button("Close") {
+                            Button(words("Close")) {
                                 if mode == .newPassword { Task { if await session.cancelPasswordRecovery() { dismiss() } } }
                                 else { dismiss() }
                             }
@@ -529,14 +529,14 @@ struct EmailAccountView: View {
                             .frame(minWidth: 44, minHeight: 44)
                             .disabled(session.isSigningIn)
                         }
-                        Text(LocalizedStringKey(title)).font(LiyaType.text(.largeTitle, weight: .bold)).foregroundStyle(liyaInk)
-                        Text(mode == .signIn ? "Sign in to pick up where you left off." : mode == .signUp ? "Create an account for your moments and connections." : mode == .reset ? "We'll send a link to your email address." : "Use a password you haven't used before.")
+                        Text(verbatim: words(title)).font(LiyaType.text(.largeTitle, weight: .bold)).foregroundStyle(liyaInk)
+                        Text(verbatim: words(mode == .signIn ? "Sign in to pick up where you left off." : mode == .signUp ? "Create an account for your moments and connections." : mode == .reset ? "We'll send a link to your email address." : "Use a password you haven't used before."))
                             .font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.7))
                             .fixedSize(horizontal: false, vertical: true)
                         VStack(alignment: .leading, spacing: 16) {
                             if mode != .newPassword {
                                 fieldLabel("Email")
-                                TextField("you@example.com", text: $email)
+                                TextField(words("you@example.com"), text: $email)
                                     .textContentType(.emailAddress).keyboardType(.emailAddress)
                                     .textInputAutocapitalization(.never).autocorrectionDisabled()
                                     .focused($focused, equals: .email).submitLabel(.next)
@@ -545,7 +545,7 @@ struct EmailAccountView: View {
                             }
                             if mode != .reset {
                                 fieldLabel(mode == .newPassword ? "New password" : "Password")
-                                SecureField("At least 6 characters", text: $password)
+                                SecureField(words("At least 6 characters"), text: $password)
                                     .textContentType(mode == .signIn ? .password : .newPassword)
                                     .focused($focused, equals: .password).submitLabel(mode == .signIn ? .go : .next)
                                     .onSubmit { if mode == .signIn { submit() } else { focused = .confirmation } }
@@ -553,7 +553,7 @@ struct EmailAccountView: View {
                             }
                             if mode == .signUp || mode == .newPassword {
                                 fieldLabel("Confirm password")
-                                SecureField("Enter your password again", text: $confirmation)
+                                SecureField(words("Enter your password again"), text: $confirmation)
                                     .textContentType(.newPassword).focused($focused, equals: .confirmation)
                                     .submitLabel(.go).onSubmit { submit() }
                                     .padding(16).background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 16))
@@ -564,21 +564,21 @@ struct EmailAccountView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         if let notice = session.authNotice {
-                            Text(notice).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaInk)
+                            Text(verbatim: words(notice)).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaInk)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         WelcomeAction(title: session.isSigningIn ? "Please wait…" : actionTitle, image: "consent-button", foreground: .white, isLoading: session.isSigningIn) { submit() }
                             .disabled(session.isSigningIn)
                         if mode != .newPassword {
                             HStack {
-                                Button(mode == .signUp ? "Already have an account? Sign in" : "Create account") {
+                                Button(words(mode == .signUp ? "Already have an account? Sign in" : "Create account")) {
                                     changeMode(mode == .signUp ? .signIn : .signUp)
                                 }.frame(minHeight: 44)
                                 Spacer()
                                 if mode == .signIn {
-                                    Button("Forgot password?") { changeMode(.reset) }.frame(minHeight: 44)
+                                    Button(words("Forgot password?")) { changeMode(.reset) }.frame(minHeight: 44)
                                 } else if mode == .reset {
-                                    Button("Sign in") { changeMode(.signIn) }.frame(minHeight: 44)
+                                    Button(words("Sign in")) { changeMode(.signIn) }.frame(minHeight: 44)
                                 }
                             }.font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent)
                                 .disabled(session.isSigningIn)
@@ -601,7 +601,7 @@ struct EmailAccountView: View {
     }
 
     private func fieldLabel(_ title: String) -> some View {
-        Text(LocalizedStringKey(title)).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+        Text(verbatim: words(title)).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
     }
 
     private func changeMode(_ next: Mode) {
@@ -635,7 +635,7 @@ struct EmailAccountView: View {
             if succeeded { password = ""; confirmation = ""; onSuccess() }
         }
         let reauthenticating = selectedMode == .signIn && session.matchesSavedEmail(cleanEmail)
-        if selectedMode != .newPassword, !reauthenticating, let name = session.savedAccountLabel {
+        if selectedMode != .newPassword, !reauthenticating, let name = session.savedAccountLabel(fallback: words("Saved account")) {
             accountChoice = WelcomeAccountChoice(name: name, action: .replace(submitCredentials))
         } else {
             Task { await submitCredentials() }
@@ -655,6 +655,7 @@ private struct WelcomeAccountChoice: Identifiable {
 }
 
 private struct WelcomeAccountSheet: View {
+    @Environment(\.liyaWords) private var words
     let choice: WelcomeAccountChoice
     let onResume: () -> Void
     @EnvironmentObject private var session: LiyaSession
@@ -668,13 +669,13 @@ private struct WelcomeAccountSheet: View {
     var body: some View {
         PageShell(title: title) {
             VStack(spacing: 16) {
-                Image(decorative: "navigation-profile").resizable().scaledToFit().frame(width: 48, height: 48)
+                HostedArtwork(decorative: "navigation-profile").scaledToFit().frame(width: 48, height: 48)
                 switch choice.action {
-                case .resume: Text("Keep using \(choice.name)?")
-                case .replace: Text("Sign out of \(choice.name) to continue?")
+                case .resume: Text(verbatim: words.inserting(choice.name, into: "Keep using %@?"))
+                case .replace: Text(verbatim: words.inserting(choice.name, into: "Sign out of %@ to continue?"))
                 }
                 if let errorMessage {
-                    Text(LocalizedStringKey(errorMessage)).font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
+                    Text(verbatim: words(errorMessage)).font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
                 }
                 WelcomeAction(title: working ? "Please wait…" : actionTitle, image: "consent-button",
                               foreground: .white, isLoading: working) {
@@ -724,6 +725,7 @@ private struct WelcomeAccountSheet: View {
 }
 
 struct WelcomeAction: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     let image: String
     let foreground: Color
@@ -739,14 +741,14 @@ struct WelcomeAction: View {
                     label.padding(.vertical, artworkLabelInset)
                 }
                 .frame(maxWidth: .infinity, minHeight: 56)
-                .background { Image(decorative: image).resizable() }
+                .background { HostedArtwork(decorative: image, placeholderFill: liyaAccent) }
                 .contentShape(Rectangle())
             } else {
                 label
                     .frame(maxWidth: .infinity, minHeight: 56)
                     .background {
                         GeometryReader { geometry in
-                            Image(image).resizable().scaledToFill()
+                            HostedArtwork(image, placeholderFill: liyaAccent).scaledToFill()
                                 .frame(width: geometry.size.width, height: geometry.size.height).clipped()
                         }
                     }
@@ -759,7 +761,7 @@ struct WelcomeAction: View {
     private var label: some View {
         HStack(spacing: 8) {
             if isLoading { LiyaLoadingIndicator(size: 30).accessibilityHidden(true) }
-            Text(LocalizedStringKey(title))
+            Text(verbatim: words(title))
                 .font(LiyaType.action)
                 .foregroundStyle(foreground)
         }

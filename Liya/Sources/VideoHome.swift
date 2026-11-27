@@ -140,6 +140,7 @@ private struct VideoScrollBounce: ViewModifier {
 }
 
 struct VideoHome: View {
+    @Environment(\.liyaWords) private var words
     let active: Bool
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
@@ -165,7 +166,7 @@ struct VideoHome: View {
             if session.catalogLoading || preview.loading {
                 DuoControlRegion { _ in
                     LiyaLoadingIndicator(size: 68)
-                        .accessibilityLabel("Loading video")
+                        .accessibilityLabel(words("Loading video"))
                 }
                 .allowsHitTesting(false)
             }
@@ -173,20 +174,20 @@ struct VideoHome: View {
               ScrollView {
                VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Image("video-title").resizable().scaledToFit().frame(width: 145, height: 42)
-                        .allowsHitTesting(false).accessibilityLabel("Liya videos")
+                    HostedArtwork("video-title").scaledToFit().frame(width: 145, height: 42)
+                        .allowsHitTesting(false).accessibilityLabel(words("Liya videos"))
                     Spacer(minLength: 4)
                     VideoJournalShortcut()
                 }
                 Spacer(minLength: 16)
                 if session.catalogLoading || preview.loading { EmptyView() }
                 else if let error = session.catalogError {
-                    Text(error).font(LiyaType.text(.headline))
-                    Button("Try again") { Task { await session.refreshCatalog() } }.frame(minHeight: 44)
-                } else if session.videos.isEmpty { Text("No videos yet.").font(LiyaType.text(.headline)) }
+                    Text(verbatim: words(error)).font(LiyaType.text(.headline))
+                    Button(words("Try again")) { Task { await session.refreshCatalog() } }.frame(minHeight: 44)
+                } else if session.videos.isEmpty { Text(verbatim: words("No videos yet.")).font(LiyaType.text(.headline)) }
                 else if preview.unavailable {
-                    Text("This video is unavailable.").font(LiyaType.text(.headline))
-                    Button("Try again") { preview.select(preview.requestedIndex, active: active && scenePhase == .active && panel == nil, session: session) }.frame(minHeight: 44)
+                    Text(verbatim: words("This video is unavailable.")).font(LiyaType.text(.headline))
+                    Button(words("Try again")) { preview.select(preview.requestedIndex, active: active && scenePhase == .active && panel == nil, session: session) }.frame(minHeight: 44)
                 }
                 HStack(alignment: .bottom, spacing: 12) {
                     VStack(alignment: .leading, spacing: 10) {
@@ -212,10 +213,10 @@ struct VideoHome: View {
                                     .foregroundStyle(.white)
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("View \(authorName)")
+                                .accessibilityLabel(words.inserting(authorName, into: "View %@"))
                                 if let creator, let photoIndex {
                                     CuratedFollowButton(id: creator.photoID) { following, title in
-                                        Text(LocalizedStringKey(title))
+                                        Text(verbatim: words(title))
                                             .font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(.white)
                                             .fixedSize(horizontal: true, vertical: false)
                                             .padding(.horizontal, 12).frame(minHeight: 36)
@@ -245,8 +246,8 @@ struct VideoHome: View {
                     }
                 }
                 if let error = session.likesError {
-                    Text(error).font(LiyaType.text(.footnote))
-                    Button("Retry likes") { Task { await session.refreshLikes() } }.frame(minHeight: 44)
+                    Text(verbatim: words(error)).font(LiyaType.text(.footnote))
+                    Button(words("Retry likes")) { Task { await session.refreshLikes() } }.frame(minHeight: 44)
                 }
                }
                .foregroundStyle(.white)
@@ -260,7 +261,7 @@ struct VideoHome: View {
                    if canTapVideo {
                        playbackTapSurface.accessibilityRepresentation {
                            Button(action: preview.toggle) {
-                               Text(preview.playing ? "Pause video" : "Play video")
+                               Text(verbatim: words(preview.playing ? "Pause video" : "Play video"))
                            }
                        }
                    }
@@ -283,7 +284,7 @@ struct VideoHome: View {
         .overlay {
             if canTapVideo && !preview.playing {
                 DuoControlRegion { _ in
-                    Image(decorative: "play").resizable().scaledToFit()
+                    HostedArtwork(decorative: "play").scaledToFit()
                         .frame(width: 56, height: 56)
                 }
                 .allowsHitTesting(false)
@@ -354,28 +355,28 @@ struct VideoHome: View {
                        count: counts?.likeCount, failed: failed)
             }
             .disabled(!session.likesReady || session.likesLoading)
-            .accessibilityLabel(liked ? "Remove like" : "Like")
+            .accessibilityLabel(words(liked ? "Remove like" : "Like"))
             .accessibilityValue(countValue(counts?.likeCount))
             .accessibilityAddTraits(liked ? .isSelected : [])
 
             Button { panel = .comments(video.id) } label: {
                 metric("Comments", icon: "comment", count: counts?.commentCount, failed: failed)
             }
-            .accessibilityLabel("Comments")
+            .accessibilityLabel(words("Comments"))
             .accessibilityValue(countValue(counts?.commentCount))
 
             Button {
                 if let owner = session.userID { panel = .report(mediaID: video.id, ownerID: owner) }
             } label: {
-                Image("report").resizable().scaledToFit().frame(width: 44, height: 44)
+                HostedArtwork("report").scaledToFit().frame(width: 44, height: 44)
             }
             .disabled(session.userID == nil)
-            .accessibilityLabel("Report options")
+            .accessibilityLabel(words("Report options"))
 
             if failed {
-                Button("Try again") { Task { await session.refreshMediaEngagement(ids: [video.id]) } }
+                Button(words("Try again")) { Task { await session.refreshMediaEngagement(ids: [video.id]) } }
                     .font(LiyaType.text(.caption, weight: .semibold)).frame(minHeight: 44)
-                    .accessibilityHint("Refresh likes and comments")
+                    .accessibilityHint(words("Refresh likes and comments"))
             }
         }
         .buttonStyle(.plain)
@@ -386,14 +387,14 @@ struct VideoHome: View {
         }
     }
 
-    private func metric(_ title: LocalizedStringKey, icon: String, count: Int?, failed: Bool) -> some View {
+    private func metric(_ title: String, icon: String, count: Int?, failed: Bool) -> some View {
         VStack(spacing: 2) {
             HStack(spacing: 4) {
-                Image(decorative: icon).resizable().scaledToFit().frame(width: 28, height: 28)
+                HostedArtwork(decorative: icon).scaledToFit().frame(width: 28, height: 28)
                 if let count { Text(count, format: .number) }
                 else { Text(verbatim: failed ? "—" : "…") }
             }.font(LiyaType.text(.subheadline, weight: .bold)).monospacedDigit()
-            Text(title).font(LiyaType.text(.caption, weight: .semibold))
+            Text(verbatim: words(title)).font(LiyaType.text(.caption, weight: .semibold))
                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
         }
         .foregroundStyle(.white).padding(.horizontal, 9).padding(.vertical, 5)
@@ -404,7 +405,7 @@ struct VideoHome: View {
 
     private func countValue(_ count: Int?) -> Text {
         if let count { return Text(count, format: .number) }
-        return Text("Count unavailable")
+        return Text(verbatim: words("Count unavailable"))
     }
 }
 
@@ -477,6 +478,7 @@ private struct MediaCommentAvatar: View {
 }
 
 struct MediaCommentsView: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
     @Environment(\.dismiss) private var dismiss
@@ -517,12 +519,12 @@ struct MediaCommentsView: View {
                 DuoControlRegion { _ in
                     HStack(spacing: 4) {
                         Button { dismiss() } label: {
-                            Image("back").resizable().scaledToFit().frame(width: 20, height: 20)
+                            HostedArtwork("back").scaledToFit().frame(width: 20, height: 20)
                                 .frame(width: 44, height: 44)
-                        }.buttonStyle(.plain).disabled(sending).accessibilityLabel("Back")
+                        }.buttonStyle(.plain).disabled(sending).accessibilityLabel(words("Back"))
                         Spacer(minLength: 0)
                         HStack(spacing: 6) {
-                            Text("Comments").font(LiyaType.text(.headline))
+                            Text(verbatim: words("Comments")).font(LiyaType.text(.headline))
                             if let count = displayedCommentCount {
                                 Text(count, format: .number).font(LiyaType.text(.subheadline, weight: .semibold)).monospacedDigit()
                                     .foregroundStyle(.secondary)
@@ -538,8 +540,8 @@ struct MediaCommentsView: View {
                             LiyaLoadingIndicator(size: 28).frame(maxWidth: .infinity).padding(.vertical, 24)
                         } else if error == nil && comments.isEmpty {
                             VStack(spacing: 10) {
-                                Image(decorative: "profile-action-message").resizable().scaledToFit().frame(width: 52, height: 52)
-                                Text("No comments yet").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+                                HostedArtwork(decorative: "profile-action-message").scaledToFit().frame(width: 52, height: 52)
+                                Text(verbatim: words("No comments yet")).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
                             }.frame(maxWidth: .infinity).padding(.vertical, 28)
                         }
                         ForEach(comments) { comment in commentRow(comment) }
@@ -574,23 +576,23 @@ struct MediaCommentsView: View {
         VStack(alignment: .leading, spacing: 6) {
             if let error {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(LocalizedStringKey(error)).font(LiyaType.text(.footnote)).foregroundStyle(.red)
+                    Text(verbatim: words(error)).font(LiyaType.text(.footnote)).foregroundStyle(.red)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     if loadFailed {
-                        Button("Try again") { Task { await refreshThread() } }
+                        Button(words("Try again")) { Task { await refreshThread() } }
                             .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                     }
                 }
             }
             HStack(alignment: .bottom, spacing: 10) {
-                TextField("Write a comment", text: Binding(get: { text }, set: {
+                TextField(words("Write a comment"), text: Binding(get: { text }, set: {
                     text = $0; attempt = UUID(); persistDraft()
                 }), axis: .vertical)
                     .lineLimit(1...4).padding(.horizontal, 14).padding(.vertical, 12)
                     .background(.white.opacity(0.96), in: RoundedRectangle(cornerRadius: 18))
                     .overlay(RoundedRectangle(cornerRadius: 18).stroke(liyaAccent.opacity(0.12), lineWidth: 1))
-                    .focused($commentFocused).disabled(sending).accessibilityLabel("Write a comment")
-                Button(sending ? "Sending…" : "Send") { send() }
+                    .focused($commentFocused).disabled(sending).accessibilityLabel(words("Write a comment"))
+                Button(words(sending ? "Sending…" : "Send")) { send() }
                     .font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(.white)
                     .padding(.horizontal, 18).frame(minHeight: 44)
                     .background(liyaGradient.opacity(canSend ? 1 : 0.45), in: Capsule())
@@ -609,35 +611,35 @@ struct MediaCommentsView: View {
                 Group {
                     if let person = comment.memberAuthor {
                         NavigationLink { CommunityPersonView(personID: person.id) } label: {
-                            if mine { Text("You") } else { Text(verbatim: person.displayName) }
+                            if mine { Text(verbatim: words("You")) } else { Text(verbatim: person.displayName) }
                         }.buttonStyle(.plain)
-                    } else if mine { Text("You") }
+                    } else if mine { Text(verbatim: words("You")) }
                     else if case .editorial(let credit) = comment {
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
                             Text(verbatim: credit.displayName)
-                            Text("Collection").font(LiyaType.text(.caption)).foregroundStyle(.secondary)
+                            Text(verbatim: words("Collection")).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
                         }
                     }
-                    else { Text("Liya member") }
+                    else { Text(verbatim: words("Liya member")) }
                 }.font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
                 Text(verbatim: comment.bodyText).font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.9))
                     .lineSpacing(3).fixedSize(horizontal: false, vertical: true)
                 if reportedCommentIDs.contains(comment.id) {
-                    Text("Report received.").font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaAccent)
+                    Text(verbatim: words("Report received.")).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaAccent)
                 }
                 if mine, let member, let status = social.moderationText(kind: "media_comment", id: member.id) {
-                    Text(LocalizedStringKey(status)).font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
+                    Text(verbatim: words(status)).font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
             if let member, mine {
-                Button("Delete") { delete(member) }
+                Button(words("Delete")) { delete(member) }
                     .font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                     .disabled(deleting.contains(member.id))
             } else {
                 Button { commentFocused = false; target = comment } label: {
-                    Image(decorative: member == nil ? "safety-report" : "more").resizable().scaledToFit()
+                    HostedArtwork(decorative: member == nil ? "safety-report" : "more").scaledToFit()
                         .frame(width: 18, height: 18).frame(width: 44, height: 44)
-                }.buttonStyle(.plain).accessibilityLabel(member == nil ? Text("Report comment") : Text("Comment options"))
+                }.buttonStyle(.plain).accessibilityLabel(member == nil ? Text(verbatim: words("Report comment")) : Text(verbatim: words("Comment options")))
                     .disabled(member == nil && reportedCommentIDs.contains(comment.id))
             }
         }.padding(.vertical, 12)
@@ -725,15 +727,16 @@ struct MediaCommentsView: View {
 }
 
 struct VideoSafetyReason: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     let selected: Bool
     let action: () -> Void
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                Text(title).font(LiyaType.text(.subheadline, weight: selected ? .semibold : .medium)).foregroundStyle(liyaInk)
+                Text(verbatim: words(title)).font(LiyaType.text(.subheadline, weight: selected ? .semibold : .medium)).foregroundStyle(liyaInk)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                if selected { Text("Selected").font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(liyaAccent) }
+                if selected { Text(verbatim: words("Selected")).font(LiyaType.text(.caption, weight: .semibold)).foregroundStyle(liyaAccent) }
             }.padding(.horizontal, 16).frame(maxWidth: .infinity, minHeight: 48)
                 .background(selected ? liyaAccent.opacity(0.09) : Color(red: 0.96, green: 0.96, blue: 0.98), in: RoundedRectangle(cornerRadius: 12))
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(liyaAccent.opacity(selected ? 0.35 : 0), lineWidth: 1))
@@ -742,6 +745,7 @@ struct VideoSafetyReason: View {
 }
 
 private struct MediaCommentSafetyView: View {
+    @Environment(\.liyaWords) private var words
     private enum Step {
         case options, report, block
 
@@ -776,7 +780,7 @@ private struct MediaCommentSafetyView: View {
     }
 
     private var profileName: String {
-        comment.authorName ?? String(localized: "Liya member", locale: locale)
+        comment.authorName ?? words("Liya member")
     }
 
     var body: some View {
@@ -809,7 +813,7 @@ private struct MediaCommentSafetyView: View {
                     SafetySubmitButton(title: sending ? "Sending…" : "Send report", busy: sending,
                                        disabled: selected == nil || sending, action: report)
                 case .block:
-                    Text("Their comments and other community content will no longer be visible to you.")
+                    Text(verbatim: words("Their comments and other community content will no longer be visible to you."))
                         .font(LiyaType.detail).foregroundStyle(liyaInk).fixedSize(horizontal: false, vertical: true)
                     feedback
                     if social.canCommentOnMedia(session) {
@@ -818,7 +822,7 @@ private struct MediaCommentSafetyView: View {
                     } else if social.loading {
                         LiyaLoadingIndicator(size: 24).frame(maxWidth: .infinity, minHeight: 44)
                     } else if session.userID == nil || social.checkedMemberProfileOwner != session.userID || social.error != nil {
-                        Text("Couldn't load your profile. Please try again.")
+                        Text(verbatim: words("Couldn't load your profile. Please try again."))
                             .font(LiyaType.text(.footnote)).foregroundStyle(liyaInk)
                         SafetySecondaryButton(title: "Try again") { Task { await social.refresh(session) } }
                     } else {
@@ -837,7 +841,7 @@ private struct MediaCommentSafetyView: View {
 
     @ViewBuilder private var feedback: some View {
         if let error {
-            Text(LocalizedStringKey(error)).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaInk)
+            Text(verbatim: words(error)).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaInk)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -884,6 +888,7 @@ private struct MediaCommentSafetyView: View {
 }
 
 private struct VideoReportView: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var session: LiyaSession
     @Environment(\.dismiss) private var dismiss
     let mediaID: String
@@ -903,15 +908,15 @@ private struct VideoReportView: View {
         SafetyPanel(title: sent ? "Report received." : "Report video",
                     subject: session.curatedVideoCreators[mediaID]?.name,
                     back: nil, close: { dismiss() }, busy: sending) {
-            Image("safety-report").resizable().scaledToFit().padding(6)
+            HostedArtwork("safety-report").scaledToFit().padding(6)
         } content: {
             if sent {
                 SafetySubmitButton(title: "Done") { dismiss() }
             } else if targetIndex == nil {
-                Text("This video is unavailable.").font(LiyaType.detail).foregroundStyle(liyaInk)
+                Text(verbatim: words("This video is unavailable.")).font(LiyaType.detail).foregroundStyle(liyaInk)
                 SafetySecondaryButton(title: "Close") { dismiss() }
             } else {
-                Text("Choose a reason").font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+                Text(verbatim: words("Choose a reason")).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
                 SafetyReasonList(selected: selected) { reason in
                     guard !sending, reason != selected else { return }
                     selected = reason
@@ -919,7 +924,7 @@ private struct VideoReportView: View {
                     failed = false
                 }.disabled(sending)
                 if failed {
-                    Text("Couldn't confirm the report. Please try again.")
+                    Text(verbatim: words("Couldn't confirm the report. Please try again."))
                         .font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(liyaInk)
                         .fixedSize(horizontal: false, vertical: true)
                 }

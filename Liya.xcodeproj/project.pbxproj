@@ -1,4 +1,3 @@
-// !$*UTF8*$!
 {
 	archiveVersion = 1;
 	classes = {
@@ -6,161 +5,146 @@
 	objectVersion = 63;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		073D8EE7810AFCF9F9B31B86 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C1AA7E627810F1A043DB07 /* RootView.swift */; };
-		262EA9226C0699993B1E645E /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F623C35F01064B5675C139C1 /* WalletView.swift */; };
-		26E2D5608ADB547C04EA2231 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 1008727600F4C756AF33B38C /* Supabase */; };
-		2A68D9FBFD459854460E746A /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B3165B5F348D386BDA1F13D /* Components.swift */; };
-		2BA2072B7918FE67B1D32B29 /* LiyaSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D48B8AC7CD59A9EF09A2C00 /* LiyaSession.swift */; };
-		324598B2552C2847BA3FBABB /* CollectionAuthors.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFEE673FE4EB43FAD342B45A /* CollectionAuthors.swift */; };
-		32E3CDDE51E9F1562E13755D /* VideoHome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 362B25F54F99DDE61E68206D /* VideoHome.swift */; };
-		3BAB87846F99325C6B799D94 /* CoinCheckout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B7ED4624CF45B548E99A81 /* CoinCheckout.swift */; };
-		3EED5221EF3C25A6D41D15A2 /* CollectionPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D3C848B4534F0BB94FF8789 /* CollectionPhoto.swift */; };
-		44CF192B0AD54DFFA0D31D68 /* CoinWalletLedger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C8A336B63C14C48B7198FC6 /* CoinWalletLedger.swift */; };
-		4E2E82BA3371A18568475440 /* SocialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 342B0A1CBB1A51F8DF16C1CF /* SocialStore.swift */; };
-		54CA158E53B5FE7FA22C7C28 /* DraftMedia.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */; };
-		7B42BD8844C5C09CEF2842B6 /* LiyaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2061D8AD2D04E41E28919D /* LiyaApp.swift */; };
-		7C361BAE46054E808D9DC6BB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = DD4D76344138405A8A47740C /* PrivacyInfo.xcprivacy */; };
-		7FDE4B121440C7BE36374D65 /* SquareViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593E5372186CB54C83F75E59 /* SquareViews.swift */; };
-		8D787902AA6F4E78946DE2C7 /* WaitingMediaPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0F0196BA8C840A3AC30403C /* WaitingMediaPreview.swift */; };
-		94AA0FDD52D33EF28DE55AE6 /* DuoControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3984E1F4A9E1E136685F9B50 /* DuoControls.swift */; };
-		98CA115E39D64DE9880B42C1 /* JournalPostcards.swift in Sources */ = {isa = PBXBuildFile; fileRef = B372A225B9524B84A7BE9580 /* JournalPostcards.swift */; };
-		9FD5E4EF8A1C427A8B2CF101 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 9FD5E4EF8A1C427A8B2CF102 /* InfoPlist.xcstrings */; };
-		A0627F5AD9573BDC71118145 /* ProfileViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1801B18AF27DF23E012330C7 /* ProfileViews.swift */; };
-		A11111111111111111111101 /* LiyaCalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11111111111111111111102 /* LiyaCalls.swift */; };
-		A33333333333333333333301 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A33333333333333333333302 /* LaunchScreen.storyboard */; };
-		A44444444444444444444401 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A44444444444444444444402 /* Localizable.xcstrings */; };
-		C82EF4A543D3DF6A2C874E68 /* LocalPosts.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA69102DD583B62A83217A19 /* LocalPosts.swift */; };
-		C8766601EBA24E1680980C5A /* Typefaces in Resources */ = {isa = PBXBuildFile; fileRef = BC3B8B66097D4C539158F32F /* Typefaces */; };
-		CA27812540BE098620440156 /* MainViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 393130AEC742C97B5E001EAB /* MainViews.swift */; };
-		CC7E2CA079842B58037D651C /* LegalDocumentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A004A2012B0809716BDC4A2 /* LegalDocumentView.swift */; };
-		D13D7EED4D1BD097D1746957 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C619DBBB0211BA6980C958D2 /* Assets.xcassets */; };
-		D8BF7B3D30868198F8AF9D7D /* SocialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577DC4FDFFFC8D2FE2971E05 /* SocialViews.swift */; };
-		DC4628DC65FC19D7D5763A59 /* LocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6570BF991B9EBC01B32BA0EE /* LocalStore.swift */; };
-		F9095906E366F7A2A10EA0A4 /* AutomaticChat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701485677FE2C405F57264D3 /* AutomaticChat.swift */; };
-		F9366F1AF434AB6AECAB4263 /* VideoCompression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBDFB333D4488D41A926C30 /* VideoCompression.swift */; };
-/* End PBXBuildFile section */
+		073D8EE7810AFCF9F9B31B86 = {isa = PBXBuildFile; fileRef = E1C1AA7E627810F1A043DB07; };
+		262EA9226C0699993B1E645E = {isa = PBXBuildFile; fileRef = F623C35F01064B5675C139C1; };
+		26E2D5608ADB547C04EA2231 = {isa = PBXBuildFile; productRef = 1008727600F4C756AF33B38C; };
+		2A68D9FBFD459854460E746A = {isa = PBXBuildFile; fileRef = 9B3165B5F348D386BDA1F13D; };
+		2BA2072B7918FE67B1D32B29 = {isa = PBXBuildFile; fileRef = 6D48B8AC7CD59A9EF09A2C00; };
+		324598B2552C2847BA3FBABB = {isa = PBXBuildFile; fileRef = BFEE673FE4EB43FAD342B45A; };
+		32E3CDDE51E9F1562E13755D = {isa = PBXBuildFile; fileRef = 362B25F54F99DDE61E68206D; };
+		3BAB87846F99325C6B799D94 = {isa = PBXBuildFile; fileRef = 07B7ED4624CF45B548E99A81; };
+		3EED5221EF3C25A6D41D15A2 = {isa = PBXBuildFile; fileRef = 0D3C848B4534F0BB94FF8789; };
+		E37D8954D1F041569B81F4BF = {isa = PBXBuildFile; fileRef = BF1B0CB8F75E48C18811D756; };
+		44CF192B0AD54DFFA0D31D68 = {isa = PBXBuildFile; fileRef = 0C8A336B63C14C48B7198FC6; };
+		4E2E82BA3371A18568475440 = {isa = PBXBuildFile; fileRef = 342B0A1CBB1A51F8DF16C1CF; };
+		54CA158E53B5FE7FA22C7C28 = {isa = PBXBuildFile; fileRef = BD7490A29EDC7FD0A5D1D987; };
+		7B42BD8844C5C09CEF2842B6 = {isa = PBXBuildFile; fileRef = 7C2061D8AD2D04E41E28919D; };
+		7C361BAE46054E808D9DC6BB = {isa = PBXBuildFile; fileRef = DD4D76344138405A8A47740C; };
+		7FDE4B121440C7BE36374D65 = {isa = PBXBuildFile; fileRef = 593E5372186CB54C83F75E59; };
+		8D787902AA6F4E78946DE2C7 = {isa = PBXBuildFile; fileRef = B0F0196BA8C840A3AC30403C; };
+		94AA0FDD52D33EF28DE55AE6 = {isa = PBXBuildFile; fileRef = 3984E1F4A9E1E136685F9B50; };
+		98CA115E39D64DE9880B42C1 = {isa = PBXBuildFile; fileRef = B372A225B9524B84A7BE9580; };
+		9FD5E4EF8A1C427A8B2CF101 = {isa = PBXBuildFile; fileRef = 9FD5E4EF8A1C427A8B2CF102; };
+		A0627F5AD9573BDC71118145 = {isa = PBXBuildFile; fileRef = 1801B18AF27DF23E012330C7; };
+		A11111111111111111111101 = {isa = PBXBuildFile; fileRef = A11111111111111111111102; };
+		A33333333333333333333301 = {isa = PBXBuildFile; fileRef = A33333333333333333333302; };
+		C82EF4A543D3DF6A2C874E68 = {isa = PBXBuildFile; fileRef = BA69102DD583B62A83217A19; };
+		CA27812540BE098620440156 = {isa = PBXBuildFile; fileRef = 393130AEC742C97B5E001EAB; };
+		CC7E2CA079842B58037D651C = {isa = PBXBuildFile; fileRef = 5A004A2012B0809716BDC4A2; };
+		D13D7EED4D1BD097D1746957 = {isa = PBXBuildFile; fileRef = C619DBBB0211BA6980C958D2; };
+		D8BF7B3D30868198F8AF9D7D = {isa = PBXBuildFile; fileRef = 577DC4FDFFFC8D2FE2971E05; };
+		DC4628DC65FC19D7D5763A59 = {isa = PBXBuildFile; fileRef = 6570BF991B9EBC01B32BA0EE; };
+		F9366F1AF434AB6AECAB4263 = {isa = PBXBuildFile; fileRef = 6BBDFB333D4488D41A926C30; };
 
-/* Begin PBXFileReference section */
-		07B7ED4624CF45B548E99A81 /* CoinCheckout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinCheckout.swift; sourceTree = "<group>"; };
-		0A49B42E539DC4B03BDB34DE /* Liya.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Liya.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		0C8A336B63C14C48B7198FC6 /* CoinWalletLedger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinWalletLedger.swift; sourceTree = "<group>"; };
-		0D3C848B4534F0BB94FF8789 /* CollectionPhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionPhoto.swift; sourceTree = "<group>"; };
-		1801B18AF27DF23E012330C7 /* ProfileViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViews.swift; sourceTree = "<group>"; };
-		342B0A1CBB1A51F8DF16C1CF /* SocialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialStore.swift; sourceTree = "<group>"; };
-		362B25F54F99DDE61E68206D /* VideoHome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoHome.swift; sourceTree = "<group>"; };
-		393130AEC742C97B5E001EAB /* MainViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViews.swift; sourceTree = "<group>"; };
-		3984E1F4A9E1E136685F9B50 /* DuoControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoControls.swift; sourceTree = "<group>"; };
-		577DC4FDFFFC8D2FE2971E05 /* SocialViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialViews.swift; sourceTree = "<group>"; };
-		593E5372186CB54C83F75E59 /* SquareViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquareViews.swift; sourceTree = "<group>"; };
-		5A004A2012B0809716BDC4A2 /* LegalDocumentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocumentView.swift; sourceTree = "<group>"; };
-		6570BF991B9EBC01B32BA0EE /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
-		6BBDFB333D4488D41A926C30 /* VideoCompression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCompression.swift; sourceTree = "<group>"; };
-		6D48B8AC7CD59A9EF09A2C00 /* LiyaSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaSession.swift; sourceTree = "<group>"; };
-		701485677FE2C405F57264D3 /* AutomaticChat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomaticChat.swift; sourceTree = "<group>"; };
-		7C2061D8AD2D04E41E28919D /* LiyaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaApp.swift; sourceTree = "<group>"; };
-		9B3165B5F348D386BDA1F13D /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
-		9FD5E4EF8A1C427A8B2CF102 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
-		A11111111111111111111102 /* LiyaCalls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaCalls.swift; sourceTree = "<group>"; };
-		A33333333333333333333302 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
-		A44444444444444444444402 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
-		B0F0196BA8C840A3AC30403C /* WaitingMediaPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitingMediaPreview.swift; sourceTree = "<group>"; };
-		B372A225B9524B84A7BE9580 /* JournalPostcards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalPostcards.swift; sourceTree = "<group>"; };
-		BA69102DD583B62A83217A19 /* LocalPosts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPosts.swift; sourceTree = "<group>"; };
-		BC3B8B66097D4C539158F32F /* Typefaces */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Typefaces; path = Resources/Typefaces; sourceTree = "<group>"; };
-		BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraftMedia.swift; sourceTree = "<group>"; };
-		BFEE673FE4EB43FAD342B45A /* CollectionAuthors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionAuthors.swift; sourceTree = "<group>"; };
-		C619DBBB0211BA6980C958D2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		DD4D76344138405A8A47740C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		E1C1AA7E627810F1A043DB07 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
-		F623C35F01064B5675C139C1 /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
-/* End PBXFileReference section */
+		07B7ED4624CF45B548E99A81 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinCheckout.swift; sourceTree = "<group>"; };
+		0A49B42E539DC4B03BDB34DE = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Liya.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0C8A336B63C14C48B7198FC6 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinWalletLedger.swift; sourceTree = "<group>"; };
+		0D3C848B4534F0BB94FF8789 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionPhoto.swift; sourceTree = "<group>"; };
+		BF1B0CB8F75E48C18811D756 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterfaceLibrary.swift; sourceTree = "<group>"; };
+		1801B18AF27DF23E012330C7 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViews.swift; sourceTree = "<group>"; };
+		342B0A1CBB1A51F8DF16C1CF = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialStore.swift; sourceTree = "<group>"; };
+		362B25F54F99DDE61E68206D = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoHome.swift; sourceTree = "<group>"; };
+		393130AEC742C97B5E001EAB = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViews.swift; sourceTree = "<group>"; };
+		3984E1F4A9E1E136685F9B50 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuoControls.swift; sourceTree = "<group>"; };
+		577DC4FDFFFC8D2FE2971E05 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialViews.swift; sourceTree = "<group>"; };
+		593E5372186CB54C83F75E59 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquareViews.swift; sourceTree = "<group>"; };
+		5A004A2012B0809716BDC4A2 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalDocumentView.swift; sourceTree = "<group>"; };
+		6570BF991B9EBC01B32BA0EE = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
+		6BBDFB333D4488D41A926C30 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCompression.swift; sourceTree = "<group>"; };
+		6D48B8AC7CD59A9EF09A2C00 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaSession.swift; sourceTree = "<group>"; };
+		7C2061D8AD2D04E41E28919D = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaApp.swift; sourceTree = "<group>"; };
+		9B3165B5F348D386BDA1F13D = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		9FD5E4EF8A1C427A8B2CF102 = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
+		A11111111111111111111102 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiyaCalls.swift; sourceTree = "<group>"; };
+		A33333333333333333333302 = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		B0F0196BA8C840A3AC30403C = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitingMediaPreview.swift; sourceTree = "<group>"; };
+		B372A225B9524B84A7BE9580 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalPostcards.swift; sourceTree = "<group>"; };
+		BA69102DD583B62A83217A19 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPosts.swift; sourceTree = "<group>"; };
+		BD7490A29EDC7FD0A5D1D987 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraftMedia.swift; sourceTree = "<group>"; };
+		BFEE673FE4EB43FAD342B45A = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionAuthors.swift; sourceTree = "<group>"; };
+		C619DBBB0211BA6980C958D2 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DD4D76344138405A8A47740C = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		E1C1AA7E627810F1A043DB07 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		F623C35F01064B5675C139C1 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
 
-/* Begin PBXFrameworksBuildPhase section */
-		9BA8C07A0349C9AF0D637ABB /* Frameworks */ = {
+		9BA8C07A0349C9AF0D637ABB = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				26E2D5608ADB547C04EA2231 /* Supabase in Frameworks */,
+				26E2D5608ADB547C04EA2231,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-/* End PBXFrameworksBuildPhase section */
 
-/* Begin PBXGroup section */
 		47E1305AB0237536E0BCB3A5 = {
 			isa = PBXGroup;
 			children = (
-				6BBA48D2AE2AA016DFA0ECBE /* Liya */,
-				5F92A2190486565EC12E91E7 /* Sources */,
-				7C1D8A4D23972E7A196D2C6D /* Products */,
+				6BBA48D2AE2AA016DFA0ECBE,
+				5F92A2190486565EC12E91E7,
+				7C1D8A4D23972E7A196D2C6D,
 			);
 			sourceTree = "<group>";
 		};
-		5F92A2190486565EC12E91E7 /* Sources */ = {
+		5F92A2190486565EC12E91E7 = {
 			isa = PBXGroup;
 			children = (
-				A11111111111111111111102 /* LiyaCalls.swift */,
-				B0F0196BA8C840A3AC30403C /* WaitingMediaPreview.swift */,
-				701485677FE2C405F57264D3 /* AutomaticChat.swift */,
-				07B7ED4624CF45B548E99A81 /* CoinCheckout.swift */,
-				0C8A336B63C14C48B7198FC6 /* CoinWalletLedger.swift */,
-				9B3165B5F348D386BDA1F13D /* Components.swift */,
-				BD7490A29EDC7FD0A5D1D987 /* DraftMedia.swift */,
-				3984E1F4A9E1E136685F9B50 /* DuoControls.swift */,
-				BFEE673FE4EB43FAD342B45A /* CollectionAuthors.swift */,
-				0D3C848B4534F0BB94FF8789 /* CollectionPhoto.swift */,
-				5A004A2012B0809716BDC4A2 /* LegalDocumentView.swift */,
-				7C2061D8AD2D04E41E28919D /* LiyaApp.swift */,
-				6D48B8AC7CD59A9EF09A2C00 /* LiyaSession.swift */,
-				BA69102DD583B62A83217A19 /* LocalPosts.swift */,
-				6570BF991B9EBC01B32BA0EE /* LocalStore.swift */,
-				393130AEC742C97B5E001EAB /* MainViews.swift */,
-				1801B18AF27DF23E012330C7 /* ProfileViews.swift */,
-				E1C1AA7E627810F1A043DB07 /* RootView.swift */,
-				342B0A1CBB1A51F8DF16C1CF /* SocialStore.swift */,
-				577DC4FDFFFC8D2FE2971E05 /* SocialViews.swift */,
-				593E5372186CB54C83F75E59 /* SquareViews.swift */,
-				B372A225B9524B84A7BE9580 /* JournalPostcards.swift */,
-				6BBDFB333D4488D41A926C30 /* VideoCompression.swift */,
-				362B25F54F99DDE61E68206D /* VideoHome.swift */,
-				F623C35F01064B5675C139C1 /* WalletView.swift */,
+				A11111111111111111111102,
+				B0F0196BA8C840A3AC30403C,
+				07B7ED4624CF45B548E99A81,
+				0C8A336B63C14C48B7198FC6,
+				9B3165B5F348D386BDA1F13D,
+				BD7490A29EDC7FD0A5D1D987,
+				3984E1F4A9E1E136685F9B50,
+				BFEE673FE4EB43FAD342B45A,
+				0D3C848B4534F0BB94FF8789,
+				BF1B0CB8F75E48C18811D756,
+				5A004A2012B0809716BDC4A2,
+				7C2061D8AD2D04E41E28919D,
+				6D48B8AC7CD59A9EF09A2C00,
+				BA69102DD583B62A83217A19,
+				6570BF991B9EBC01B32BA0EE,
+				393130AEC742C97B5E001EAB,
+				1801B18AF27DF23E012330C7,
+				E1C1AA7E627810F1A043DB07,
+				342B0A1CBB1A51F8DF16C1CF,
+				577DC4FDFFFC8D2FE2971E05,
+				593E5372186CB54C83F75E59,
+				B372A225B9524B84A7BE9580,
+				6BBDFB333D4488D41A926C30,
+				362B25F54F99DDE61E68206D,
+				F623C35F01064B5675C139C1,
 			);
 			name = Sources;
 			path = Liya/Sources;
 			sourceTree = "<group>";
 		};
-		6BBA48D2AE2AA016DFA0ECBE /* Liya */ = {
+		6BBA48D2AE2AA016DFA0ECBE = {
 			isa = PBXGroup;
 			children = (
-				BC3B8B66097D4C539158F32F /* Typefaces */,
-				A44444444444444444444402 /* Localizable.xcstrings */,
-				9FD5E4EF8A1C427A8B2CF102 /* InfoPlist.xcstrings */,
-				DD4D76344138405A8A47740C /* PrivacyInfo.xcprivacy */,
-				A33333333333333333333302 /* LaunchScreen.storyboard */,
-				C619DBBB0211BA6980C958D2 /* Assets.xcassets */,
+				9FD5E4EF8A1C427A8B2CF102,
+				DD4D76344138405A8A47740C,
+				A33333333333333333333302,
+				C619DBBB0211BA6980C958D2,
 			);
 			path = Liya;
 			sourceTree = "<group>";
 		};
-		7C1D8A4D23972E7A196D2C6D /* Products */ = {
+		7C1D8A4D23972E7A196D2C6D = {
 			isa = PBXGroup;
 			children = (
-				0A49B42E539DC4B03BDB34DE /* Liya.app */,
+				0A49B42E539DC4B03BDB34DE,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-/* End PBXGroup section */
 
-/* Begin PBXNativeTarget section */
-		319DC7A720CAF1D2CD041369 /* Liya */ = {
+		319DC7A720CAF1D2CD041369 = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 03D42F9D2DE6B62119F0915C /* Build configuration list for PBXNativeTarget "Liya" */;
+			buildConfigurationList = 03D42F9D2DE6B62119F0915C;
 			buildPhases = (
-				69C1C6A7EE9A257EA05B5A33 /* Sources */,
-				0BB7252F8A1FB08BDEC4FD73 /* Resources */,
-				9BA8C07A0349C9AF0D637ABB /* Frameworks */,
+				69C1C6A7EE9A257EA05B5A33,
+				0BB7252F8A1FB08BDEC4FD73,
+				9BA8C07A0349C9AF0D637ABB,
 			);
 			buildRules = (
 			);
@@ -168,22 +152,20 @@
 			);
 			name = Liya;
 			packageProductDependencies = (
-				1008727600F4C756AF33B38C /* Supabase */,
+				1008727600F4C756AF33B38C,
 			);
 			productName = Liya;
-			productReference = 0A49B42E539DC4B03BDB34DE /* Liya.app */;
+			productReference = 0A49B42E539DC4B03BDB34DE;
 			productType = "com.apple.product-type.application";
 		};
-/* End PBXNativeTarget section */
 
-/* Begin PBXProject section */
-		2B7D257627435858BF94383D /* Project object */ = {
+		2B7D257627435858BF94383D = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 2710;
 			};
-			buildConfigurationList = EF66F6CC11FC8DEB1EF37E59 /* Build configuration list for PBXProject "Liya" */;
+			buildConfigurationList = EF66F6CC11FC8DEB1EF37E59;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -198,75 +180,68 @@
 			mainGroup = 47E1305AB0237536E0BCB3A5;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				4169A5017835DAFD0AC3573A /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				4169A5017835DAFD0AC3573A,
 			);
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				319DC7A720CAF1D2CD041369 /* Liya */,
+				319DC7A720CAF1D2CD041369,
 			);
 		};
-/* End PBXProject section */
 
-/* Begin PBXResourcesBuildPhase section */
-		0BB7252F8A1FB08BDEC4FD73 /* Resources */ = {
+		0BB7252F8A1FB08BDEC4FD73 = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C8766601EBA24E1680980C5A /* Typefaces in Resources */,
-				A44444444444444444444401 /* Localizable.xcstrings in Resources */,
-				9FD5E4EF8A1C427A8B2CF101 /* InfoPlist.xcstrings in Resources */,
-				7C361BAE46054E808D9DC6BB /* PrivacyInfo.xcprivacy in Resources */,
-				A33333333333333333333301 /* LaunchScreen.storyboard in Resources */,
-				D13D7EED4D1BD097D1746957 /* Assets.xcassets in Resources */,
+				9FD5E4EF8A1C427A8B2CF101,
+				7C361BAE46054E808D9DC6BB,
+				A33333333333333333333301,
+				D13D7EED4D1BD097D1746957,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-/* End PBXResourcesBuildPhase section */
 
-/* Begin PBXSourcesBuildPhase section */
-		69C1C6A7EE9A257EA05B5A33 /* Sources */ = {
+		69C1C6A7EE9A257EA05B5A33 = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A11111111111111111111101 /* LiyaCalls.swift in Sources */,
-				8D787902AA6F4E78946DE2C7 /* WaitingMediaPreview.swift in Sources */,
-				F9095906E366F7A2A10EA0A4 /* AutomaticChat.swift in Sources */,
-				3BAB87846F99325C6B799D94 /* CoinCheckout.swift in Sources */,
-				44CF192B0AD54DFFA0D31D68 /* CoinWalletLedger.swift in Sources */,
-				2A68D9FBFD459854460E746A /* Components.swift in Sources */,
-				54CA158E53B5FE7FA22C7C28 /* DraftMedia.swift in Sources */,
-				94AA0FDD52D33EF28DE55AE6 /* DuoControls.swift in Sources */,
-				324598B2552C2847BA3FBABB /* CollectionAuthors.swift in Sources */,
-				3EED5221EF3C25A6D41D15A2 /* CollectionPhoto.swift in Sources */,
-				CC7E2CA079842B58037D651C /* LegalDocumentView.swift in Sources */,
-				7B42BD8844C5C09CEF2842B6 /* LiyaApp.swift in Sources */,
-				2BA2072B7918FE67B1D32B29 /* LiyaSession.swift in Sources */,
-				C82EF4A543D3DF6A2C874E68 /* LocalPosts.swift in Sources */,
-				DC4628DC65FC19D7D5763A59 /* LocalStore.swift in Sources */,
-				CA27812540BE098620440156 /* MainViews.swift in Sources */,
-				A0627F5AD9573BDC71118145 /* ProfileViews.swift in Sources */,
-				073D8EE7810AFCF9F9B31B86 /* RootView.swift in Sources */,
-				4E2E82BA3371A18568475440 /* SocialStore.swift in Sources */,
-				D8BF7B3D30868198F8AF9D7D /* SocialViews.swift in Sources */,
-				7FDE4B121440C7BE36374D65 /* SquareViews.swift in Sources */,
-				98CA115E39D64DE9880B42C1 /* JournalPostcards.swift in Sources */,
-				F9366F1AF434AB6AECAB4263 /* VideoCompression.swift in Sources */,
-				32E3CDDE51E9F1562E13755D /* VideoHome.swift in Sources */,
-				262EA9226C0699993B1E645E /* WalletView.swift in Sources */,
+				A11111111111111111111101,
+				8D787902AA6F4E78946DE2C7,
+				3BAB87846F99325C6B799D94,
+				44CF192B0AD54DFFA0D31D68,
+				2A68D9FBFD459854460E746A,
+				54CA158E53B5FE7FA22C7C28,
+				94AA0FDD52D33EF28DE55AE6,
+				324598B2552C2847BA3FBABB,
+				3EED5221EF3C25A6D41D15A2,
+				E37D8954D1F041569B81F4BF,
+				CC7E2CA079842B58037D651C,
+				7B42BD8844C5C09CEF2842B6,
+				2BA2072B7918FE67B1D32B29,
+				C82EF4A543D3DF6A2C874E68,
+				DC4628DC65FC19D7D5763A59,
+				CA27812540BE098620440156,
+				A0627F5AD9573BDC71118145,
+				073D8EE7810AFCF9F9B31B86,
+				4E2E82BA3371A18568475440,
+				D8BF7B3D30868198F8AF9D7D,
+				7FDE4B121440C7BE36374D65,
+				98CA115E39D64DE9880B42C1,
+				F9366F1AF434AB6AECAB4263,
+				32E3CDDE51E9F1562E13755D,
+				262EA9226C0699993B1E645E,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-/* End PBXSourcesBuildPhase section */
 
-/* Begin XCBuildConfiguration section */
-		585C2C0EC05169A1231D719D /* Release */ = {
+		585C2C0EC05169A1231D719D = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Liya/Liya.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Liya/Info.plist;
@@ -289,12 +264,13 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Osize";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
-		6FC4B633A84D7B53CB229E32 /* Debug */ = {
+		6FC4B633A84D7B53CB229E32 = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -328,7 +304,7 @@
 			};
 			name = Debug;
 		};
-		835CA8B200AECB53FD8B572D /* Release */ = {
+		835CA8B200AECB53FD8B572D = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -386,7 +362,7 @@
 			};
 			name = Release;
 		};
-		9DAA7D566E25EE3CE395A04D /* Debug */ = {
+		9DAA7D566E25EE3CE395A04D = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -451,31 +427,27 @@
 			};
 			name = Debug;
 		};
-/* End XCBuildConfiguration section */
 
-/* Begin XCConfigurationList section */
-		03D42F9D2DE6B62119F0915C /* Build configuration list for PBXNativeTarget "Liya" */ = {
+		03D42F9D2DE6B62119F0915C = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				6FC4B633A84D7B53CB229E32 /* Debug */,
-				585C2C0EC05169A1231D719D /* Release */,
+				6FC4B633A84D7B53CB229E32,
+				585C2C0EC05169A1231D719D,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		EF66F6CC11FC8DEB1EF37E59 /* Build configuration list for PBXProject "Liya" */ = {
+		EF66F6CC11FC8DEB1EF37E59 = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9DAA7D566E25EE3CE395A04D /* Debug */,
-				835CA8B200AECB53FD8B572D /* Release */,
+				9DAA7D566E25EE3CE395A04D,
+				835CA8B200AECB53FD8B572D,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-/* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		4169A5017835DAFD0AC3573A /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+		4169A5017835DAFD0AC3573A = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/supabase/supabase-swift.git";
 			requirement = {
@@ -483,15 +455,13 @@
 				version = 2.55.5;
 			};
 		};
-/* End XCRemoteSwiftPackageReference section */
 
-/* Begin XCSwiftPackageProductDependency section */
-		1008727600F4C756AF33B38C /* Supabase */ = {
+		1008727600F4C756AF33B38C = {
 			isa = XCSwiftPackageProductDependency;
-			package = 4169A5017835DAFD0AC3573A /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			package = 4169A5017835DAFD0AC3573A;
 			productName = Supabase;
 		};
-/* End XCSwiftPackageProductDependency section */
+
 	};
-	rootObject = 2B7D257627435858BF94383D /* Project object */;
+	rootObject = 2B7D257627435858BF94383D;
 }

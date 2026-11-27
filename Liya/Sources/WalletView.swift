@@ -25,6 +25,7 @@ struct CoinPackage: Identifiable {
 }
 
 struct WalletView: View {
+    @Environment(\.liyaWords) private var words
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.locale) private var locale
     @ScaledMetric(relativeTo: .body) private var packWidth: CGFloat = 138
@@ -37,30 +38,30 @@ struct WalletView: View {
             VStack(alignment: .leading, spacing: 20) {
                 balanceHeader
                 if let message = checkout.message, checkout.walletError == nil {
-                    Text(LocalizedStringKey(message))
+                    Text(verbatim: words(message))
                         .font(LiyaType.detail).foregroundStyle(liyaInk)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("Coin packs").font(LiyaType.text(.title3, weight: .bold)).foregroundStyle(liyaInk)
+                    Text(verbatim: words("Coin packs")).font(LiyaType.text(.title3, weight: .bold)).foregroundStyle(liyaInk)
                         .accessibilityAddTraits(.isHeader)
-                    Text("USD prices are estimates. Select a pack for your App Store price.")
+                    Text(verbatim: words("USD prices are estimates. Select a pack for your App Store price."))
                         .font(LiyaType.text(.footnote)).foregroundStyle(liyaInk.opacity(0.72))
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 packageGrid
-                Button("Check purchases") { checkout.recover(showIssues: true) }
+                Button(words("Check purchases")) { checkout.recover(showIssues: true) }
                     .font(LiyaType.text(.footnote, weight: .semibold))
                     .foregroundStyle(liyaAccent).frame(minHeight: 44)
                     .disabled(checkout.busy)
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("Personalize Liya").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
+                    Text(verbatim: words("Personalize Liya")).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
                     VStack(spacing: 8) {
                         appearanceRow(.moodPrism, detail: "A violet palette for your mood diary", image: "mood-calm")
                         appearanceRow(.profileGlow, detail: "A colorful accent for your profile", image: "nav-soft-profile")
                         appearanceRow(.tideglassPaper, detail: "Sea-glass stationery for your journal postcards", image: "journal-paper-tideglass")
                     }
-                    Text("Each style unlocks once. Comparing days and sharing postcards are free.")
+                    Text(verbatim: words("Each style unlocks once. Comparing days and sharing postcards are free."))
                         .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent)
                         .frame(maxWidth: .infinity, alignment: .leading).padding(.top, 2)
                 }.padding(18).frame(maxWidth: .infinity, alignment: .leading)
@@ -76,14 +77,14 @@ struct WalletView: View {
                 DuoControlRegion { size in
                     ScrollView {
                         VStack(spacing: 14) {
-                            Image("wallet-coin").resizable().scaledToFit().frame(width: 46, height: 46).accessibilityHidden(true)
-                            Text(LocalizedStringKey(appearance.title)).font(LiyaType.sectionHeading)
-                            Text("Spend \(appearance.cost) coins to unlock this style once.").font(LiyaType.reading)
+                            HostedArtwork("wallet-coin").scaledToFit().frame(width: 46, height: 46).accessibilityHidden(true)
+                            Text(verbatim: words(appearance.title)).font(LiyaType.sectionHeading)
+                            Text(verbatim: words.inserting(appearance.cost.formatted(.number.locale(locale)), into: "Spend %lld coins to unlock this style once.")).font(LiyaType.reading)
                             PrimaryButton(title: "Unlock") {
                                 if !checkout.owns(appearance) { checkout.select(appearance) }
                                 appearanceToUnlock = nil
                             }
-                            Button("Cancel") { appearanceToUnlock = nil }.frame(minHeight: 44)
+                            Button(words("Cancel")) { appearanceToUnlock = nil }.frame(minHeight: 44)
                         }.multilineTextAlignment(.center).foregroundStyle(liyaInk)
                             .frame(maxWidth: 420).padding(20).frame(maxWidth: .infinity, minHeight: size.height)
                     }
@@ -95,23 +96,23 @@ struct WalletView: View {
 
     private var balanceHeader: some View {
         HStack(spacing: 15) {
-            Image("wallet-coin").resizable().scaledToFit().frame(width: 62, height: 62)
+            HostedArtwork("wallet-coin").scaledToFit().frame(width: 62, height: 62)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
-                Text("Your balance")
+                Text(verbatim: words("Your balance"))
                     .font(LiyaType.text(.subheadline, weight: .semibold))
                     .foregroundStyle(liyaInk.opacity(0.72))
                 if let balance = checkout.balance {
-                    Text("\(balance.formatted(.number.locale(locale))) coins")
+                    Text(verbatim: words.inserting(balance.formatted(.number.locale(locale)), into: "%@ coins"))
                         .font(LiyaType.text(.title, weight: .bold)).monospacedDigit()
                         .fixedSize(horizontal: false, vertical: true)
                 } else if checkout.walletError == nil {
                     LiyaLoadingIndicator(size: 24)
                 }
                 if let issue = checkout.walletError {
-                    Text(LocalizedStringKey(issue)).font(LiyaType.text(.footnote))
+                    Text(verbatim: words(issue)).font(LiyaType.text(.footnote))
                         .fixedSize(horizontal: false, vertical: true)
-                    Button("Refresh balance") { checkout.recover(showIssues: true) }
+                    Button(words("Refresh balance")) { checkout.recover(showIssues: true) }
                         .font(LiyaType.action).foregroundStyle(liyaAccent).frame(minHeight: 44)
                 }
             }
@@ -135,7 +136,7 @@ struct WalletView: View {
                 } label: {
                     VStack(alignment: .leading, spacing: 9) {
                         HStack(spacing: 8) {
-                            Image("wallet-coin").resizable().scaledToFit().frame(width: 22, height: 22)
+                            HostedArtwork("wallet-coin").scaledToFit().frame(width: 22, height: 22)
                                 .accessibilityHidden(true)
                             Text(amount).font(LiyaType.text(.headline, weight: .bold)).monospacedDigit()
                         }
@@ -152,7 +153,7 @@ struct WalletView: View {
                     .contentShape(RoundedRectangle(cornerRadius: 16))
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("\(amount) coins")
+                .accessibilityLabel(words.inserting(amount, into: "%@ coins"))
                 .accessibilityValue(Text(verbatim: price))
             }
         }
@@ -160,7 +161,7 @@ struct WalletView: View {
 
     private func appearanceRow(_ appearance: CoinCheckout.Appearance, detail: String, image: String) -> some View {
         let owned = checkout.owns(appearance)
-        let badge: LocalizedStringKey = owned ? (checkout.isActive(appearance) ? "Turn off" : "Apply") : "\(appearance.cost) coins"
+        let badge: String = owned ? (checkout.isActive(appearance) ? "Turn off" : "Apply") : words.inserting(appearance.cost.formatted(.number.locale(locale)), into: "%lld coins")
         return Button {
             if owned { checkout.select(appearance) }
             else { appearanceToUnlock = appearance }
@@ -169,15 +170,15 @@ struct WalletView: View {
         }.buttonStyle(.plain).disabled(checkout.balance == nil || checkout.walletError != nil || checkout.busy)
     }
 
-    private func useRow(_ title: String, detail: String, badge: LocalizedStringKey, image: String) -> some View {
+    private func useRow(_ title: String, detail: String, badge: String, image: String) -> some View {
         HStack(alignment: .center, spacing: 10) {
-            Image(image).resizable().scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
+            HostedArtwork(image).scaledToFit().frame(width: 38, height: 38).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
-                Text(LocalizedStringKey(title)).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
-                Text(LocalizedStringKey(detail)).font(LiyaType.text(.caption)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(verbatim: words(title)).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+                Text(verbatim: words(detail)).font(LiyaType.text(.caption)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }.frame(maxWidth: .infinity, alignment: .leading)
             Spacer(minLength: 5)
-            Text(badge).font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent)
+            Text(verbatim: words(badge)).font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent)
                 .multilineTextAlignment(.trailing)
         }.padding(.horizontal, 10).padding(.vertical, 9)
             .background(.white.opacity(0.75), in: RoundedRectangle(cornerRadius: 14))
@@ -185,6 +186,7 @@ struct WalletView: View {
 }
 
 private struct AppleCoinPackSheet: View {
+    @Environment(\.liyaWords) private var words
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
     @EnvironmentObject private var checkout: CoinCheckout
@@ -193,10 +195,10 @@ private struct AppleCoinPackSheet: View {
 
     var body: some View {
         SafetyPanel(title: "Your coin pack", subject: nil, back: nil, close: { dismiss() }) {
-            Image("wallet-coin").resizable().scaledToFit()
+            HostedArtwork("wallet-coin").scaledToFit()
         } content: {
             VStack(alignment: .leading, spacing: 14) {
-                Text("\(pack.coins.formatted(.number.locale(locale))) coins")
+                Text(verbatim: words.inserting(pack.coins.formatted(.number.locale(locale)), into: "%@ coins"))
                     .font(LiyaType.text(.title, weight: .bold)).monospacedDigit()
                     .foregroundStyle(liyaInk)
                 purchaseControls
@@ -219,7 +221,7 @@ private struct AppleCoinPackSheet: View {
 
     @ViewBuilder private var purchaseControls: some View {
         if let issue = checkout.walletError {
-            note(LocalizedStringKey(issue))
+            note(issue)
             actionButton("Refresh balance") { checkout.recover(showIssues: true) }
         } else if checkout.isAwaitingDelivery(pack) {
             note("Your purchase is pending delivery.")
@@ -237,10 +239,10 @@ private struct AppleCoinPackSheet: View {
             LabeledContent {
                 Text(verbatim: price).font(LiyaType.text(.headline, weight: .bold)).monospacedDigit()
             } label: {
-                Text("App Store price").font(LiyaType.detail)
+                Text(verbatim: words("App Store price")).font(LiyaType.detail)
             }
             .foregroundStyle(liyaInk)
-            if let message = checkout.message { note(LocalizedStringKey(message)) }
+            if let message = checkout.message { note(message) }
             actionButton(checkout.busy ? "Processing…" : "Buy with Apple",
                          disabled: !checkout.canPurchase(pack)) {
                 submitted = true
@@ -252,9 +254,9 @@ private struct AppleCoinPackSheet: View {
         }
     }
 
-    private func actionButton(_ title: LocalizedStringKey, disabled: Bool = false, action: @escaping () -> Void) -> some View {
+    private func actionButton(_ title: String, disabled: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(title).font(LiyaType.action).foregroundStyle(liyaInk)
+            Text(verbatim: words(title)).font(LiyaType.action).foregroundStyle(liyaInk)
                 .frame(maxWidth: .infinity, minHeight: 48)
                 .modifier(ContactBarSurface())
         }
@@ -262,13 +264,15 @@ private struct AppleCoinPackSheet: View {
         .disabled(disabled)
     }
 
-    private func note(_ text: LocalizedStringKey) -> some View {
-        Text(text).font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.77))
+    private func note(_ text: String) -> some View {
+        Text(verbatim: words(text)).font(LiyaType.detail).foregroundStyle(liyaInk.opacity(0.77))
             .fixedSize(horizontal: false, vertical: true)
     }
 }
 
 struct WelcomeCoinGift: View {
+    @Environment(\.locale) private var locale
+    @Environment(\.liyaWords) private var words
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var checkout: CoinCheckout
     let creditedCoins: Int
@@ -287,7 +291,7 @@ struct WelcomeCoinGift: View {
                     ScrollView { giftContent(artworkSize: artworkSize) }
                 }
                 .frame(maxWidth: 292)
-                .background { Image(decorative: "color-background").resizable() }
+                .background { HostedArtwork(decorative: "color-background") }
                 .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                 .shadow(color: .black.opacity(0.2), radius: 16, y: 7)
                 .accessibilityElement(children: .contain)
@@ -302,17 +306,16 @@ struct WelcomeCoinGift: View {
 
     private func giftContent(artworkSize: CGFloat) -> some View {
         VStack(spacing: 8) {
-            Image(decorative: "welcome-gift")
-                .resizable().scaledToFit()
+            HostedArtwork(decorative: "welcome-gift").scaledToFit()
                 .frame(width: artworkSize, height: artworkSize)
                 .scaleEffect(appeared || reduceMotion ? 1 : 0.94)
-            Text("Welcome to Liya")
+            Text(verbatim: words("Welcome to Liya"))
                 .font(LiyaType.text(.title2, weight: .bold))
                 .accessibilityAddTraits(.isHeader)
-            Text("\(creditedCoins.formatted()) coins added to your wallet.")
+            Text(verbatim: words.inserting(creditedCoins.formatted(.number.locale(locale)), into: "%@ coins added to your wallet."))
                 .font(LiyaType.text(.subheadline, weight: .medium))
             if checkout.walletError != nil {
-                Text("Couldn’t save your wallet. Tap again to continue.")
+                Text(verbatim: words("Couldn’t save your wallet. Tap again to continue."))
                     .font(LiyaType.text(.footnote, weight: .medium))
             }
             WelcomeAction(title: "Continue to Liya", image: "welcome-gift-dismiss",

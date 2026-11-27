@@ -17,11 +17,6 @@ targets:
     sources:
       - path: Liya/Sources
       - path: Liya/Assets.xcassets
-      - path: Liya/Resources/Typefaces
-        type: folder
-        buildPhase: resources
-      - path: Liya/Localizable.xcstrings
-        buildPhase: resources
       - path: Liya/InfoPlist.xcstrings
         buildPhase: resources
       - path: Liya/PrivacyInfo.xcprivacy
@@ -29,6 +24,10 @@ targets:
       - path: Liya/LaunchScreen.storyboard
         buildPhase: resources
     settings:
+      configs:
+        Release:
+          DEAD_CODE_STRIPPING: YES
+          SWIFT_OPTIMIZATION_LEVEL: "-Osize"
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.liyalumora.auroramuse
         PRODUCT_NAME: Liya
@@ -40,6 +39,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: Liya
         INFOPLIST_KEY_NSCameraUsageDescription: You can take photos for your profile, posts, and messages or check your framing while waiting for a video call.
         INFOPLIST_KEY_NSMicrophoneUsageDescription: The sound meter lets you check your microphone while you wait for a voice or video call.
+        INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
         INFOPLIST_KEY_UILaunchScreen_Generation: NO
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         TARGETED_DEVICE_FAMILY: "1,2"

@@ -11,14 +11,6 @@
 			</array>
 		</dict>
 	</array>
-	<key>UIAppFonts</key>
-	<array>
-		<string>Typefaces/Nunito-Regular.ttf</string>
-		<string>Typefaces/Nunito-Medium.ttf</string>
-		<string>Typefaces/Nunito-SemiBold.ttf</string>
-		<string>Typefaces/Nunito-Bold.ttf</string>
-		<string>Typefaces/InstrumentSerif-Regular.ttf</string>
-	</array>
 	<key>UILaunchScreen</key>
 	<false/>
 </dict>

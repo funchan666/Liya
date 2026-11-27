@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CollectionPhoto: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var session: LiyaSession
     let catalogIndex: Int
     var contentMode: ContentMode = .fit
@@ -11,7 +12,7 @@ struct CollectionPhoto: View {
     var body: some View {
         Group {
             if let url {
-                AsyncImage(url: url) { phase in
+                NetworkPhoto(url: url) { phase in
                     switch phase {
                     case .success(let image): image.resizable().aspectRatio(contentMode: contentMode)
                     case .failure: unavailable
@@ -43,7 +44,7 @@ struct CollectionPhoto: View {
         if let avatarName {
             MemberInitialsAvatar(name: avatarName)
         } else {
-            Text("Photo unavailable").font(LiyaType.text(.caption)).foregroundStyle(.secondary)
+            Text(verbatim: words("Photo unavailable")).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, minHeight: 44)
         }
     }

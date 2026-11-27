@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 
 struct PostTagSelector: View {
+    @Environment(\.liyaWords) private var words
     @Binding var selection: [String]
     private let choices = ["Little Moments", "How I Feel", "Good Vibes"]
     var body: some View {
@@ -11,7 +12,7 @@ struct PostTagSelector: View {
                     Button {
                         if selection.contains(tag) { selection.removeAll { $0 == tag } } else { selection.append(tag) }
                     } label: {
-                        Text("# \(tag)").font(LiyaType.text(.caption)).foregroundStyle(selection.contains(tag) ? liyaAccent : .secondary)
+                        Text(verbatim: words.inserting(tag, into: "# %@")).font(LiyaType.text(.caption)).foregroundStyle(selection.contains(tag) ? liyaAccent : .secondary)
                             .padding(.horizontal, 12).frame(minHeight: 44)
                             .background(selection.contains(tag) ? liyaAccent.opacity(0.13) : .white.opacity(0.75), in: Capsule())
                     }.buttonStyle(.plain).accessibilityAddTraits(selection.contains(tag) ? .isSelected : [])
@@ -22,6 +23,7 @@ struct PostTagSelector: View {
 }
 
 struct LocalPostCard: View {
+    @Environment(\.liyaWords) private var words
     @EnvironmentObject private var store: LocalStore
     @EnvironmentObject private var session: LiyaSession
     @EnvironmentObject private var social: SocialStore
@@ -33,35 +35,38 @@ struct LocalPostCard: View {
             HStack(spacing: 10) {
                 NavigationLink { DeviceProfileView() } label: {
                     HStack(spacing: 10) {
-                        if let avatar = store.avatar { MediaThumbnail(item: avatar).frame(width: 42, height: 42).clipShape(Circle()) }
-                        else { Image("app-mark").resizable().scaledToFill().frame(width: 42, height: 42).clipShape(Circle()) }
+                        if let sharedPost { SocialAvatar(personID: sharedPost.ownerID).frame(width: 42, height: 42).clipShape(Circle()) }
+                        else if let avatar = store.avatar { MediaThumbnail(item: avatar).frame(width: 42, height: 42).clipShape(Circle()) }
+                        else { HostedArtwork("app-mark").scaledToFill().frame(width: 42, height: 42).clipShape(Circle()) }
                         VStack(alignment: .leading, spacing: 3) {
-                            Text(store.nickname.isEmpty ? "Your profile" : store.nickname).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(liyaInk)
-                            Text(LocalizedStringKey(isShared ? "Submitted to community" : "Private moment")).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
+                            Text(store.nickname.isEmpty ? words("Your profile") : store.nickname).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(liyaInk)
+                            Text(verbatim: words(isShared ? "Submitted to community" : "Private moment")).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
                         }
                     }
                 }.buttonStyle(.plain)
                 Spacer()
-                NavigationLink { EditDraftView(draft: post) } label: { Text("Edit").font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44) }
+                NavigationLink { EditDraftView(draft: post) } label: { Text(verbatim: words("Edit")).font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44) }
                     .buttonStyle(.plain)
-                Button("Delete") { confirmingDelete = true }.font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                Button(words("Delete")) { confirmingDelete = true }.font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
             }
             if !post.text.isEmpty { Text(post.text).foregroundStyle(liyaInk).frame(maxWidth: .infinity, alignment: .leading) }
             if let tags = post.tags, !tags.isEmpty { Text(tags.map { "# " + $0 }.joined(separator: "   ")).font(LiyaType.text(.caption)).foregroundStyle(liyaAccent) }
-            if let attachments = post.attachments, !attachments.isEmpty {
+            if let sharedPost {
+                SocialMediaStrip(post: sharedPost)
+            } else if let attachments = post.attachments, !attachments.isEmpty {
                 ScrollView(.horizontal) {
                     HStack(spacing: 8) {
                         ForEach(attachments) { item in
                             Button { preview = item } label: {
                                 MediaThumbnail(item: item).frame(width: 190, height: 180).clipped().clipShape(RoundedRectangle(cornerRadius: 14))
-                            }.buttonStyle(.plain).accessibilityLabel(item.isVideo ? "Open video" : "Open photo")
+                            }.buttonStyle(.plain).accessibilityLabel(words(item.isVideo ? "Open video" : "Open photo"))
                         }
                     }
                 }
             }
             if isShared, let owner = session.userID,
                let status = social.moderationText(kind: "post", id: SocialAttempt.draftPostID(owner: owner, draft: post)) {
-                Text(LocalizedStringKey(status)).font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
+                Text(verbatim: words(status)).font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
             }
         }.padding(14).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 16))
             .sheet(item: $preview) { item in
@@ -74,26 +79,29 @@ struct LocalPostCard: View {
                 .presentationDetents([.medium])
             }
     }
-    private var isShared: Bool {
-        guard let owner = session.userID else { return false }
-        return social.posts.contains { $0.id == SocialAttempt.draftPostID(owner: owner, draft: post) }
+    private var sharedPost: SocialPost? {
+        guard let owner = session.userID else { return nil }
+        let id = SocialAttempt.draftPostID(owner: owner, draft: post)
+        return social.posts.first { $0.id == id }
     }
+    private var isShared: Bool { sharedPost != nil }
 }
 
 struct DraftPhotoPreview: View {
+    @Environment(\.liyaWords) private var words
     @Environment(\.dismiss) private var dismiss
     let item: DraftAttachment
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             if let image = UIImage(contentsOfFile: DraftFiles.url(item).path) {
-                Image(uiImage: image).resizable().scaledToFit().accessibilityLabel("Private photo")
-            } else { Text("Photo unavailable").foregroundStyle(.white) }
+                Image(uiImage: image).resizable().scaledToFit().accessibilityLabel(words("Private photo"))
+            } else { Text(verbatim: words("Photo unavailable")).foregroundStyle(.white) }
             DuoControlRegion { size in
               VStack {
                 HStack {
-                    Button { dismiss() } label: { Image("close").resizable().scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44) }
-                        .buttonStyle(.plain).accessibilityLabel("Close photo")
+                    Button { dismiss() } label: { HostedArtwork("close", labelWhileMissing: "Close").scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44) }
+                        .buttonStyle(.plain).accessibilityLabel(words("Close photo"))
                     Spacer()
                 }
                 Spacer()

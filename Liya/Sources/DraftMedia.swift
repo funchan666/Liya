@@ -36,6 +36,7 @@ enum DraftFiles {
 }
 
 struct CameraPhotoButton: View {
+    @Environment(\.liyaWords) private var words
     @Environment(\.openURL) private var openURL
     @Environment(\.locale) private var locale
     var compact: Bool = false
@@ -49,7 +50,7 @@ struct CameraPhotoButton: View {
             if compact {
                 ComposeMediaActionLabel(title: cameraRequest != nil ? "Opening…" : "Take photo", subtitle: "Camera", image: "avatar-camera")
             } else {
-                Text(cameraRequest != nil ? "Opening…" : "Take photo")
+                Text(verbatim: words(cameraRequest != nil ? "Opening…" : "Take photo"))
                     .font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent)
                     .frame(minWidth: 100, minHeight: 44)
                     .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
@@ -64,25 +65,25 @@ struct CameraPhotoButton: View {
                     showingCamera = false
                     guard let image else { return }
                     do { onPhoto(try DraftFiles.savePhoto(image)) }
-                    catch { onError(String(localized: "The photo could not be saved. Please try again.", locale: locale)) }
+                    catch { onError(words("The photo could not be saved. Please try again.")) }
                 }.ignoresSafeArea()
             }
             .sheet(isPresented: $showingSettings) {
                 SafetyPanel(title: "Camera access is off", subject: nil, back: nil, close: { showingSettings = false }) {
-                    Image("avatar-camera").resizable().scaledToFit().padding(4)
+                    HostedArtwork("avatar-camera").scaledToFit().padding(4)
                 } content: {
-                    Text("You can still choose a photo from your library.")
+                    Text(verbatim: words("You can still choose a photo from your library."))
                         .font(LiyaType.detail).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                     Button { showingSettings = false } label: {
-                        Text("Done").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
+                        Text(verbatim: words("Done")).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
                             .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
                     }
                     Button {
                         showingSettings = false
                         if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                     } label: {
-                        Text("Open Settings").font(LiyaType.detail).foregroundStyle(liyaAccent)
+                        Text(verbatim: words("Open Settings")).font(LiyaType.detail).foregroundStyle(liyaAccent)
                             .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
                     }
                 }.buttonStyle(.plain)
@@ -95,7 +96,7 @@ struct CameraPhotoButton: View {
         switch authorization {
         case .authorized, .notDetermined:
             guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
-                onError(String(localized: "No camera is available. You can choose a photo from your library.", locale: locale))
+                onError(words("No camera is available. You can choose a photo from your library."))
                 return
             }
             if authorization == .authorized {
@@ -111,25 +112,26 @@ struct CameraPhotoButton: View {
         case .denied:
             showingSettings = true
         case .restricted:
-            onError(String(localized: "Camera use is restricted. You can choose a photo from your library.", locale: locale))
+            onError(words("Camera use is restricted. You can choose a photo from your library."))
         @unknown default:
-            onError(String(localized: "No camera is available. You can choose a photo from your library.", locale: locale))
+            onError(words("No camera is available. You can choose a photo from your library."))
         }
     }
 }
 
 private struct ComposeMediaActionLabel: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     let subtitle: String
     let image: String
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(image).resizable().scaledToFit().frame(width: 40, height: 40).accessibilityHidden(true)
+            HostedArtwork(image).scaledToFit().frame(width: 40, height: 40).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
-                Text(LocalizedStringKey(title)).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
+                Text(verbatim: words(title)).font(LiyaType.text(.subheadline, weight: .semibold)).foregroundStyle(liyaInk)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(LocalizedStringKey(subtitle)).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
+                Text(verbatim: words(subtitle)).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }.frame(maxWidth: .infinity, alignment: .leading)
         }.padding(.horizontal, 11).padding(.vertical, 10).frame(maxWidth: .infinity, minHeight: 76)
@@ -179,6 +181,7 @@ private struct ImportedMovie: Transferable {
 }
 
 struct DraftMediaPicker: View {
+    @Environment(\.liyaWords) private var words
     @Binding var attachments: [DraftAttachment]
     @Binding var loading: Bool
     var note = "Add up to 9 photos or videos."
@@ -189,7 +192,7 @@ struct DraftMediaPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Photos and videos").font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
+            Text(verbatim: words("Photos and videos")).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
             if compactButtons && attachments.count < 9 {
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 10) { compactLibraryButton; cameraButton }.frame(minWidth: 300)
@@ -202,26 +205,26 @@ struct DraftMediaPicker: View {
                         PhotosPicker(selection: $selection, maxSelectionCount: 9 - attachments.count,
                                      matching: .any(of: [.images, .videos])) {
                             VStack(spacing: 5) {
-                                Image("avatar-camera").resizable().scaledToFit().frame(width: 42, height: 42)
-                                Text("Add media").font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent)
+                                HostedArtwork("avatar-camera").scaledToFit().frame(width: 42, height: 42)
+                                Text(verbatim: words("Add media")).font(LiyaType.text(.caption, weight: .bold)).foregroundStyle(liyaAccent)
                             }.frame(width: 100, height: 120).background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
-                        }.disabled(loading).accessibilityLabel("Add photos or videos")
+                        }.disabled(loading).accessibilityLabel(words("Add photos or videos"))
                     }
                     ForEach(attachments) { item in
                         ZStack(alignment: .topTrailing) {
                             Button { preview = item } label: {
                                 MediaThumbnail(item: item).frame(width: 100, height: 120).clipped().clipShape(RoundedRectangle(cornerRadius: 14))
-                            }.buttonStyle(.plain).accessibilityLabel(item.isVideo ? "Preview video" : "Preview photo")
+                            }.buttonStyle(.plain).accessibilityLabel(words(item.isVideo ? "Preview video" : "Preview photo"))
                             Button { attachments.removeAll { $0.id == item.id } } label: {
-                                Image("close").resizable().scaledToFit().frame(width: 25, height: 25).padding(4)
-                            }.buttonStyle(.plain).accessibilityLabel("Remove attachment")
+                                HostedArtwork("close").scaledToFit().frame(width: 25, height: 25).padding(4)
+                            }.buttonStyle(.plain).accessibilityLabel(words("Remove attachment"))
                         }
                     }
                 }
             }.scrollIndicators(.hidden)
             if attachments.count < 9 && !compactButtons { cameraButton }
-            if loading { Text("Loading selected media…").font(LiyaType.text(.footnote)).foregroundStyle(.secondary) }
-            if let errorMessage { Text(errorMessage).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
+            if loading { Text(verbatim: words("Loading selected media…")).font(LiyaType.text(.footnote)).foregroundStyle(.secondary) }
+            if let errorMessage { Text(verbatim: words(errorMessage)).font(LiyaType.text(.footnote)).foregroundStyle(.red) }
             Text(note).font(LiyaType.text(.footnote)).foregroundStyle(.secondary)
         }.sheet(item: $preview) { item in
             if item.isVideo { DraftVideoPreview(item: item) } else { DraftPhotoPreview(item: item) }
@@ -253,7 +256,7 @@ struct DraftMediaPicker: View {
         PhotosPicker(selection: $selection, maxSelectionCount: 9 - attachments.count,
                      matching: .any(of: [.images, .videos])) {
             ComposeMediaActionLabel(title: "Add media", subtitle: "Photos & videos", image: "navigation-compose")
-        }.buttonStyle(.plain).disabled(loading).accessibilityLabel("Add photos or videos")
+        }.buttonStyle(.plain).disabled(loading).accessibilityLabel(words("Add photos or videos"))
     }
 
     private var cameraButton: some View {
@@ -264,6 +267,7 @@ struct DraftMediaPicker: View {
 }
 
 struct MediaThumbnail: View {
+    @Environment(\.liyaWords) private var words
     let item: DraftAttachment
     @State private var videoCover: UIImage?
     var body: some View {
@@ -271,13 +275,13 @@ struct MediaThumbnail: View {
             Color.black.opacity(0.1)
             if item.isVideo {
                 if let videoCover { Image(uiImage: videoCover).resizable().scaledToFill() }
-                Image("play").resizable().scaledToFit().frame(width: 42, height: 42)
+                HostedArtwork("play").scaledToFit().frame(width: 42, height: 42)
             } else if let image = UIImage(contentsOfFile: DraftFiles.url(item).path) {
                 Image(uiImage: image).resizable().scaledToFill()
             } else {
-                Text("Unavailable").font(LiyaType.text(.caption)).foregroundStyle(.secondary)
+                Text(verbatim: words("Unavailable")).font(LiyaType.text(.caption)).foregroundStyle(.secondary)
             }
-        }.accessibilityLabel(item.isVideo ? "Video attachment" : "Photo attachment")
+        }.accessibilityLabel(words(item.isVideo ? "Video attachment" : "Photo attachment"))
             .task(id: item.id) {
                 guard item.isVideo else { return }
                 let generator = AVAssetImageGenerator(asset: AVURLAsset(url: DraftFiles.url(item)))
@@ -292,6 +296,7 @@ struct MediaThumbnail: View {
 
 
 struct DraftVideoPreview: View {
+    @Environment(\.liyaWords) private var words
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     let item: DraftAttachment
@@ -308,19 +313,19 @@ struct DraftVideoPreview: View {
               ScrollView {
                VStack {
                 HStack {
-                    Button { dismiss() } label: { Image("close").resizable().scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44) }
-                        .buttonStyle(.plain).accessibilityLabel("Close video")
+                    Button { dismiss() } label: { HostedArtwork("close", labelWhileMissing: "Close").scaledToFit().frame(width: 30, height: 30).frame(width: 44, height: 44) }
+                        .buttonStyle(.plain).accessibilityLabel(words("Close video"))
                     Spacer()
-                    Text("Private draft video").foregroundStyle(.white).font(LiyaType.text(.headline))
+                    Text(verbatim: words("Private draft video")).foregroundStyle(.white).font(LiyaType.text(.headline))
                 }
                 Spacer()
-                if player == nil { Text("Video unavailable").foregroundStyle(.white) }
+                if player == nil { Text(verbatim: words("Video unavailable")).foregroundStyle(.white) }
                 Button {
                     guard let player else { return }
                     if playing { player.pause() } else { player.play() }
                     playing.toggle()
-                } label: { Image(playing ? "pause" : "play").resizable().scaledToFit().frame(width: 50, height: 50) }
-                    .buttonStyle(.plain).accessibilityLabel(playing ? "Pause video" : "Play video")
+                } label: { HostedArtwork(playing ? "pause" : "play").scaledToFit().frame(width: 50, height: 50) }
+                    .buttonStyle(.plain).accessibilityLabel(words(playing ? "Pause video" : "Play video"))
                }.padding(20).frame(maxWidth: .infinity).frame(minHeight: size.height)
               }
             }

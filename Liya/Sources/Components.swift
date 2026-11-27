@@ -49,6 +49,7 @@ enum LiyaType {
 }
 
 struct LiyaFeedActionLabel: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     let count: String
     let icon: String
@@ -56,8 +57,8 @@ struct LiyaFeedActionLabel: View {
 
     var body: some View {
         HStack(spacing: 7) {
-            Image(icon).resizable().scaledToFit().frame(width: 25, height: 25).accessibilityHidden(true)
-            Text(LocalizedStringKey(title)).font(LiyaType.text(.caption, weight: .semibold)).lineLimit(1)
+            HostedArtwork(icon).scaledToFit().frame(width: 25, height: 25).accessibilityHidden(true)
+            Text(verbatim: words(title)).font(LiyaType.text(.caption, weight: .semibold)).lineLimit(1)
             Text(verbatim: count).font(LiyaType.text(.subheadline, weight: .semibold)).monospacedDigit()
         }
         .foregroundStyle(active ? liyaAccent : liyaInk)
@@ -76,17 +77,17 @@ struct LiyaFeedCardSurface: ViewModifier {
 }
 
 struct LiyaLoadingIndicator: View {
+    @Environment(\.liyaWords) private var words
     var size: CGFloat = 34
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var rotating = false
 
     var body: some View {
-        Image("liya-spinner")
-            .resizable().scaledToFit().frame(width: size, height: size)
+        HostedArtwork("liya-spinner").scaledToFit().frame(width: size, height: size)
             .rotationEffect(.degrees(rotating ? 360 : 0))
             .animation(reduceMotion ? nil : .linear(duration: 1.1).repeatForever(autoreverses: false), value: rotating)
             .onAppear { rotating = !reduceMotion }
-            .accessibilityLabel("Loading")
+            .accessibilityLabel(words("Loading"))
     }
 }
 
@@ -94,19 +95,21 @@ struct LiyaBackground: View {
     var name = "plain-background"
     var body: some View {
         GeometryReader { geometry in
-            Image(name).resizable().aspectRatio(contentMode: .fill)
+            HostedArtwork(name).aspectRatio(contentMode: .fill)
                 .frame(width: geometry.size.width, height: geometry.size.height).clipped()
-        }.ignoresSafeArea().accessibilityHidden(true)
+        }.background(name == "welcome-clear" ? Color(red: 0.24, green: 0.23, blue: 0.88) : Color.white)
+            .ignoresSafeArea().accessibilityHidden(true)
     }
 }
 
 struct PrimaryButton: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     var disabled = false
     let action: () -> Void
     var body: some View {
         Button(action: action) {
-            Text(LocalizedStringKey(title)).font(LiyaType.action)
+            Text(verbatim: words(title)).font(LiyaType.action)
                 .foregroundStyle(.white).frame(maxWidth: .infinity).frame(minHeight: 48)
                 .background(liyaGradient.opacity(disabled ? 0.45 : 1), in: Capsule())
         }.buttonStyle(.plain).disabled(disabled)
@@ -114,6 +117,7 @@ struct PrimaryButton: View {
 }
 
 struct PageHeader: View {
+    @Environment(\.liyaWords) private var words
     @Environment(\.dismiss) private var dismiss
     @ScaledMetric(relativeTo: .headline) private var headerHeight: CGFloat = 44
     let title: String
@@ -128,10 +132,10 @@ struct PageHeader: View {
         DuoControlRegion { _ in
             HStack {
                 Button(action: { dismiss() }) {
-                    Image("back").renderingMode(light ? .template : .original).resizable().scaledToFit().foregroundStyle(.white).frame(width: 20, height: 20).frame(width: 44, height: 44)
-                }.buttonStyle(.plain).accessibilityLabel("Back")
+                    HostedArtwork("back", renderingMode: light ? .template : .original, labelWhileMissing: "Back").scaledToFit().foregroundStyle(light ? .white : liyaInk).frame(width: 20, height: 20).frame(width: 44, height: 44)
+                }.buttonStyle(.plain).accessibilityLabel(words("Back"))
                 Spacer(minLength: 0)
-                Text(LocalizedStringKey(title)).font(LiyaType.sectionHeading)
+                Text(verbatim: words(title)).font(LiyaType.sectionHeading)
                     .lineLimit(2).multilineTextAlignment(.center).foregroundStyle(light ? .white : liyaInk)
                 Spacer(minLength: 0)
                 Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
@@ -151,21 +155,23 @@ struct AdaptiveContainerMargins: ViewModifier {
 }
 
 struct EmptyState: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     let detail: String
     var body: some View {
         VStack(spacing: 12) {
-            Image("empty-art").resizable().scaledToFit().frame(width: 78, height: 72).accessibilityHidden(true)
-            Text(LocalizedStringKey(title)).font(LiyaType.sectionHeading).foregroundStyle(liyaInk).multilineTextAlignment(.center)
-            if !detail.isEmpty { Text(LocalizedStringKey(detail)).font(LiyaType.detail).foregroundStyle(.secondary).multilineTextAlignment(.center) }
+            HostedArtwork("empty-art").scaledToFit().frame(width: 78, height: 72).accessibilityHidden(true)
+            Text(verbatim: words(title)).font(LiyaType.sectionHeading).foregroundStyle(liyaInk).multilineTextAlignment(.center)
+            if !detail.isEmpty { Text(verbatim: words(detail)).font(LiyaType.detail).foregroundStyle(.secondary).multilineTextAlignment(.center) }
         }.frame(maxWidth: .infinity).padding(24)
     }
 }
 
 struct OfflineNote: View {
+    @Environment(\.liyaWords) private var words
     let text: String
     var body: some View {
-        Text(text).font(LiyaType.text(.footnote)).foregroundStyle(liyaInk.opacity(0.8))
+        Text(verbatim: words(text)).font(LiyaType.text(.footnote)).foregroundStyle(liyaInk.opacity(0.8))
             .frame(maxWidth: .infinity, alignment: .leading).padding(14)
             .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 14))
     }
@@ -188,6 +194,7 @@ struct PageShell<Content: View>: View {
 
 
 struct LocalConfirmation: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     let message: String
     let action: String
@@ -199,10 +206,10 @@ struct LocalConfirmation: View {
             DuoControlRegion { size in
                 ScrollView {
                     VStack(spacing: 18) {
-                        Text(LocalizedStringKey(title)).font(LiyaType.text(.title3, weight: .bold)).foregroundStyle(liyaInk)
-                        Text(LocalizedStringKey(message)).multilineTextAlignment(.center).foregroundStyle(.secondary)
+                        Text(verbatim: words(title)).font(LiyaType.text(.title3, weight: .bold)).foregroundStyle(liyaInk)
+                        Text(verbatim: words(message)).multilineTextAlignment(.center).foregroundStyle(.secondary)
                         PrimaryButton(title: action, action: confirm)
-                        Button("Cancel", action: cancel).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
+                        Button(words("Cancel"), action: cancel).font(LiyaType.text(.subheadline, weight: .bold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                     }.padding(24).frame(maxWidth: 440).frame(maxWidth: .infinity).frame(minHeight: size.height)
                 }
             }
@@ -221,6 +228,7 @@ private struct SafetyPanelHeight: PreferenceKey {
 }
 
 struct SafetyPanel<Avatar: View, Content: View>: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     let subject: String?
     let back: (() -> Void)?
@@ -249,17 +257,17 @@ struct SafetyPanel<Avatar: View, Content: View>: View {
                     HStack(spacing: 11) {
                         if let back {
                             Button(action: back) {
-                                Image("back").renderingMode(.template).resizable().scaledToFit()
+                                HostedArtwork("back", renderingMode: .template).scaledToFit()
                                     .frame(width: 18, height: 18)
                                     .scaleEffect(x: layoutDirection == .rightToLeft ? -1 : 1, y: 1)
                                     .frame(width: 44, height: 44).contentShape(Rectangle())
                             }
-                            .foregroundStyle(liyaInk).accessibilityLabel("Back").disabled(busy)
+                            .foregroundStyle(liyaInk).accessibilityLabel(words("Back")).disabled(busy)
                         } else {
                             avatar.frame(width: 46, height: 46).clipShape(Circle()).accessibilityHidden(true)
                         }
                         VStack(alignment: .leading, spacing: 3) {
-                            Text(LocalizedStringKey(title))
+                            Text(verbatim: words(title))
                                 .font(LiyaType.text(.title3, weight: .bold))
                                 .foregroundStyle(liyaInk).accessibilityAddTraits(.isHeader)
                             if let subject, !subject.isEmpty {
@@ -269,11 +277,11 @@ struct SafetyPanel<Avatar: View, Content: View>: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         Button(action: close) {
-                            Image("close").renderingMode(.template).resizable().scaledToFit()
+                            HostedArtwork("close", renderingMode: .template).scaledToFit()
                                 .frame(width: 26, height: 26).frame(width: 44, height: 44)
                                 .contentShape(Rectangle())
                         }
-                        .foregroundStyle(liyaInk.opacity(0.62)).accessibilityLabel("Close").disabled(busy)
+                        .foregroundStyle(liyaInk.opacity(0.62)).accessibilityLabel(words("Close")).disabled(busy)
                     }
                     .buttonStyle(.plain)
                     Divider().accessibilityHidden(true)
@@ -299,6 +307,7 @@ struct SafetyPanel<Avatar: View, Content: View>: View {
 }
 
 struct SafetyActionRow: View {
+    @Environment(\.liyaWords) private var words
     enum Kind { case report, block, unblock, edit }
     let title: String
     let kind: Kind
@@ -317,12 +326,12 @@ struct SafetyActionRow: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 14) {
-                Image(artwork).resizable().scaledToFit().frame(width: 40, height: 40)
+                HostedArtwork(artwork).scaledToFit().frame(width: 40, height: 40)
                     .accessibilityHidden(true)
-                Text(LocalizedStringKey(title)).font(LiyaType.text(.body, weight: .semibold))
+                Text(verbatim: words(title)).font(LiyaType.text(.body, weight: .semibold))
                     .multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Image("back").renderingMode(.template).resizable().scaledToFit()
+                HostedArtwork("back", renderingMode: .template).scaledToFit()
                     .frame(width: 13, height: 13)
                     .scaleEffect(x: layoutDirection == .rightToLeft ? 1 : -1, y: 1)
                     .foregroundStyle(liyaInk.opacity(0.45)).accessibilityHidden(true)
@@ -335,6 +344,7 @@ struct SafetyActionRow: View {
 }
 
 struct SafetyReasonList: View {
+    @Environment(\.liyaWords) private var words
     let selected: String?
     let choose: (String) -> Void
     private let reasons = ["Sexual content", "Harassment", "Discrimination", "Incorrect content", "Other"]
@@ -344,13 +354,13 @@ struct SafetyReasonList: View {
             ForEach(reasons, id: \.self) { reason in
                 Button { choose(reason) } label: {
                     HStack(spacing: 12) {
-                        Text(LocalizedStringKey(reason)).font(LiyaType.reading)
+                        Text(verbatim: words(reason)).font(LiyaType.reading)
                             .multilineTextAlignment(.leading).frame(maxWidth: .infinity, alignment: .leading)
                         if selected == reason {
-                            Image("consent-on").resizable().scaledToFit().frame(width: 21, height: 21)
+                            HostedArtwork("consent-on").scaledToFit().frame(width: 21, height: 21)
                                 .accessibilityHidden(true)
                         } else {
-                            Image("consent-off").renderingMode(.template).resizable().scaledToFit()
+                            HostedArtwork("consent-off", renderingMode: .template).scaledToFit()
                                 .frame(width: 21, height: 21).foregroundStyle(liyaInk.opacity(0.38))
                                 .accessibilityHidden(true)
                         }
@@ -368,6 +378,7 @@ struct SafetyReasonList: View {
 }
 
 struct SafetySubmitButton: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     var destructive = false
     var busy = false
@@ -378,7 +389,7 @@ struct SafetySubmitButton: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 if busy { LiyaLoadingIndicator(size: 21).accessibilityHidden(true) }
-                Text(LocalizedStringKey(title)).font(LiyaType.text(.headline)).multilineTextAlignment(.center)
+                Text(verbatim: words(title)).font(LiyaType.text(.headline)).multilineTextAlignment(.center)
             }
             .foregroundStyle(disabled && !busy ? liyaInk.opacity(0.67) : .white)
             .padding(.vertical, 10).padding(.horizontal, 14).frame(maxWidth: .infinity, minHeight: 48)
@@ -390,13 +401,14 @@ struct SafetySubmitButton: View {
 }
 
 struct SafetySecondaryButton: View {
+    @Environment(\.liyaWords) private var words
     let title: String
     let action: () -> Void
     @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
         Button(action: action) {
-            Text(LocalizedStringKey(title)).font(LiyaType.text(.subheadline, weight: .semibold))
+            Text(verbatim: words(title)).font(LiyaType.text(.subheadline, weight: .semibold))
                 .foregroundStyle(isEnabled ? safetyIndigo : liyaInk.opacity(0.55))
                 .multilineTextAlignment(.center).padding(.horizontal, 12).padding(.vertical, 7)
                 .frame(maxWidth: .infinity, minHeight: 44)

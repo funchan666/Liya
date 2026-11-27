@@ -9,6 +9,7 @@ enum PolicyPage: String, Identifiable {
 }
 
 struct LegalDocumentView: View {
+    @Environment(\.liyaWords) private var words
     @Environment(\.liyaTabBarClearance) private var tabBarClearance
     let page: PolicyPage
     @State private var failed = false
@@ -21,7 +22,7 @@ struct LegalDocumentView: View {
                 if failed {
                     VStack(spacing: 12) {
                         OfflineNote(text: "This document could not be opened. Please check your connection.")
-                        Button("Try again") { failed = false; attempt += 1 }.foregroundStyle(liyaAccent).frame(minHeight: 44)
+                        Button(words("Try again")) { failed = false; attempt += 1 }.foregroundStyle(liyaAccent).frame(minHeight: 44)
                     }.padding(20)
                     Spacer()
                 } else {

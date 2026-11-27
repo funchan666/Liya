@@ -66,3 +66,8 @@ Updated the production privacy policy and terms for the voice and video waiting 
 ## 26 November 2026 microphone and front camera previews
 
 Published the revised privacy policy and terms to the Liya production site. Both describe the microphone level on the waiting screens and the front camera preview on the video screen. The privacy policy explains when capture stops and how audio and images stay on the device. Retrieved the production homepage, both policies, stylesheet and icon and confirmed that each matched its release file byte for byte.
+
+
+## 26 November 2026 website artwork
+
+Published the homepage with its icon served by the Liya Supabase Storage project. Retrieved the public homepage and both policy pages and matched them to their deployment sources. The homepage icon is served from `liya-interface/v1-00e15d2578c8/web/liya-icon.png`.

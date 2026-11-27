@@ -69,11 +69,13 @@ final class LiyaSession: ObservableObject {
     private var profileGeneration = UUID()
     private var moodGeneration = UUID()
     private var accountGeneration = UUID()
-    private static let projectURL = URL(string: "https://hymfjhuglaqoftrcxfjx.supabase.co")!
+    private static let projectURL = LiyaMediaNetwork.projectURL
     private static let publishableKey = "sb_publishable_taByCR_N24fMyWxw4aFUqw_eZMldttB"
 
     let client: SupabaseClient = {
-        let configuration = URLSessionConfiguration.default
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.urlCache = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         configuration.timeoutIntervalForRequest = 30
         configuration.timeoutIntervalForResource = 900
         return SupabaseClient(
@@ -112,16 +114,14 @@ final class LiyaSession: ObservableObject {
         }
     }
 
-    var savedAccountLabel: String? {
+    func savedAccountLabel(fallback: String) -> String? {
         guard let user = client.auth.currentSession?.user, !user.isAnonymous else { return nil }
         if let savedEmail { return savedEmail }
         if let profile, profile.id == user.id {
             let name = profile.displayName.trimmingCharacters(in: .whitespacesAndNewlines)
             if !name.isEmpty { return name }
         }
-        let language = UserDefaults.standard.string(forKey: "liya.language") ?? "en"
-        let bundle = Bundle.main.path(forResource: language, ofType: "lproj").flatMap(Bundle.init(path:)) ?? .main
-        return String(localized: "Saved account", bundle: bundle, locale: Locale(identifier: language))
+        return fallback
     }
     private static let confirmationURL = URL(string: "com.liyalumora.auroramuse://auth/confirm")!
     private static let recoveryURL = URL(string: "com.liyalumora.auroramuse://auth/recovery")!

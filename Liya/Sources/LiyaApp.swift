@@ -7,6 +7,7 @@ struct LiyaApp: App {
     @StateObject private var checkout = CoinCheckout()
     @StateObject private var session = LiyaSession()
     @StateObject private var social = SocialStore()
+    @StateObject private var interface = InterfaceLibrary()
     @StateObject private var calls = LiyaCalls()
     @State private var showingLaunch = true
     @AppStorage("liya.language") private var language = "en"
@@ -14,11 +15,19 @@ struct LiyaApp: App {
     var body: some Scene {
         WindowGroup {
             RootView().environmentObject(store).environmentObject(checkout).environmentObject(session).environmentObject(social).environmentObject(calls)
-                .font(LiyaType.reading)
+                .font(interface.fontsReady ? LiyaType.reading : .body)
                 .environment(\.locale, Locale(identifier: language))
                 .accessibilityHidden(showingLaunch)
                 .overlay {
                     if showingLaunch { LiyaLaunchOverlay() }
+                }
+                .environment(\.liyaWords, interface.wording(in: language))
+                .environmentObject(interface)
+                .task(id: "\(interface.connectionRevision)/\(scenePhase == .background)") {
+                    guard scenePhase != .background else { return }
+                    async let fonts: Void = interface.prepareFonts()
+                    async let wording: Void = interface.prepareWording()
+                    _ = await (fonts, wording)
                 }
                 .task {
                     guard showingLaunch else { return }
@@ -56,16 +65,17 @@ struct LiyaApp: App {
 }
 
 private struct LiyaLaunchOverlay: View {
+    @Environment(\.liyaWords) private var words
     var body: some View {
         ZStack {
-            Color("LaunchBackground").ignoresSafeArea()
+            Color(red: 0.243, green: 0.235, blue: 0.882).ignoresSafeArea()
             DuoControlRegion { _ in
                 ZStack {
-                    Image("launch-icon").resizable().scaledToFit().frame(width: 140, height: 140)
+                    HostedArtwork("launch-icon").scaledToFit().frame(width: 140, height: 140)
                         .accessibilityHidden(true)
                     VStack(spacing: 2) {
                         LiyaLoadingIndicator(size: 38).accessibilityHidden(true)
-                        Text("Opening Liya…").font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(.white)
+                        Text(verbatim: words("Opening Liya…")).font(LiyaType.text(.footnote, weight: .medium)).foregroundStyle(.white)
                     }
                     .offset(y: 110)
                 }

@@ -109,6 +109,7 @@ final class LiyaCalls: ObservableObject {
 }
 
 struct LiyaCallScreen: View {
+    @Environment(\.liyaWords) private var words
     let call: LiyaCall
     @EnvironmentObject private var calls: LiyaCalls
     @EnvironmentObject private var session: LiyaSession
@@ -139,7 +140,7 @@ struct LiyaCallScreen: View {
                         .modifier(AdaptiveContainerMargins())
                     }
                     Button(action: endWaiting) {
-                        Text("Cancel call")
+                        Text(verbatim: words("Cancel call"))
                             .font(LiyaType.action)
                             .padding(.horizontal, 32).padding(.vertical, 10)
                             .frame(minHeight: 48)
@@ -165,10 +166,9 @@ struct LiyaCallScreen: View {
     private var callHeader: some View {
         VStack(spacing: 9) {
             HStack(spacing: 7) {
-                Image(call.kind == .video ? "profile-action-video" : "profile-action-voice")
-                    .resizable().scaledToFit().frame(width: 23, height: 23)
+                HostedArtwork(call.kind == .video ? "profile-action-video" : "profile-action-voice").scaledToFit().frame(width: 23, height: 23)
                     .accessibilityHidden(true)
-                Text(call.kind == .video ? LocalizedStringKey("Video call") : LocalizedStringKey("Voice call"))
+                Text(verbatim: words(call.kind == .video ? "Video call" : "Voice call"))
                     .font(LiyaType.text(.subheadline, weight: .semibold))
             }
             if call.kind == .voice {
@@ -182,7 +182,7 @@ struct LiyaCallScreen: View {
                 .font(LiyaType.journalTitle).accessibilityAddTraits(.isHeader)
             HStack(spacing: 8) {
                 if !reduceMotion { LiyaLoadingIndicator(size: 19).accessibilityHidden(true) }
-                Text("Waiting…").font(LiyaType.reading)
+                Text(verbatim: words("Waiting…")).font(LiyaType.reading)
             }
         }
         .multilineTextAlignment(.center)
@@ -197,17 +197,17 @@ struct LiyaCallScreen: View {
             if capture.state != .running || scenePhase != .active {
                 Color.black
                 if scenePhase == .active && (capture.state == .starting || capture.state == .idle) {
-                    ProgressView().tint(.white).accessibilityLabel(Text("Starting camera"))
+                    ProgressView().tint(.white).accessibilityLabel(Text(verbatim: words("Starting camera")))
                 } else if capture.state == .unavailable {
-                    Text("Preview unavailable").font(LiyaType.reading)
+                    Text(verbatim: words("Preview unavailable")).font(LiyaType.reading)
                 } else {
-                    Text("Preview paused").font(LiyaType.reading)
+                    Text(verbatim: words("Preview paused")).font(LiyaType.reading)
                 }
             }
         }
         .frame(maxWidth: .infinity).frame(height: height)
         .overlay(alignment: .bottomLeading) {
-            Text("Your camera")
+            Text(verbatim: words("Your camera"))
                 .font(LiyaType.text(.caption, weight: .semibold))
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .background(.black.opacity(0.68), in: Capsule())
@@ -220,16 +220,16 @@ struct LiyaCallScreen: View {
     @ViewBuilder private var microphoneMeter: some View {
         if capture.state == .running && scenePhase == .active {
             ProgressView(value: capture.microphoneLevel, total: 1) {
-                Text("Microphone level").font(LiyaType.text(.subheadline, weight: .semibold))
+                Text(verbatim: words("Microphone level")).font(LiyaType.text(.subheadline, weight: .semibold))
             }
             .progressViewStyle(.linear)
             .tint(.white)
             .frame(maxWidth: 240)
             .padding(.vertical, 8)
         } else if call.kind == .voice && capture.state == .unavailable {
-            Text("Microphone unavailable").font(LiyaType.reading)
+            Text(verbatim: words("Microphone unavailable")).font(LiyaType.reading)
         } else if call.kind == .voice && capture.state == .interrupted {
-            Text("Microphone paused").font(LiyaType.reading)
+            Text(verbatim: words("Microphone paused")).font(LiyaType.reading)
         }
     }
 
