@@ -22,7 +22,7 @@ Sign in, open **Profile**, tap the coin balance to open **My wallet**, and selec
 
 For the initial release, configure the nine products in App Store Connect with their exact identifiers, prices, storefront availability, localizations and review screenshots. Include the packs offered at launch in the submission with the new app version. Apple reviews purchases in its sandbox using the App Store Connect catalog. [Apple product setup](https://developer.apple.com/help/app-store-connect/configure-in-app-purchase-settings/overview-for-configuring-in-app-purchases) · [Submitting the first consumable](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-in-app-purchase) · [Apple review environment](https://developer.apple.com/library/archive/technotes/tn2413/index.html)
 
-The Xcode project declares version 1.0. Supply an unused build number for that version at archive time, since the checked-in project leaves `CURRENT_PROJECT_VERSION` unset. [Uploading builds](https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds)
+The Xcode project declares version 1.0. Codemagic assigns the release build number before archiving and uploads the signed IPA to App Store Connect. [Uploading builds](https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds)
 
 ## Coin delivery and spending
 

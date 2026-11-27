@@ -1,8 +1,13 @@
 name: Liya
 options:
   bundleIdPrefix: com.liyalumora
+  xcodeVersion: "27.1"
   deploymentTarget:
     iOS: "16.0"
+settings:
+  base:
+    CURRENT_PROJECT_VERSION: "1"
+    VERSIONING_SYSTEM: apple-generic
 packages:
   Supabase:
     url: https://github.com/supabase/supabase-swift.git
@@ -31,6 +36,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.liyalumora.auroramuse
         PRODUCT_NAME: Liya
+        MARKETING_VERSION: "1.0"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_VERSION: "5.0"
         GENERATE_INFOPLIST_FILE: YES
@@ -44,3 +50,10 @@ targets:
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+schemes:
+  Liya:
+    build:
+      targets:
+        Liya: all
+    archive:
+      config: Release

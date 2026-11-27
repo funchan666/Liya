@@ -1,0 +1,106 @@
+workflows:
+  liya-ios-app-store:
+    name: Liya iOS App Store
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+
+    integrations:
+      app_store_connect: Liya
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.liyalumora.auroramuse
+
+      vars:
+        BUNDLE_ID: "com.liyalumora.auroramuse"
+        XCODE_PROJECT: "Liya.xcodeproj"
+        XCODE_SCHEME: "Liya"
+        APP_STORE_APPLE_ID: "6839909038"
+
+      xcode: "27.1"
+
+    scripts:
+      - name: Verify native iOS project configuration
+        script: |
+          set -eu
+          cd "$CM_BUILD_DIR"
+          test -f "$XCODE_PROJECT/xcshareddata/xcschemes/$XCODE_SCHEME.xcscheme"
+          grep -Fq "PRODUCT_BUNDLE_IDENTIFIER = $BUNDLE_ID;" "$XCODE_PROJECT/project.pbxproj"
+          registered_bundle="$(app-store-connect apps get "$APP_STORE_APPLE_ID" --json | jq -er '.attributes.bundleId')"
+          if [ "$registered_bundle" != "$BUNDLE_ID" ]; then
+            echo "App Store Connect app $APP_STORE_APPLE_ID does not match $BUNDLE_ID." >&2
+            exit 1
+          fi
+
+      - name: Set up App Store signing
+        script: |
+          set -eu
+          cd "$CM_BUILD_DIR"
+          xcode-project use-profiles --project "$XCODE_PROJECT" \
+            --custom-export-options='{"manageAppVersionAndBuildNumber":false}'
+
+      - name: Set next App Store build number
+        script: |
+          set -eu
+          cd "$CM_BUILD_DIR"
+          latest="$(app-store-connect get-latest-build-number "$APP_STORE_APPLE_ID" --platform IOS)"
+          latest="${latest:-0}"
+          if ! printf '%s\n' "$latest" | grep -Eq '^[0-9]+([.][0-9]+){0,2}$'; then
+            echo "Unexpected App Store Connect build number: $latest" >&2
+            exit 1
+          fi
+          next_build="$(expr "${latest%%.*}" + 1)"
+          if [ "$PROJECT_BUILD_NUMBER" -gt "$next_build" ]; then
+            next_build="$PROJECT_BUILD_NUMBER"
+          fi
+          agvtool new-version "$next_build"
+          echo "LIYA_BUILD_NUMBER=$next_build" >> "$CM_ENV"
+
+      - name: Build signed IPA
+        script: |
+          set -eu
+          cd "$CM_BUILD_DIR"
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME" --config Release
+
+      - name: Verify IPA before upload
+        script: |
+          set -eu
+          cd "$CM_BUILD_DIR"
+          python3 - <<'PY'
+          import os
+          import plistlib
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          packages = list(Path("build/ios/ipa").glob("*.ipa"))
+          if len(packages) != 1:
+              raise SystemExit(f"Expected one IPA, found {len(packages)}")
+          with ZipFile(packages[0]) as package:
+              info = plistlib.loads(package.read(f"Payload/{os.environ['XCODE_SCHEME']}.app/Info.plist"))
+          if info["CFBundleIdentifier"] != os.environ["BUNDLE_ID"]:
+              raise SystemExit(f"Unexpected IPA bundle ID: {info['CFBundleIdentifier']}")
+          if info["CFBundleVersion"] != os.environ["LIYA_BUILD_NUMBER"]:
+              raise SystemExit(f"Unexpected IPA build number: {info['CFBundleVersion']}")
+          print(f"Verified {info['CFBundleIdentifier']} {info['CFBundleShortVersionString']} ({info['CFBundleVersion']})")
+          PY
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - build/ios/xcarchive/*.xcarchive/Products/Applications/*.app
+      - build/ios/xcarchive/*.xcarchive/dSYMs/*.dSYM
+
+    publishing:
+      email:
+        recipients:
+          - funchan@126.com
+        notify:
+          success: true
+          failure: true
+
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
+        submit_to_app_store: false
