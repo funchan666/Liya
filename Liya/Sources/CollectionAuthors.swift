@@ -710,7 +710,7 @@ struct CollectionSafetySheet: View {
     }
 
     private var supportLink: some View {
-        Link(words("Contact support"), destination: URL(string: "mailto:Liya2026support@liya.vip")!)
+        Link(words("Contact support"), destination: LiyaSupport.mailURL)
             .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent)
             .fixedSize(horizontal: true, vertical: false).frame(minHeight: 44)
     }

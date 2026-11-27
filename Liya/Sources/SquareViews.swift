@@ -680,7 +680,7 @@ private struct TreeThoughtOptions: View {
                         if mode == 1 && !sent {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(verbatim: words("Why are you reporting this thought?")).font(LiyaType.text(.headline)).foregroundStyle(liyaInk)
-                                Link(words("Email support: Liya2026support@liya.vip"), destination: URL(string: "mailto:Liya2026support@liya.vip")!)
+                                Link(LiyaSupport.label(in: words), destination: LiyaSupport.mailURL)
                                     .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
                                 ForEach(reasons, id: \.self) { item in
                                     VideoSafetyReason(title: item, selected: reason == item) {

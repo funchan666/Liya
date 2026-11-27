@@ -1,6 +1,15 @@
 import SwiftUI
 import WebKit
 
+enum LiyaSupport {
+    static let email = "averyhayes95@icloud.com"
+    static let mailURL = URL(string: "mailto:\(email)")!
+
+    static func label(in words: LiyaWording) -> String {
+        "\(words("Contact support")): \(email)"
+    }
+}
+
 enum PolicyPage: String, Identifiable {
     case terms, privacy
     var id: String { rawValue }
@@ -34,9 +43,10 @@ struct LegalDocumentView: View {
 }
 
 private struct LegalHTMLReader: UIViewRepresentable {
+    @Environment(\.openURL) private var openURL
     let url: URL
     @Binding var failed: Bool
-    func makeCoordinator() -> Coordinator { Coordinator(failed: $failed) }
+    func makeCoordinator() -> Coordinator { Coordinator(failed: $failed, openURL: openURL) }
     func makeUIView(context: Context) -> WKWebView {
         let view = WKWebView()
         view.isOpaque = false
@@ -48,7 +58,17 @@ private struct LegalHTMLReader: UIViewRepresentable {
     func updateUIView(_ view: WKWebView, context: Context) { }
     final class Coordinator: NSObject, WKNavigationDelegate {
         @Binding var failed: Bool
-        init(failed: Binding<Bool>) { _failed = failed }
+        let openURL: OpenURLAction
+        init(failed: Binding<Bool>, openURL: OpenURLAction) {
+            _failed = failed
+            self.openURL = openURL
+        }
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
+            guard navigationAction.navigationType == .linkActivated,
+                  navigationAction.request.url == LiyaSupport.mailURL else { return .allow }
+            openURL(LiyaSupport.mailURL)
+            return .cancel
+        }
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { failed = true }
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { failed = true }
     }

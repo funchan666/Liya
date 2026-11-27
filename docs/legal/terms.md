@@ -1,6 +1,6 @@
 # Liya Terms of Service
 
-Last updated 26 November 2026.
+Last updated 27 November 2026.
 
 ## Welcome to Liya
 
@@ -48,4 +48,4 @@ Liya is not medical advice, professional care or an emergency service. If you ar
 
 ## Changes and contact
 
-We may update these terms when Liya changes. You can contact Liya at Liya2026support@liya.vip.
+We may update these terms when Liya changes. You can contact Liya at averyhayes95@icloud.com.

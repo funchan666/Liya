@@ -1,6 +1,6 @@
 # Liya Privacy Policy
 
-Last updated 26 November 2026.
+Last updated 27 November 2026.
 
 ## About this policy
 
@@ -64,4 +64,4 @@ Liya is not intended for children who are unable to consent to its use under app
 
 ## Contact
 
-Contact email: Liya2026support@liya.vip.
+Contact email: averyhayes95@icloud.com.

@@ -576,8 +576,8 @@ private struct SettingsSupportView: View {
         PageShell(title: "Help & legal") {
             VStack(alignment: .leading, spacing: 22) {
                 SettingsGroup(title: "Support") {
-                    Link(destination: URL(string: "mailto:Liya2026support@liya.vip")!) {
-                        SettingsRow("Email support: Liya2026support@liya.vip", image: "setting-help")
+                    Link(destination: LiyaSupport.mailURL) {
+                        SettingsRow(LiyaSupport.email, image: "setting-help")
                     }
                     SettingsDivider()
                     NavigationLink { InformationView(title: "About Liya", message: "Liya is a place to share moments and connect with others.") } label: { SettingsRow("About Liya", image: "app-mark") }
@@ -765,7 +765,7 @@ private struct SubmittedReportsView: View {
                     }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
                         .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
                 }
-                Link(words("Email support: Liya2026support@liya.vip"), destination: URL(string: "mailto:Liya2026support@liya.vip")!)
+                Link(LiyaSupport.label(in: words), destination: LiyaSupport.mailURL)
                     .font(LiyaType.text(.footnote, weight: .semibold)).foregroundStyle(liyaAccent).frame(minHeight: 44)
             }.padding(.top, 16).modifier(AdaptiveContainerMargins())
         }.task(id: session.userID) { await load() }

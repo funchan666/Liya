@@ -5,7 +5,7 @@
 - Home: https://liya-emotional-space.pages.dev/
 - Terms: https://liya-emotional-space.pages.dev/terms/
 - Privacy: https://liya-emotional-space.pages.dev/privacy/
-- Support address: Liya2026support@liya.vip, supplied by the user; delivery has not been verified.
+- Current support address: averyhayes95@icloud.com.
 - Source: `website/`; editable legal text: `docs/legal/terms.md` and `docs/legal/privacy.md`.
 - The public homepage and both policy pages were opened and their titles, navigation, content and email were observed after deployment. This does not verify rendering inside the app or receipt of support email.
 - Terms Markdown SHA-256: `1305ca25b80d81e600de6d5da250f0833cf5d3d29ec95391399c910f405a0dd9`
@@ -71,3 +71,7 @@ Published the revised privacy policy and terms to the Liya production site. Both
 ## 26 November 2026 website artwork
 
 Published the homepage with its icon served by the Liya Supabase Storage project. Retrieved the public homepage and both policy pages and matched them to their deployment sources. The homepage icon is served from `liya-interface/v1-00e15d2578c8/web/liya-icon.png`.
+
+## 27 November 2026 support address update
+
+Published the new support address on the homepage, privacy policy and terms. All three pages returned HTTP 200 with an email link to averyhayes95@icloud.com. The three pages and the stylesheet matched the release files byte for byte.
